@@ -16,7 +16,7 @@ The goal is to help content editors achieve **best-practice SEO** without touchi
 
 - **Simple Integration** - Just 2 template tags: `{% seo_head %}` and `{% seo_schema %}`
 - **Site-wide Settings** - Configure Organization, favicons, social profiles from admin
-- **Page-level SEO** - Override title, description, OG image per page
+- **Page-level SEO** - Uses Wagtail's built-in SEO fields + OG image override
 - **13+ Schema Types** - Article, Product, FAQ, Event, LocalBusiness, and more
 - **Automatic BreadcrumbList** - Generated from page hierarchy
 - **Multi-language Support** - hreflang tags with wagtail-localize integration
@@ -111,13 +111,14 @@ class ArticlePage(SEOPageMixin, Page):
     promote_panels = Page.promote_panels + SEOPageMixin.seo_panels
 ```
 
-This adds a "SEO" tab in the page editor with:
-- SEO title and description
+This adds an "SEO" panel in the page editor with:
 - OG image override
 - Schema type selector (Article, Product, FAQ, etc.)
 - Locale selector (ja_JP, en_US, en_GB, etc.)
 - noindex/nofollow options
 - Canonical URL override
+
+> **Note**: For SEO title and meta description, use Wagtail's built-in `seo_title` and `search_description` fields in the Promote tab. The template tags automatically use these fields.
 
 ## Supported Schema Types
 
@@ -165,7 +166,8 @@ This adds a "SEO" tab in the page editor with:
 <link rel="alternate" hreflang="x-default" href="https://example.com/ja/page/">
 
 <!-- Favicon -->
-<link rel="icon" type="image/png" sizes="32x32" href="/media/favicon.png">
+<link rel="icon" type="image/svg+xml" href="/media/favicon.svg">
+<link rel="icon" type="image/png" sizes="48x48" href="/media/favicon.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/media/apple-touch-icon.png">
 
 <!-- Open Graph -->
@@ -244,9 +246,10 @@ All settings are optional and configured through Wagtail admin:
 | Organization logo | Logo image for Schema |
 | Twitter handle | @username (without @) |
 | Facebook URL | Facebook page URL |
-| Default OG image | Fallback image for social sharing |
-| Favicon | Browser tab icon |
-| Apple Touch Icon | iOS home screen icon |
+| Default OG image | Fallback image for social sharing (1200x630) |
+| Favicon (SVG) | SVG favicon for modern browsers (recommended) |
+| Favicon (PNG) | PNG fallback, minimum 48x48 (Google requirement) |
+| Apple Touch Icon | iOS home screen icon (180x180) |
 | Google verification | google-site-verification code |
 
 ### Django Settings (Optional)
@@ -257,11 +260,11 @@ WAGTAIL_SEO_TOOLKIT = {
     # Default robots meta (can be overridden per-page)
     'DEFAULT_ROBOTS': 'index, follow',
 
-    # OG image rendition filter
+    # OG image rendition filter (1200x630 is optimal for social sharing)
     'OG_IMAGE_FILTER': 'fill-1200x630',
 
-    # Favicon rendition filter
-    'FAVICON_FILTER': 'fill-32x32',
+    # Favicon rendition filter (48x48 minimum recommended by Google)
+    'FAVICON_FILTER': 'fill-48x48',
 }
 ```
 

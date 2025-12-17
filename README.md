@@ -20,6 +20,7 @@ The goal is to help content editors achieve **best-practice SEO** without touchi
 - **13+ Schema Types** - Article, Product, FAQ, Event, LocalBusiness, and more
 - **Automatic BreadcrumbList** - Generated from page hierarchy
 - **Multi-language Support** - hreflang tags with wagtail-localize integration
+- **Locale Settings** - Per-page language/region targeting (ja_JP, en_US, etc.)
 - **Japanese UI** - Full Japanese localization for admin interface
 
 ## Comparison with Existing Libraries
@@ -114,6 +115,7 @@ This adds a "SEO" tab in the page editor with:
 - SEO title and description
 - OG image override
 - Schema type selector (Article, Product, FAQ, etc.)
+- Locale selector (ja_JP, en_US, en_GB, etc.)
 - noindex/nofollow options
 - Canonical URL override
 
@@ -263,9 +265,13 @@ WAGTAIL_SEO_TOOLKIT = {
 }
 ```
 
-## Multi-language Support
+## Multi-language & Locale Support
 
-wagtail-seo-toolkit automatically generates hreflang tags when used with [wagtail-localize](https://wagtail-localize.org/):
+wagtail-seo-toolkit provides flexible language and region targeting:
+
+### Use Case 1: wagtail-localize Integration
+
+When using [wagtail-localize](https://wagtail-localize.org/), hreflang tags are generated automatically:
 
 ```html
 <link rel="alternate" hreflang="ja" href="https://example.com/ja/page/">
@@ -274,6 +280,48 @@ wagtail-seo-toolkit automatically generates hreflang tags when used with [wagtai
 ```
 
 No additional configuration needed - it detects wagtail-localize automatically.
+
+### Use Case 2: Mixed Language Content
+
+Write Japanese and English articles on the same site by selecting locale per page:
+
+```html
+<!-- Japanese article (locale: ja_JP) -->
+<html lang="ja">
+<meta property="og:locale" content="ja_JP">
+
+<!-- English article (locale: en_US) -->
+<html lang="en">
+<meta property="og:locale" content="en_US">
+```
+
+### Use Case 3: Regional Targeting
+
+Target specific regions with the same language:
+
+| Locale | Target |
+|--------|--------|
+| `en_US` | English (United States) |
+| `en_GB` | English (United Kingdom) |
+| `zh_CN` | Chinese (Simplified, China) |
+| `zh_TW` | Chinese (Traditional, Taiwan) |
+
+### Available Locales
+
+| Locale | Language |
+|--------|----------|
+| `ja_JP` | 日本語 (日本) |
+| `en_US` | English (US) |
+| `en_GB` | English (UK) |
+| `zh_CN` | 中文 (简体) |
+| `zh_TW` | 中文 (繁體) |
+| `ko_KR` | 한국어 |
+| `fr_FR` | Français (France) |
+| `de_DE` | Deutsch (Deutschland) |
+| `es_ES` | Español (España) |
+| `pt_BR` | Português (Brasil) |
+
+Set the default locale in **Settings > SEO Settings**, then override per-page as needed.
 
 ## Requirements
 

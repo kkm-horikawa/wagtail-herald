@@ -56,4 +56,8 @@ def site(db, root_page):
             "site_name": "Test Site",
         },
     )
+    # Ensure site_name is set even if site already existed
+    if site.site_name != "Test Site":
+        site.site_name = "Test Site"
+        site.save()
     return site

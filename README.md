@@ -21,6 +21,7 @@ The goal is to help content editors achieve **best-practice SEO** without touchi
 - **Automatic BreadcrumbList** - Generated from page hierarchy
 - **Multi-language Support** - hreflang tags with wagtail-localize integration
 - **Locale Settings** - Per-page language/region targeting (ja_JP, en_US, etc.)
+- **Analytics Integration** - GTM, GA4, Facebook Pixel, Microsoft Clarity from admin
 - **Japanese UI** - Full Japanese localization for admin interface
 
 ## Comparison with Existing Libraries
@@ -39,6 +40,7 @@ The goal is to help content editors achieve **best-practice SEO** without touchi
 | LocalBusiness Schema | No | No | **Yes** |
 | 13+ Schema types | No | No | **Yes** |
 | hreflang (i18n) | No | No | **Yes** |
+| GTM/Analytics | No | No | **Yes** |
 | Template tags | 3 includes | 1 tag | **2 tags** |
 | Japanese UI | No | No | **Yes** |
 
@@ -80,7 +82,7 @@ INSTALLED_APPS = [
 ```
 
 That's it! The template tags handle everything:
-- `{% seo_head %}` - All meta tags, OG, Twitter Card, favicon, hreflang
+- `{% seo_head %}` - Meta tags, OG, Twitter Card, favicon, hreflang, analytics scripts
 - `{% seo_schema %}` - All JSON-LD structured data
 
 ### 2. Configure Site Settings
@@ -92,6 +94,7 @@ Go to **Settings > SEO Settings** in Wagtail admin to configure:
 - Default OG image
 - Favicon and Apple Touch Icon
 - Google/Bing site verification
+- Analytics (GTM, GA4, Facebook Pixel, Clarity)
 
 ### 3. Add SEO Mixin to Pages (Optional)
 
@@ -187,6 +190,19 @@ This adds an "SEO" panel in the page editor with:
 
 <!-- Verification -->
 <meta name="google-site-verification" content="xxxxx">
+
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){...})(window,document,'script','dataLayer','GTM-XXXXXX');</script>
+
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-XXXXXXXXXX');</script>
+
+<!-- Facebook Pixel -->
+<script>!function(f,b,e,v,n,t,s){...}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','XXXXXXXXXXXXXXX');fbq('track','PageView');</script>
+
+<!-- Microsoft Clarity -->
+<script type="text/javascript">(function(c,l,a,r,i,t,y){...})(window,document,"clarity","script","xxxxxxxxxx");</script>
 ```
 
 ### `{% seo_schema %}` Output
@@ -251,6 +267,10 @@ All settings are optional and configured through Wagtail admin:
 | Favicon (PNG) | PNG fallback, minimum 48x48 (Google requirement) |
 | Apple Touch Icon | iOS home screen icon (180x180) |
 | Google verification | google-site-verification code |
+| GTM Container ID | Google Tag Manager (GTM-XXXXXX) |
+| GA4 Measurement ID | Google Analytics 4 (G-XXXXXXXXXX) |
+| Facebook Pixel ID | Meta Pixel for ads tracking |
+| Clarity Project ID | Microsoft Clarity for heatmaps |
 
 ### Django Settings (Optional)
 

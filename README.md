@@ -22,6 +22,7 @@ The goal is to help content editors achieve **best-practice SEO** without touchi
 - **Multi-language Support** - hreflang tags with wagtail-localize integration
 - **Locale Settings** - Per-page language/region targeting (ja_JP, en_US, etc.)
 - **Analytics Integration** - GTM, GA4, Facebook Pixel, Microsoft Clarity from admin
+- **robots.txt Management** - Configure robots.txt from admin interface
 - **Japanese UI** - Full Japanese localization for admin interface
 
 ## Comparison with Existing Libraries
@@ -41,6 +42,7 @@ The goal is to help content editors achieve **best-practice SEO** without touchi
 | 13+ Schema types | No | No | **Yes** |
 | hreflang (i18n) | No | No | **Yes** |
 | GTM/Analytics | No | No | **Yes** |
+| robots.txt | No | No | **Yes** |
 | Template tags | 3 includes | 1 tag | **2 tags** |
 | Japanese UI | No | No | **Yes** |
 
@@ -271,6 +273,7 @@ All settings are optional and configured through Wagtail admin:
 | GA4 Measurement ID | Google Analytics 4 (G-XXXXXXXXXX) |
 | Facebook Pixel ID | Meta Pixel for ads tracking |
 | Clarity Project ID | Microsoft Clarity for heatmaps |
+| robots.txt content | Custom robots.txt content |
 
 ### Django Settings (Optional)
 
@@ -345,6 +348,38 @@ Target specific regions with the same language:
 | `pt_BR` | Português (Brasil) |
 
 Set the default locale in **Settings > SEO Settings**, then override per-page as needed.
+
+## robots.txt Management
+
+Configure robots.txt from Wagtail admin without editing files.
+
+### Setup
+
+Add the robots.txt view to your `urls.py`:
+
+```python
+from wagtail_seo_toolkit.views import robots_txt
+
+urlpatterns = [
+    path('robots.txt', robots_txt, name='robots_txt'),
+    # ... other urls
+]
+```
+
+### Configuration
+
+Go to **Settings > SEO Settings** and edit the robots.txt content:
+
+```
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /search/
+
+Sitemap: https://example.com/sitemap.xml
+```
+
+If no custom content is set, a sensible default is used.
 
 ## Requirements
 

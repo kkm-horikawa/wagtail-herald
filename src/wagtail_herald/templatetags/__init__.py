@@ -1,0 +1,3 @@
+"""
+wagtail-herald template tags.
+"""

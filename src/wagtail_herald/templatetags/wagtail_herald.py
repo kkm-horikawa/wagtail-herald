@@ -4,6 +4,7 @@ Template tags for wagtail-herald SEO output.
 
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING, Any
 
 from django import template
@@ -45,6 +46,142 @@ def seo_head(context: dict[str, Any]) -> SafeString:
             request=request,
         )
     )
+
+
+@register.simple_tag(takes_context=True)
+def seo_schema(context: dict[str, Any]) -> SafeString:
+    """Output JSON-LD structured data for WebSite and Organization.
+
+    Usage in templates:
+        {% load wagtail_herald %}
+        <head>
+            {% seo_schema %}
+        </head>
+    """
+    request = context.get("request")
+
+    from wagtail_herald.models import SEOSettings
+
+    seo_settings = None
+    if request:
+        seo_settings = SEOSettings.for_request(request)
+
+    schemas: list[dict[str, Any]] = []
+
+    # WebSite schema
+    website_schema = _build_website_schema(request)
+    if website_schema:
+        schemas.append(website_schema)
+
+    # Organization schema (only if organization_name is set)
+    if seo_settings and seo_settings.organization_name:
+        org_schema = _build_organization_schema(request, seo_settings)
+        if org_schema:
+            schemas.append(org_schema)
+
+    if not schemas:
+        return mark_safe("")
+
+    output = '<script type="application/ld+json">\n'
+    output += json.dumps(schemas, indent=2, ensure_ascii=False)
+    output += "\n</script>"
+
+    return mark_safe(output)
+
+
+def _build_website_schema(request: HttpRequest | None) -> dict[str, Any] | None:
+    """Build WebSite schema.
+
+    Args:
+        request: HTTP request object.
+
+    Returns:
+        WebSite schema dict or None if no site available.
+    """
+    if not request:
+        return None
+
+    site = getattr(request, "site", None)
+    if not site:
+        return None
+
+    site_name = site.site_name or ""
+    if not site_name:
+        return None
+
+    site_url = request.build_absolute_uri("/")
+
+    return {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": site_name,
+        "url": site_url,
+    }
+
+
+def _build_organization_schema(
+    request: HttpRequest | None,
+    settings: SEOSettings,
+) -> dict[str, Any] | None:
+    """Build Organization schema.
+
+    Args:
+        request: HTTP request object.
+        settings: SEOSettings instance.
+
+    Returns:
+        Organization schema dict or None.
+    """
+    if not settings.organization_name:
+        return None
+
+    schema: dict[str, Any] = {
+        "@context": "https://schema.org",
+        "@type": settings.organization_type,
+        "name": settings.organization_name,
+    }
+
+    # Add URL
+    if request:
+        schema["url"] = request.build_absolute_uri("/")
+
+    # Add logo
+    if settings.organization_logo:
+        logo_url = _get_logo_url(request, settings.organization_logo)
+        if logo_url:
+            schema["logo"] = logo_url
+
+    # Add sameAs (social profiles)
+    same_as: list[str] = []
+    if settings.twitter_handle:
+        same_as.append(f"https://twitter.com/{settings.twitter_handle}")
+    if settings.facebook_url:
+        same_as.append(settings.facebook_url)
+    if same_as:
+        schema["sameAs"] = same_as
+
+    return schema
+
+
+def _get_logo_url(request: HttpRequest | None, logo: Any) -> str:
+    """Get logo URL with appropriate rendition.
+
+    Args:
+        request: HTTP request object.
+        logo: Wagtail image instance.
+
+    Returns:
+        Absolute URL string or empty string.
+    """
+    if not logo:
+        return ""
+
+    try:
+        # Google recommends min 112x112px for logo
+        rendition = logo.get_rendition("fill-112x112")
+        return _make_absolute_url(request, rendition.url)
+    except Exception:
+        return _get_image_url(request, logo)
 
 
 def build_seo_context(

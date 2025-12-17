@@ -6,6 +6,8 @@ from django.template import Context, Template
 
 from wagtail_herald.models import SEOSettings
 from wagtail_herald.templatetags.wagtail_herald import (
+    _build_organization_schema,
+    _build_website_schema,
     _get_canonical_url,
     _get_og_image_data,
     _get_page_title,
@@ -437,3 +439,188 @@ class TestOgImageData:
         result = _get_og_image_data(request, MockPage(), settings)
 
         assert result["alt"] == "Default alt"
+
+
+class TestSeoSchemaTemplateTag:
+    """Tests for the seo_schema template tag."""
+
+    def test_tag_is_registered(self):
+        """Test that seo_schema tag can be loaded."""
+        template = Template("{% load wagtail_herald %}{% seo_schema %}")
+        assert template is not None
+
+    def test_tag_renders_without_context(self, rf, db, site):
+        """Test tag renders with minimal context."""
+        request = rf.get("/")
+        request.site = site
+        template = Template("{% load wagtail_herald %}{% seo_schema %}")
+        context = Context({"request": request})
+        html = template.render(context)
+
+        assert 'type="application/ld+json"' in html
+        assert '"@type": "WebSite"' in html
+
+    def test_tag_renders_website_schema(self, rf, site):
+        """Test tag renders WebSite schema."""
+        request = rf.get("/")
+        request.site = site
+        template = Template("{% load wagtail_herald %}{% seo_schema %}")
+        context = Context({"request": request})
+        html = template.render(context)
+
+        assert '"@context": "https://schema.org"' in html
+        assert '"@type": "WebSite"' in html
+        assert '"name": "Test Site"' in html
+        assert '"url":' in html
+
+    def test_tag_renders_organization_schema(self, rf, site, db):
+        """Test tag renders Organization schema when configured."""
+        SEOSettings.objects.create(
+            site=site,
+            organization_name="Test Organization",
+            organization_type="Corporation",
+        )
+
+        request = rf.get("/")
+        request.site = site
+        template = Template("{% load wagtail_herald %}{% seo_schema %}")
+        context = Context({"request": request})
+        html = template.render(context)
+
+        assert '"@type": "Corporation"' in html
+        assert '"name": "Test Organization"' in html
+
+    def test_tag_includes_same_as(self, rf, site, db):
+        """Test tag includes sameAs array with social profiles."""
+        SEOSettings.objects.create(
+            site=site,
+            organization_name="Test Org",
+            twitter_handle="testhandle",
+            facebook_url="https://facebook.com/testorg",
+        )
+
+        request = rf.get("/")
+        request.site = site
+        template = Template("{% load wagtail_herald %}{% seo_schema %}")
+        context = Context({"request": request})
+        html = template.render(context)
+
+        assert '"sameAs"' in html
+        assert "https://twitter.com/testhandle" in html
+        assert "https://facebook.com/testorg" in html
+
+    def test_tag_no_organization_without_name(self, rf, site, db):
+        """Test tag doesn't include Organization schema without name."""
+        SEOSettings.objects.create(
+            site=site,
+            organization_name="",
+            twitter_handle="testhandle",
+        )
+
+        request = rf.get("/")
+        request.site = site
+        template = Template("{% load wagtail_herald %}{% seo_schema %}")
+        context = Context({"request": request})
+        html = template.render(context)
+
+        assert '"@type": "WebSite"' in html
+        assert '"@type": "Organization"' not in html
+
+
+class TestBuildWebsiteSchema:
+    """Tests for _build_website_schema function."""
+
+    def test_returns_none_without_request(self):
+        """Test returns None when no request."""
+        result = _build_website_schema(None)
+        assert result is None
+
+    def test_returns_none_without_site(self, rf):
+        """Test returns None when no site on request."""
+        request = rf.get("/")
+        result = _build_website_schema(request)
+        assert result is None
+
+    def test_returns_none_without_site_name(self, rf, site):
+        """Test returns None when site has no name."""
+        request = rf.get("/")
+        site.site_name = ""
+        request.site = site
+        result = _build_website_schema(request)
+        assert result is None
+
+    def test_returns_schema_with_site(self, rf, site):
+        """Test returns valid schema with site."""
+        request = rf.get("/")
+        request.site = site
+        result = _build_website_schema(request)
+
+        assert result["@context"] == "https://schema.org"
+        assert result["@type"] == "WebSite"
+        assert result["name"] == "Test Site"
+        assert "url" in result
+
+
+class TestBuildOrganizationSchema:
+    """Tests for _build_organization_schema function."""
+
+    def test_returns_none_without_name(self, rf, site, db):
+        """Test returns None when no organization name."""
+        settings = SEOSettings(site=site, organization_name="")
+        result = _build_organization_schema(rf.get("/"), settings)
+        assert result is None
+
+    def test_returns_schema_with_name(self, rf, site, db):
+        """Test returns valid schema with organization name."""
+        request = rf.get("/")
+        request.site = site
+        settings = SEOSettings(
+            site=site,
+            organization_name="Test Org",
+            organization_type="Corporation",
+        )
+        result = _build_organization_schema(request, settings)
+
+        assert result["@context"] == "https://schema.org"
+        assert result["@type"] == "Corporation"
+        assert result["name"] == "Test Org"
+
+    def test_includes_twitter_in_same_as(self, rf, site, db):
+        """Test includes Twitter in sameAs."""
+        request = rf.get("/")
+        request.site = site
+        settings = SEOSettings(
+            site=site,
+            organization_name="Test Org",
+            twitter_handle="testhandle",
+        )
+        result = _build_organization_schema(request, settings)
+
+        assert "sameAs" in result
+        assert "https://twitter.com/testhandle" in result["sameAs"]
+
+    def test_includes_facebook_in_same_as(self, rf, site, db):
+        """Test includes Facebook in sameAs."""
+        request = rf.get("/")
+        request.site = site
+        settings = SEOSettings(
+            site=site,
+            organization_name="Test Org",
+            facebook_url="https://facebook.com/testorg",
+        )
+        result = _build_organization_schema(request, settings)
+
+        assert "sameAs" in result
+        assert "https://facebook.com/testorg" in result["sameAs"]
+
+    def test_no_same_as_without_social(self, rf, site, db):
+        """Test no sameAs when no social profiles."""
+        request = rf.get("/")
+        request.site = site
+        settings = SEOSettings(
+            site=site,
+            organization_name="Test Org",
+        )
+        result = _build_organization_schema(request, settings)
+
+        assert "sameAs" not in result

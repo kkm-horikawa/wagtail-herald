@@ -1,1 +1,1 @@
-"""Tests for wagtail-seo-toolkit."""
+"""Tests for wagtail-herald."""

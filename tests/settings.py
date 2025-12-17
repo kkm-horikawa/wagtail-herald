@@ -1,5 +1,5 @@
 """
-Django settings for testing wagtail-seo-toolkit.
+Django settings for testing wagtail-herald.
 
 This is a minimal configuration for running tests.
 """
@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     "wagtail.contrib.settings",
     "taggit",
     # Our app
-    "wagtail_seo_toolkit",
+    "wagtail_herald",
 ]
 
 MIDDLEWARE = [

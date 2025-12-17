@@ -1,4 +1,4 @@
-# Contributing to wagtail-seo-toolkit
+# Contributing to wagtail-herald
 
 Thank you for your interest in contributing!
 
@@ -43,8 +43,8 @@ pyenv global 3.13.1 3.10.16 3.11.11 3.12.8
 ### Clone and Setup
 
 ```bash
-git clone https://github.com/kkm-horikawa/wagtail-seo-toolkit.git
-cd wagtail-seo-toolkit
+git clone https://github.com/kkm-horikawa/wagtail-herald.git
+cd wagtail-herald
 
 # Using uv (recommended)
 uv venv
@@ -176,7 +176,7 @@ from django.db import models
 from wagtail.models import Page
 
 # 3. Local imports
-from wagtail_seo_toolkit.models import SEOSettings
+from wagtail_herald.models import SEOSettings
 ```
 
 Ruff's isort will automatically organize imports.
@@ -222,7 +222,7 @@ Naming pattern: `test_<what>_<condition/expectation>`
 pytest
 
 # Run with coverage
-pytest --cov=wagtail_seo_toolkit --cov-report=html
+pytest --cov=wagtail_herald --cov-report=html
 
 # Run specific test file
 pytest tests/test_models.py
@@ -240,9 +240,9 @@ pytest tests/test_models.py::TestSEOSettings::test_settings_instantiation
 ## Project Structure
 
 ```
-wagtail-seo-toolkit/
+wagtail-herald/
 ├── src/
-│   └── wagtail_seo_toolkit/
+│   └── wagtail_herald/
 │       ├── __init__.py
 │       ├── apps.py            # Django app config
 │       ├── models.py          # SEOSettings, SEOPageMixin
@@ -250,9 +250,9 @@ wagtail-seo-toolkit/
 │       ├── utils.py           # Helper functions
 │       ├── wagtail_hooks.py   # Wagtail admin hooks
 │       ├── templatetags/
-│       │   └── wagtail_seo_toolkit.py
+│       │   └── wagtail_herald.py
 │       ├── templates/
-│       │   └── wagtail_seo_toolkit/
+│       │   └── wagtail_herald/
 │       │       ├── head.html
 │       │       └── schema.html
 │       └── locale/
@@ -332,12 +332,12 @@ Examples:
 1. **Fork the repository** on GitHub
 2. **Clone your fork**:
    ```bash
-   git clone https://github.com/<your-username>/wagtail-seo-toolkit.git
-   cd wagtail-seo-toolkit
+   git clone https://github.com/<your-username>/wagtail-herald.git
+   cd wagtail-herald
    ```
 3. **Add upstream remote**:
    ```bash
-   git remote add upstream https://github.com/kkm-horikawa/wagtail-seo-toolkit.git
+   git remote add upstream https://github.com/kkm-horikawa/wagtail-herald.git
    ```
 4. **Create a branch from develop**:
    ```bash
@@ -357,7 +357,7 @@ Before submitting a PR, it's recommended to test your changes in a real Wagtail 
 1. **Install from your fork branch**:
    ```bash
    # In your Wagtail project directory
-   pip install git+https://github.com/<your-username>/wagtail-seo-toolkit.git@<your-branch>
+   pip install git+https://github.com/<your-username>/wagtail-herald.git@<your-branch>
    ```
 
 2. **Add to INSTALLED_APPS** (if not already):
@@ -365,14 +365,14 @@ Before submitting a PR, it's recommended to test your changes in a real Wagtail 
    INSTALLED_APPS = [
        # ...
        "wagtail.contrib.settings",  # Required for SEOSettings
-       "wagtail_seo_toolkit",
+       "wagtail_herald",
        # ...
    ]
    ```
 
 3. **Use the mixin in your page model**:
    ```python
-   from wagtail_seo_toolkit.models import SEOPageMixin
+   from wagtail_herald.models import SEOPageMixin
 
    class MyPage(SEOPageMixin, Page):
        # Your page fields...
@@ -381,7 +381,7 @@ Before submitting a PR, it's recommended to test your changes in a real Wagtail 
 
 4. **Add template tags**:
    ```html
-   {% load wagtail_seo_toolkit %}
+   {% load wagtail_herald %}
    <head>
        {% seo_head %}
    </head>
@@ -399,7 +399,7 @@ We recommend using **Draft PRs** for planning and early feedback.
 
 #### 1. Check Existing Issues
 
-Before starting work, check the [Issue Tracker](https://github.com/kkm-horikawa/wagtail-seo-toolkit/issues) and [Project Board](https://github.com/users/kkm-horikawa/projects/9).
+Before starting work, check the [Issue Tracker](https://github.com/kkm-horikawa/wagtail-herald/issues) and [Project Board](https://github.com/users/kkm-horikawa/projects/9).
 
 - Search for existing issues to avoid duplication
 - Comment on the issue to claim it
@@ -566,12 +566,12 @@ Instead, we focus on:
 
 | Milestone | Focus |
 |-----------|-------|
-| [v0.1.0](https://github.com/kkm-horikawa/wagtail-seo-toolkit/milestone/1) | Core Models - SEOSettings, SEOPageMixin |
-| [v0.2.0](https://github.com/kkm-horikawa/wagtail-seo-toolkit/milestone/2) | Template Tags - seo_head, seo_schema |
-| [v0.3.0](https://github.com/kkm-horikawa/wagtail-seo-toolkit/milestone/3) | Schema.org - Article, FAQ, Product, etc. |
-| [v0.4.0](https://github.com/kkm-horikawa/wagtail-seo-toolkit/milestone/4) | wagtail-localize Integration - hreflang |
-| [v1.0.0](https://github.com/kkm-horikawa/wagtail-seo-toolkit/milestone/5) | Stable Release |
+| [v0.1.0](https://github.com/kkm-horikawa/wagtail-herald/milestone/1) | Core Models - SEOSettings, SEOPageMixin |
+| [v0.2.0](https://github.com/kkm-horikawa/wagtail-herald/milestone/2) | Template Tags - seo_head, seo_schema |
+| [v0.3.0](https://github.com/kkm-horikawa/wagtail-herald/milestone/3) | Schema.org - Article, FAQ, Product, etc. |
+| [v0.4.0](https://github.com/kkm-horikawa/wagtail-herald/milestone/4) | wagtail-localize Integration - hreflang |
+| [v1.0.0](https://github.com/kkm-horikawa/wagtail-herald/milestone/5) | Stable Release |
 
 ## Questions?
 
-Open an [Issue](https://github.com/kkm-horikawa/wagtail-seo-toolkit/issues) for questions or discussions.
+Open an [Issue](https://github.com/kkm-horikawa/wagtail-herald/issues) for questions or discussions.

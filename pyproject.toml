@@ -1,7 +1,7 @@
 [project]
-name = "wagtail-seo-toolkit"
+name = "wagtail-herald"
 dynamic = ["version"]
-description = "Comprehensive SEO toolkit for Wagtail CMS with meta tags, Open Graph, Twitter Cards, and Schema.org structured data"
+description = "SEO toolkit for Wagtail CMS - meta tags, Open Graph, Twitter Cards, and Schema.org structured data"
 readme = "README.md"
 license = { text = "BSD-3-Clause" }
 authors = [{ name = "kkm-horikawa" }]
@@ -34,11 +34,11 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/kkm-horikawa/wagtail-seo-toolkit"
-Documentation = "https://github.com/kkm-horikawa/wagtail-seo-toolkit#readme"
-Repository = "https://github.com/kkm-horikawa/wagtail-seo-toolkit.git"
-Issues = "https://github.com/kkm-horikawa/wagtail-seo-toolkit/issues"
-Changelog = "https://github.com/kkm-horikawa/wagtail-seo-toolkit/releases"
+Homepage = "https://github.com/kkm-horikawa/wagtail-herald"
+Documentation = "https://github.com/kkm-horikawa/wagtail-herald#readme"
+Repository = "https://github.com/kkm-horikawa/wagtail-herald.git"
+Issues = "https://github.com/kkm-horikawa/wagtail-herald/issues"
+Changelog = "https://github.com/kkm-horikawa/wagtail-herald/releases"
 
 [project.optional-dependencies]
 localize = [
@@ -67,7 +67,7 @@ version_scheme = "no-guess-dev"
 local_scheme = "no-local-version"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/wagtail_seo_toolkit"]
+packages = ["src/wagtail_herald"]
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -79,9 +79,9 @@ include = [
 
 [tool.hatch.build]
 include = [
-    "src/wagtail_seo_toolkit/**/*.py",
-    "src/wagtail_seo_toolkit/templates/**/*.html",
-    "src/wagtail_seo_toolkit/locale/**/*",
+    "src/wagtail_herald/**/*.py",
+    "src/wagtail_herald/templates/**/*.html",
+    "src/wagtail_herald/locale/**/*",
 ]
 
 [tool.ruff]
@@ -105,7 +105,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["wagtail_seo_toolkit"]
+known-first-party = ["wagtail_herald"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -128,14 +128,14 @@ module = ["wagtail.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["wagtail_seo_toolkit.models.*"]
+module = ["wagtail_herald.models.*"]
 disable_error_code = ["var-annotated", "misc"]
 
 [tool.django-stubs]
 django_settings_module = "tests.settings"
 
 [tool.coverage.run]
-source = ["src/wagtail_seo_toolkit"]
+source = ["src/wagtail_herald"]
 branch = true
 
 [tool.coverage.report]

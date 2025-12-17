@@ -1,14 +1,14 @@
-# wagtail-seo-toolkit
+# wagtail-herald
 
-[![PyPI version](https://badge.fury.io/py/wagtail-seo-toolkit.svg)](https://badge.fury.io/py/wagtail-seo-toolkit)
-[![CI](https://github.com/kkm-horikawa/wagtail-seo-toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/kkm-horikawa/wagtail-seo-toolkit/actions/workflows/ci.yml)
+[![PyPI version](https://badge.fury.io/py/wagtail-herald.svg)](https://badge.fury.io/py/wagtail-herald)
+[![CI](https://github.com/kkm-horikawa/wagtail-herald/actions/workflows/ci.yml/badge.svg)](https://github.com/kkm-horikawa/wagtail-herald/actions/workflows/ci.yml)
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
 ## Philosophy
 
 SEO optimization shouldn't require deep technical knowledge. While Wagtail provides excellent content management, setting up proper meta tags, Open Graph, Twitter Cards, and Schema.org structured data requires significant manual work.
 
-**wagtail-seo-toolkit** provides a comprehensive SEO solution with just two template tags. Site-wide settings are managed through Wagtail's admin interface, while page-specific SEO can be configured per-page with sensible defaults.
+**wagtail-herald** provides a comprehensive SEO solution with just two template tags. Site-wide settings are managed through Wagtail's admin interface, while page-specific SEO can be configured per-page with sensible defaults.
 
 The goal is to help content editors achieve **best-practice SEO** without touching code, while giving developers full control when needed.
 
@@ -27,7 +27,7 @@ The goal is to help content editors achieve **best-practice SEO** without touchi
 
 ## Comparison with Existing Libraries
 
-| Feature | wagtail-seo | wagtail-metadata | wagtail-seo-toolkit |
+| Feature | wagtail-seo | wagtail-metadata | wagtail-herald |
 |---------|-------------|------------------|---------------------|
 | Meta tags | Yes | Yes | Yes |
 | Open Graph | Yes | Yes | Yes |
@@ -49,7 +49,7 @@ The goal is to help content editors achieve **best-practice SEO** without touchi
 ## Installation
 
 ```bash
-pip install wagtail-seo-toolkit
+pip install wagtail-herald
 ```
 
 Add to your `INSTALLED_APPS`:
@@ -59,7 +59,7 @@ Add to your `INSTALLED_APPS`:
 INSTALLED_APPS = [
     # ...
     'wagtail.contrib.settings',  # Required
-    'wagtail_seo_toolkit',
+    'wagtail_herald',
     # ...
 ]
 ```
@@ -69,7 +69,7 @@ INSTALLED_APPS = [
 ### 1. Add Template Tags
 
 ```html
-{% load wagtail_seo_toolkit %}
+{% load wagtail_herald %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -104,7 +104,7 @@ For page-level SEO control, add the mixin to your page models:
 
 ```python
 from wagtail.models import Page
-from wagtail_seo_toolkit.models import SEOPageMixin
+from wagtail_herald.models import SEOPageMixin
 
 class ArticlePage(SEOPageMixin, Page):
     # Your fields...
@@ -279,7 +279,7 @@ All settings are optional and configured through Wagtail admin:
 
 ```python
 # settings.py
-WAGTAIL_SEO_TOOLKIT = {
+WAGTAIL_HERALD = {
     # Default robots meta (can be overridden per-page)
     'DEFAULT_ROBOTS': 'index, follow',
 
@@ -293,7 +293,7 @@ WAGTAIL_SEO_TOOLKIT = {
 
 ## Multi-language & Locale Support
 
-wagtail-seo-toolkit provides flexible language and region targeting:
+wagtail-herald provides flexible language and region targeting:
 
 ### Use Case 1: wagtail-localize Integration
 
@@ -358,7 +358,7 @@ Configure robots.txt from Wagtail admin without editing files.
 Add the robots.txt view to your `urls.py`:
 
 ```python
-from wagtail_seo_toolkit.views import robots_txt
+from wagtail_herald.views import robots_txt
 
 urlpatterns = [
     path('robots.txt', robots_txt, name='robots_txt'),
@@ -393,8 +393,8 @@ If no custom content is set, a sensible default is used.
 
 ## Project Links
 
-- [GitHub Repository](https://github.com/kkm-horikawa/wagtail-seo-toolkit)
-- [Issue Tracker](https://github.com/kkm-horikawa/wagtail-seo-toolkit/issues)
+- [GitHub Repository](https://github.com/kkm-horikawa/wagtail-herald)
+- [Issue Tracker](https://github.com/kkm-horikawa/wagtail-herald/issues)
 
 ## Related Projects
 

@@ -30,7 +30,7 @@ assignees: ''
 
 ## Environment
 
-- wagtail-seo-toolkit version:
+- wagtail-herald version:
 - Wagtail version:
 - Django version:
 - Python version:

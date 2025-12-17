@@ -1,0 +1,19 @@
+# CODEOWNERS for wagtail-seo-toolkit
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo
+* @kkm-horikawa
+
+# Core source code
+/src/ @kkm-horikawa
+
+# Tests
+/tests/ @kkm-horikawa
+
+# Documentation
+/docs/ @kkm-horikawa
+*.md @kkm-horikawa
+
+# Configuration files
+pyproject.toml @kkm-horikawa
+/.github/ @kkm-horikawa

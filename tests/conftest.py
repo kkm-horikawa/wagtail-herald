@@ -1,39 +1,59 @@
 """
-Pytest configuration for wagtail-seo-toolkit tests.
+Pytest configuration and fixtures for wagtail-seo-toolkit tests.
 """
 
-import django
-from django.conf import settings
+import pytest
+from django.contrib.auth import get_user_model
+from django.test import RequestFactory
+from wagtail.models import Page, Site
+
+User = get_user_model()
 
 
-def pytest_configure():
-    """Configure Django settings for tests."""
-    if not settings.configured:
-        settings.configure(
-            DEBUG=True,
-            DATABASES={
-                "default": {
-                    "ENGINE": "django.db.backends.sqlite3",
-                    "NAME": ":memory:",
-                }
-            },
-            INSTALLED_APPS=[
-                "django.contrib.contenttypes",
-                "django.contrib.auth",
-                "wagtail",
-                "wagtail.admin",
-                "wagtail.documents",
-                "wagtail.images",
-                "wagtail.search",
-                "wagtail.sites",
-                "wagtail.users",
-                "wagtail.contrib.settings",
-                "taggit",
-                "wagtail_seo_toolkit",
-            ],
-            ROOT_URLCONF="tests.urls",
-            SECRET_KEY="test-secret-key",
-            USE_TZ=True,
-            WAGTAIL_SITE_NAME="Test Site",
-        )
-        django.setup()
+@pytest.fixture
+def rf():
+    """Provide Django's RequestFactory."""
+    return RequestFactory()
+
+
+@pytest.fixture
+def admin_user(db):
+    """Create an admin user for testing."""
+    return User.objects.create_superuser(
+        username="admin",
+        email="admin@example.com",
+        password="password",
+    )
+
+
+@pytest.fixture
+def regular_user(db):
+    """Create a regular user for testing."""
+    return User.objects.create_user(
+        username="user",
+        email="user@example.com",
+        password="password",
+    )
+
+
+@pytest.fixture
+def root_page(db):
+    """Get or create the root page."""
+    try:
+        return Page.objects.get(depth=1)
+    except Page.DoesNotExist:
+        return Page.add_root(title="Root", slug="root")
+
+
+@pytest.fixture
+def site(db, root_page):
+    """Get or create the default site."""
+    site, created = Site.objects.get_or_create(
+        hostname="localhost",
+        defaults={
+            "root_page": root_page,
+            "is_default_site": True,
+            "site_name": "Test Site",
+        },
+    )
+    return site

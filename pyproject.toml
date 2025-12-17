@@ -127,6 +127,10 @@ exclude = ["tests/"]
 module = ["wagtail.*"]
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = ["wagtail_seo_toolkit.models.*"]
+disable_error_code = ["var-annotated", "misc"]
+
 [tool.django-stubs]
 django_settings_module = "tests.settings"
 

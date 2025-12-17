@@ -1,10 +1,10 @@
 """
-Tests for wagtail-seo-toolkit models.
+Tests for wagtail-herald models.
 """
 
 import pytest
 
-from wagtail_seo_toolkit.models import SEOPageMixin, SEOSettings
+from wagtail_herald.models import SEOPageMixin, SEOSettings
 
 
 class TestSEOSettings:

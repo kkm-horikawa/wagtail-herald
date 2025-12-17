@@ -16,7 +16,7 @@ We take security vulnerabilities seriously. If you discover a security issue, pl
 
 Instead, use GitHub's Security Advisories feature:
 
-1. Go to the [Security tab](https://github.com/kkm-horikawa/wagtail-seo-toolkit/security) of this repository
+1. Go to the [Security tab](https://github.com/kkm-horikawa/wagtail-herald/security) of this repository
 2. Click "Report a vulnerability"
 3. Fill out the form with details about the vulnerability
 
@@ -45,7 +45,7 @@ Please include the following information in your report:
 
 ## Security Best Practices for Users
 
-When using wagtail-seo-toolkit:
+When using wagtail-herald:
 
 1. Always use the latest version
 2. Keep your Wagtail and Django installations up to date

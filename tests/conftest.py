@@ -1,5 +1,5 @@
 """
-Pytest configuration and fixtures for wagtail-seo-toolkit tests.
+Pytest configuration and fixtures for wagtail-herald tests.
 """
 
 import pytest

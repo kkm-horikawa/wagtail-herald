@@ -8,8 +8,8 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("wagtailcore", "0096_referenceindex_referenceindex_source_object_and_more"),
-        ("wagtailimages", "0027_image_description"),
+        ("wagtailcore", "0001_squashed_0016_change_page_url_path_to_text_field"),
+        ("wagtailimages", "0001_squashed_0021"),
     ]
 
     operations = [

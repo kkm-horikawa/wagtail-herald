@@ -87,6 +87,11 @@ def seo_schema(context: dict[str, Any]) -> SafeString:
         if breadcrumb_schema:
             schemas.append(breadcrumb_schema)
 
+    # Page-specific schemas (from schema_data field)
+    if page:
+        page_schemas = _build_page_schemas(request, page, seo_settings)
+        schemas.extend(page_schemas)
+
     if not schemas:
         return mark_safe("")
 
@@ -238,6 +243,192 @@ def _build_breadcrumb_schema(
         "@type": "BreadcrumbList",
         "itemListElement": items,
     }
+
+
+def _build_page_schemas(
+    request: HttpRequest | None,
+    page: Any,
+    settings: Any,
+) -> list[dict[str, Any]]:
+    """Build schemas from page's schema_data field.
+
+    Args:
+        request: HTTP request object.
+        page: Wagtail page instance.
+        settings: SEOSettings instance.
+
+    Returns:
+        List of schema dicts for selected types.
+    """
+    schemas: list[dict[str, Any]] = []
+
+    schema_data = getattr(page, "schema_data", None)
+    if not schema_data or not isinstance(schema_data, dict):
+        return schemas
+
+    schema_types = schema_data.get("types", [])
+    schema_properties = schema_data.get("properties", {})
+
+    for schema_type in schema_types:
+        # Skip site-wide schemas (handled separately)
+        if schema_type in ("WebSite", "Organization", "BreadcrumbList"):
+            continue
+
+        custom_props = schema_properties.get(schema_type, {})
+        schema = _build_schema_for_type(
+            request, page, settings, schema_type, custom_props
+        )
+        if schema:
+            schemas.append(schema)
+
+    return schemas
+
+
+def _build_schema_for_type(
+    request: HttpRequest | None,
+    page: Any,
+    settings: Any,
+    schema_type: str,
+    custom_properties: dict[str, Any],
+) -> dict[str, Any] | None:
+    """Build a single schema with auto-populated and custom fields.
+
+    Args:
+        request: HTTP request object.
+        page: Wagtail page instance.
+        settings: SEOSettings instance.
+        schema_type: Schema.org type name.
+        custom_properties: Custom properties from user input.
+
+    Returns:
+        Schema dict or None.
+    """
+    schema: dict[str, Any] = {
+        "@context": "https://schema.org",
+        "@type": schema_type,
+        "name": _get_page_title(page),
+        "url": _get_canonical_url(request, page),
+    }
+
+    # Add description if available
+    description = getattr(page, "search_description", "")
+    if description:
+        schema["description"] = description
+
+    # Type-specific auto fields
+    if schema_type in ("Article", "NewsArticle", "BlogPosting"):
+        _add_article_auto_fields(schema, request, page, settings)
+    elif schema_type == "Product":
+        _add_product_auto_fields(schema, request, page, settings)
+    elif schema_type in ("Event", "Course", "Recipe", "HowTo", "JobPosting"):
+        _add_content_auto_fields(schema, request, page, settings)
+
+    # Merge custom properties (override auto)
+    _deep_merge(schema, custom_properties)
+
+    return schema
+
+
+def _add_article_auto_fields(
+    schema: dict[str, Any],
+    request: HttpRequest | None,
+    page: Any,
+    settings: Any,
+) -> None:
+    """Add auto-populated fields for Article types."""
+    # headline
+    schema["headline"] = _get_page_title(page)
+
+    # author
+    owner = getattr(page, "owner", None)
+    if owner:
+        name = getattr(owner, "get_full_name", lambda: "")() or getattr(
+            owner, "username", ""
+        )
+        if name:
+            schema["author"] = {"@type": "Person", "name": name}
+
+    # dates
+    first_pub = getattr(page, "first_published_at", None)
+    if first_pub:
+        schema["datePublished"] = first_pub.isoformat()
+
+    last_pub = getattr(page, "last_published_at", None)
+    if last_pub:
+        schema["dateModified"] = last_pub.isoformat()
+
+    # publisher
+    if settings and getattr(settings, "organization_name", None):
+        publisher: dict[str, Any] = {
+            "@type": "Organization",
+            "name": settings.organization_name,
+        }
+        logo = getattr(settings, "organization_logo", None)
+        if logo:
+            logo_url = _get_logo_url(request, logo)
+            if logo_url:
+                publisher["logo"] = {"@type": "ImageObject", "url": logo_url}
+        schema["publisher"] = publisher
+
+    # image
+    og_data = _get_og_image_data(request, page, settings)
+    if og_data.get("url"):
+        schema["image"] = og_data["url"]
+
+
+def _add_product_auto_fields(
+    schema: dict[str, Any],
+    request: HttpRequest | None,
+    page: Any,
+    settings: Any,
+) -> None:
+    """Add auto-populated fields for Product type."""
+    # image
+    og_data = _get_og_image_data(request, page, settings)
+    if og_data.get("url"):
+        schema["image"] = og_data["url"]
+
+
+def _add_content_auto_fields(
+    schema: dict[str, Any],
+    request: HttpRequest | None,
+    page: Any,
+    settings: Any,
+) -> None:
+    """Add auto-populated fields for content types (Event, Course, etc.)."""
+    # image
+    og_data = _get_og_image_data(request, page, settings)
+    if og_data.get("url"):
+        schema["image"] = og_data["url"]
+
+    # provider/organizer for Course, Event, JobPosting
+    if settings and getattr(settings, "organization_name", None):
+        org = {"@type": "Organization", "name": settings.organization_name}
+        schema_type = schema.get("@type", "")
+        if schema_type == "Course":
+            schema.setdefault("provider", org)
+        elif schema_type == "Event":
+            schema.setdefault("organizer", org)
+        elif schema_type == "JobPosting":
+            schema.setdefault("hiringOrganization", org)
+
+
+def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    """Deep merge override into base dict.
+
+    Args:
+        base: Base dictionary to merge into.
+        override: Dictionary with values to override.
+
+    Returns:
+        Merged dictionary (base is modified in place).
+    """
+    for key, value in override.items():
+        if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+            _deep_merge(base[key], value)
+        else:
+            base[key] = value
+    return base
 
 
 def _get_logo_url(request: HttpRequest | None, logo: Any) -> str:

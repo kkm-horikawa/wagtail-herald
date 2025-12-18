@@ -6,10 +6,18 @@ from django.template import Context, Template
 
 from wagtail_herald.models import SEOSettings
 from wagtail_herald.templatetags.wagtail_herald import (
+    _add_article_auto_fields,
+    _add_content_auto_fields,
+    _add_product_auto_fields,
     _build_breadcrumb_schema,
     _build_organization_schema,
+    _build_page_schemas,
+    _build_schema_for_type,
     _build_website_schema,
+    _deep_merge,
     _get_canonical_url,
+    _get_image_url,
+    _get_logo_url,
     _get_og_image_data,
     _get_page_title,
     _get_robots_meta,
@@ -25,6 +33,15 @@ class TestSeoHeadTemplateTag:
         """Test that seo_head tag can be loaded."""
         template = Template("{% load wagtail_herald %}{% seo_head %}")
         assert template is not None
+
+    def test_tag_renders_without_request(self, db):
+        """Test tag renders without request in context."""
+        template = Template("{% load wagtail_herald %}{% seo_head %}")
+        context = Context({})  # No request
+        html = template.render(context)
+
+        # Should still render title tag
+        assert "<title>" in html
 
     def test_tag_renders_without_context(self, rf, db, site):
         """Test tag renders with minimal context."""
@@ -450,6 +467,15 @@ class TestSeoSchemaTemplateTag:
         template = Template("{% load wagtail_herald %}{% seo_schema %}")
         assert template is not None
 
+    def test_tag_renders_without_request(self, db):
+        """Test seo_schema renders without request in context."""
+        template = Template("{% load wagtail_herald %}{% seo_schema %}")
+        context = Context({})  # No request
+        html = template.render(context)
+
+        # Should return empty (no schemas can be generated without request)
+        assert html.strip() == ""
+
     def test_tag_renders_without_context(self, rf, db, site):
         """Test tag renders with minimal context."""
         request = rf.get("/")
@@ -537,11 +563,16 @@ class TestBuildWebsiteSchema:
         assert result is None
 
     def test_returns_none_without_site(self, rf, db):
-        """Test returns None when no site matches request."""
-        # Use a hostname that doesn't match any site
-        request = rf.get("/", HTTP_HOST="unknown.example.com")
-        result = _build_website_schema(request)
-        assert result is None
+        """Test returns None when Site.find_for_request returns None."""
+        from unittest.mock import patch
+
+        from wagtail.models import Site
+
+        # Mock Site.find_for_request to return None
+        with patch.object(Site, "find_for_request", return_value=None):
+            request = rf.get("/")
+            result = _build_website_schema(request)
+            assert result is None
 
     def test_returns_none_without_site_name(self, rf, site):
         """Test returns None when site has no name."""
@@ -625,6 +656,41 @@ class TestBuildOrganizationSchema:
         result = _build_organization_schema(request, settings)
 
         assert "sameAs" not in result
+
+    def test_without_request_no_url(self, site, db):
+        """Test organization schema without request has no URL."""
+        settings = SEOSettings(
+            site=site,
+            organization_name="Test Org",
+        )
+        result = _build_organization_schema(None, settings)
+
+        assert "url" not in result
+        assert result["name"] == "Test Org"
+
+    def test_logo_returns_empty_url(self, rf, site, db):
+        """Test organization schema when logo get_rendition returns empty URL."""
+        request = rf.get("/")
+
+        class MockLogo:
+            file = None  # No file attribute
+
+            def get_rendition(self, spec):
+                raise Exception("Rendition error")
+
+        settings = SEOSettings(
+            site=site,
+            organization_name="Test Org",
+        )
+        settings._organization_logo = MockLogo()
+        type(settings).organization_logo = property(
+            lambda self: getattr(self, "_organization_logo", None)
+        )
+
+        result = _build_organization_schema(request, settings)
+
+        # Logo should not be in schema because URL is empty
+        assert "logo" not in result
 
 
 class TestBuildBreadcrumbSchema:
@@ -797,3 +863,926 @@ class TestBuildBreadcrumbSchema:
 
         assert '"@type": "BreadcrumbList"' in html
         assert '"itemListElement"' in html
+
+
+class TestBuildPageSchemas:
+    """Tests for _build_page_schemas function."""
+
+    def test_returns_empty_list_for_none_page(self, rf):
+        """Test returns empty list when page is None."""
+        request = rf.get("/")
+        result = _build_page_schemas(request, None, None)
+        assert result == []
+
+    def test_returns_empty_list_without_schema_data(self, rf):
+        """Test returns empty list when page has no schema_data."""
+        request = rf.get("/")
+
+        class MockPage:
+            title = "Test Page"
+
+        result = _build_page_schemas(request, MockPage(), None)
+        assert result == []
+
+    def test_returns_empty_list_for_invalid_schema_data(self, rf):
+        """Test returns empty list when schema_data is not a dict."""
+        request = rf.get("/")
+
+        class MockPage:
+            title = "Test Page"
+            schema_data = "invalid"
+
+        result = _build_page_schemas(request, MockPage(), None)
+        assert result == []
+
+    def test_generates_article_schema(self, rf):
+        """Test generates Article schema from schema_data."""
+        request = rf.get("/")
+
+        class MockPage:
+            title = "Test Article"
+            full_url = "https://example.com/article/"
+            search_description = "Article description"
+            schema_data = {"types": ["Article"], "properties": {}}
+
+        result = _build_page_schemas(request, MockPage(), None)
+
+        assert len(result) == 1
+        assert result[0]["@type"] == "Article"
+        assert result[0]["name"] == "Test Article"
+
+    def test_skips_site_wide_schemas(self, rf):
+        """Test skips WebSite, Organization, BreadcrumbList."""
+        request = rf.get("/")
+
+        class MockPage:
+            title = "Test Page"
+            full_url = "https://example.com/"
+            schema_data = {
+                "types": ["WebSite", "Organization", "BreadcrumbList", "Article"],
+                "properties": {},
+            }
+
+        result = _build_page_schemas(request, MockPage(), None)
+
+        # Only Article should be included
+        assert len(result) == 1
+        assert result[0]["@type"] == "Article"
+
+    def test_merges_custom_properties(self, rf):
+        """Test custom properties are merged into schema."""
+        request = rf.get("/")
+
+        class MockPage:
+            title = "Test Article"
+            full_url = "https://example.com/article/"
+            schema_data = {
+                "types": ["Article"],
+                "properties": {"Article": {"articleSection": "Technology"}},
+            }
+
+        result = _build_page_schemas(request, MockPage(), None)
+
+        assert result[0]["articleSection"] == "Technology"
+
+    def test_returns_empty_for_empty_types(self, rf):
+        """Test returns empty list when types list is empty."""
+        request = rf.get("/")
+
+        class MockPage:
+            title = "Test Page"
+            full_url = "https://example.com/"
+            schema_data = {"types": [], "properties": {}}
+
+        result = _build_page_schemas(request, MockPage(), None)
+
+        assert result == []
+
+
+class TestBuildSchemaForType:
+    """Tests for _build_schema_for_type function."""
+
+    def test_includes_basic_fields(self, rf):
+        """Test schema includes basic fields."""
+        request = rf.get("/")
+
+        class MockPage:
+            title = "Test Page"
+            full_url = "https://example.com/test/"
+            search_description = "Test description"
+
+        result = _build_schema_for_type(request, MockPage(), None, "WebPage", {})
+
+        assert result["@context"] == "https://schema.org"
+        assert result["@type"] == "WebPage"
+        assert result["name"] == "Test Page"
+        assert result["description"] == "Test description"
+
+    def test_article_includes_auto_fields(self, rf):
+        """Test Article type includes auto-populated fields."""
+        request = rf.get("/")
+
+        class MockOwner:
+            username = "testuser"
+
+            def get_full_name(self):
+                return "Test User"
+
+        class MockPage:
+            title = "Test Article"
+            seo_title = ""
+            full_url = "https://example.com/article/"
+            search_description = ""
+            owner = MockOwner()
+
+        result = _build_schema_for_type(request, MockPage(), None, "Article", {})
+
+        assert result["headline"] == "Test Article"
+        assert result["author"]["@type"] == "Person"
+        assert result["author"]["name"] == "Test User"
+
+    def test_custom_properties_override_auto(self, rf):
+        """Test custom properties override auto-populated fields."""
+        request = rf.get("/")
+
+        class MockPage:
+            title = "Auto Title"
+            full_url = "https://example.com/"
+
+        custom = {"name": "Custom Title"}
+        result = _build_schema_for_type(request, MockPage(), None, "WebPage", custom)
+
+        assert result["name"] == "Custom Title"
+
+
+class TestDeepMerge:
+    """Tests for _deep_merge function."""
+
+    def test_shallow_merge(self):
+        """Test shallow merge of dicts."""
+        base = {"a": 1, "b": 2}
+        override = {"b": 3, "c": 4}
+        result = _deep_merge(base, override)
+
+        assert result == {"a": 1, "b": 3, "c": 4}
+
+    def test_deep_merge_nested(self):
+        """Test deep merge of nested dicts."""
+        base = {"a": {"x": 1, "y": 2}}
+        override = {"a": {"y": 3, "z": 4}}
+        result = _deep_merge(base, override)
+
+        assert result == {"a": {"x": 1, "y": 3, "z": 4}}
+
+    def test_override_non_dict_with_dict(self):
+        """Test override replaces non-dict with dict."""
+        base = {"a": 1}
+        override = {"a": {"x": 2}}
+        result = _deep_merge(base, override)
+
+        assert result == {"a": {"x": 2}}
+
+
+class TestSeoSchemaWithPageSchemas:
+    """Tests for seo_schema tag with page-specific schemas."""
+
+    def test_includes_article_schema(self, rf, site, db):
+        """Test seo_schema includes Article schema from page."""
+
+        class MockPage:
+            title = "Test Article"
+            full_url = "https://example.com/article/"
+            schema_data = {"types": ["Article"], "properties": {}}
+
+        request = rf.get("/")
+        request.site = site
+        template = Template("{% load wagtail_herald %}{% seo_schema %}")
+        context = Context({"request": request, "page": MockPage()})
+        html = template.render(context)
+
+        assert '"@type": "Article"' in html
+        assert '"name": "Test Article"' in html
+
+    def test_includes_custom_properties(self, rf, site, db):
+        """Test seo_schema includes custom properties."""
+
+        class MockPage:
+            title = "Product Page"
+            full_url = "https://example.com/product/"
+            schema_data = {
+                "types": ["Product"],
+                "properties": {"Product": {"sku": "PROD-001", "brand": "TestBrand"}},
+            }
+
+        request = rf.get("/")
+        request.site = site
+        template = Template("{% load wagtail_herald %}{% seo_schema %}")
+        context = Context({"request": request, "page": MockPage()})
+        html = template.render(context)
+
+        assert '"@type": "Product"' in html
+        assert '"sku": "PROD-001"' in html
+        assert '"brand": "TestBrand"' in html
+
+
+class TestSeoSchemaEmptySchemas:
+    """Tests for seo_schema when no schemas are generated."""
+
+    def test_returns_empty_when_no_schemas(self, rf, db):
+        """Test seo_schema returns empty string when no schemas can be generated."""
+        # Use a request without a site and no page
+        request = rf.get("/", HTTP_HOST="unknown.example.com")
+        template = Template("{% load wagtail_herald %}{% seo_schema %}")
+        context = Context({"request": request})
+        html = template.render(context)
+
+        # Should be empty (no JSON-LD script)
+        assert html.strip() == ""
+
+
+class TestBuildOrganizationSchemaWithLogo:
+    """Tests for organization schema with logo."""
+
+    def test_includes_logo_url(self, rf, site, db):
+        """Test organization schema includes logo URL when set."""
+        request = rf.get("/")
+        request.site = site
+
+        class MockLogo:
+            def get_rendition(self, spec):
+                return MockRendition()
+
+        class MockRendition:
+            url = "/media/logo.jpg"
+
+        settings = SEOSettings(
+            site=site,
+            organization_name="Test Org",
+        )
+        # Manually set the logo
+        settings._organization_logo = MockLogo()
+        type(settings).organization_logo = property(
+            lambda self: getattr(self, "_organization_logo", None)
+        )
+
+        result = _build_organization_schema(request, settings)
+
+        assert "logo" in result
+        assert "logo.jpg" in result["logo"]
+
+
+class TestBreadcrumbSchemaEdgeCases:
+    """Tests for breadcrumb schema edge cases."""
+
+    def test_ancestor_without_url(self, rf):
+        """Test handles ancestor without URL attribute."""
+        request = rf.get("/")
+
+        class MockAncestor:
+            title = "Ancestor"
+            url = None  # No URL
+            live = True
+
+        class MockPage:
+            title = "Current"
+            depth = 3
+
+            def get_ancestors(self):
+                class MockQuerySet:
+                    def filter(self, **kwargs):
+                        return [MockAncestor()]
+
+                return MockQuerySet()
+
+        result = _build_breadcrumb_schema(request, MockPage())
+
+        # Ancestor should not have 'item' key when URL is None
+        assert "item" not in result["itemListElement"][0]
+
+    def test_single_item_returns_none(self, rf):
+        """Test returns None when only 1 item (need at least 2)."""
+        request = rf.get("/")
+
+        class MockPage:
+            title = "Current"
+            depth = 3
+
+            def get_ancestors(self):
+                class MockQuerySet:
+                    def filter(self, **kwargs):
+                        return []  # No ancestors
+
+                return MockQuerySet()
+
+        result = _build_breadcrumb_schema(request, MockPage())
+
+        # Should return None because only 1 item
+        assert result is None
+
+    def test_exception_in_get_ancestors(self, rf):
+        """Test handles exception in get_ancestors."""
+        request = rf.get("/")
+
+        class MockPage:
+            title = "Current"
+            depth = 3
+
+            def get_ancestors(self):
+                raise Exception("Database error")
+
+        result = _build_breadcrumb_schema(request, MockPage())
+
+        assert result is None
+
+
+class TestArticleAutoFields:
+    """Tests for _add_article_auto_fields function."""
+
+    def test_adds_headline(self, rf):
+        """Test adds headline from page title."""
+        request = rf.get("/")
+        schema = {"@type": "Article"}
+
+        class MockPage:
+            title = "Test Headline"
+            seo_title = ""
+
+        _add_article_auto_fields(schema, request, MockPage(), None)
+
+        assert schema["headline"] == "Test Headline"
+
+    def test_adds_author_from_owner(self, rf):
+        """Test adds author from page owner."""
+        request = rf.get("/")
+        schema = {"@type": "Article"}
+
+        class MockOwner:
+            username = "testuser"
+
+            def get_full_name(self):
+                return "Test User"
+
+        class MockPage:
+            title = "Test"
+            seo_title = ""
+            owner = MockOwner()
+
+        _add_article_auto_fields(schema, request, MockPage(), None)
+
+        assert schema["author"]["@type"] == "Person"
+        assert schema["author"]["name"] == "Test User"
+
+    def test_uses_username_when_no_full_name(self, rf):
+        """Test uses username when get_full_name returns empty."""
+        request = rf.get("/")
+        schema = {"@type": "Article"}
+
+        class MockOwner:
+            username = "testuser"
+
+            def get_full_name(self):
+                return ""
+
+        class MockPage:
+            title = "Test"
+            seo_title = ""
+            owner = MockOwner()
+
+        _add_article_auto_fields(schema, request, MockPage(), None)
+
+        assert schema["author"]["name"] == "testuser"
+
+    def test_skips_author_without_owner(self, rf):
+        """Test skips author when no owner."""
+        request = rf.get("/")
+        schema = {"@type": "Article"}
+
+        class MockPage:
+            title = "Test"
+            seo_title = ""
+            owner = None
+
+        _add_article_auto_fields(schema, request, MockPage(), None)
+
+        assert "author" not in schema
+
+    def test_skips_author_when_name_empty(self, rf):
+        """Test skips author when owner has no name."""
+        request = rf.get("/")
+        schema = {"@type": "Article"}
+
+        class MockOwner:
+            username = ""
+
+            def get_full_name(self):
+                return ""
+
+        class MockPage:
+            title = "Test"
+            seo_title = ""
+            owner = MockOwner()
+
+        _add_article_auto_fields(schema, request, MockPage(), None)
+
+        assert "author" not in schema
+
+    def test_adds_date_published(self, rf):
+        """Test adds datePublished from first_published_at."""
+        from datetime import datetime, timezone
+
+        request = rf.get("/")
+        schema = {"@type": "Article"}
+
+        class MockPage:
+            title = "Test"
+            seo_title = ""
+            first_published_at = datetime(2024, 1, 15, 10, 30, tzinfo=timezone.utc)
+
+        _add_article_auto_fields(schema, request, MockPage(), None)
+
+        assert "datePublished" in schema
+        assert "2024-01-15" in schema["datePublished"]
+
+    def test_adds_date_modified(self, rf):
+        """Test adds dateModified from last_published_at."""
+        from datetime import datetime, timezone
+
+        request = rf.get("/")
+        schema = {"@type": "Article"}
+
+        class MockPage:
+            title = "Test"
+            seo_title = ""
+            last_published_at = datetime(2024, 2, 20, 14, 0, tzinfo=timezone.utc)
+
+        _add_article_auto_fields(schema, request, MockPage(), None)
+
+        assert "dateModified" in schema
+        assert "2024-02-20" in schema["dateModified"]
+
+    def test_adds_publisher_with_logo(self, rf, site, db):
+        """Test adds publisher with logo when settings have org and logo."""
+        request = rf.get("/")
+        schema = {"@type": "Article"}
+
+        class MockLogo:
+            def get_rendition(self, spec):
+                return MockRendition()
+
+        class MockRendition:
+            url = "/media/logo.jpg"
+
+        class MockPage:
+            title = "Test"
+            seo_title = ""
+            og_image = None
+
+        settings = SEOSettings(
+            site=site,
+            organization_name="Test Publisher",
+        )
+        settings._organization_logo = MockLogo()
+        type(settings).organization_logo = property(
+            lambda self: getattr(self, "_organization_logo", None)
+        )
+
+        _add_article_auto_fields(schema, request, MockPage(), settings)
+
+        assert schema["publisher"]["@type"] == "Organization"
+        assert schema["publisher"]["name"] == "Test Publisher"
+        assert "logo" in schema["publisher"]
+
+    def test_adds_publisher_without_logo(self, rf, site, db):
+        """Test adds publisher without logo when org has no logo."""
+        request = rf.get("/")
+        schema = {"@type": "Article"}
+
+        class MockPage:
+            title = "Test"
+            seo_title = ""
+            og_image = None
+
+        settings = SEOSettings(
+            site=site,
+            organization_name="Test Publisher",
+        )
+
+        _add_article_auto_fields(schema, request, MockPage(), settings)
+
+        assert schema["publisher"]["@type"] == "Organization"
+        assert schema["publisher"]["name"] == "Test Publisher"
+        assert "logo" not in schema["publisher"]
+
+    def test_adds_publisher_with_logo_empty_url(self, rf, site, db):
+        """Test adds publisher without logo when logo URL is empty."""
+        request = rf.get("/")
+        schema = {"@type": "Article"}
+
+        class MockLogo:
+            file = None
+
+            def get_rendition(self, spec):
+                raise Exception("Rendition error")
+
+        class MockPage:
+            title = "Test"
+            seo_title = ""
+            og_image = None
+
+        settings = SEOSettings(
+            site=site,
+            organization_name="Test Publisher",
+        )
+        settings._organization_logo = MockLogo()
+        type(settings).organization_logo = property(
+            lambda self: getattr(self, "_organization_logo", None)
+        )
+
+        _add_article_auto_fields(schema, request, MockPage(), settings)
+
+        assert schema["publisher"]["@type"] == "Organization"
+        assert "logo" not in schema["publisher"]
+
+    def test_adds_image_from_og_image(self, rf):
+        """Test adds image URL from page og_image."""
+        request = rf.get("/")
+        schema = {"@type": "Article"}
+
+        class MockImage:
+            def get_rendition(self, spec):
+                return MockRendition()
+
+        class MockRendition:
+            url = "/media/article-image.jpg"
+            width = 1200
+            height = 630
+
+        class MockPage:
+            title = "Test"
+            seo_title = ""
+            og_image = MockImage()
+
+            def get_og_image_alt(self):
+                return "Alt text"
+
+        _add_article_auto_fields(schema, request, MockPage(), None)
+
+        assert "image" in schema
+        assert "article-image.jpg" in schema["image"]
+
+
+class TestProductAutoFields:
+    """Tests for _add_product_auto_fields function."""
+
+    def test_adds_image_from_og_image(self, rf):
+        """Test adds image URL from page og_image."""
+        request = rf.get("/")
+        schema = {"@type": "Product"}
+
+        class MockImage:
+            def get_rendition(self, spec):
+                return MockRendition()
+
+        class MockRendition:
+            url = "/media/product-image.jpg"
+            width = 1200
+            height = 630
+
+        class MockPage:
+            og_image = MockImage()
+
+            def get_og_image_alt(self):
+                return "Product alt"
+
+        _add_product_auto_fields(schema, request, MockPage(), None)
+
+        assert "image" in schema
+        assert "product-image.jpg" in schema["image"]
+
+
+class TestContentAutoFields:
+    """Tests for _add_content_auto_fields function."""
+
+    def test_adds_image_from_og_image(self, rf):
+        """Test adds image URL for content types."""
+        request = rf.get("/")
+        schema = {"@type": "Event"}
+
+        class MockImage:
+            def get_rendition(self, spec):
+                return MockRendition()
+
+        class MockRendition:
+            url = "/media/event-image.jpg"
+            width = 1200
+            height = 630
+
+        class MockPage:
+            og_image = MockImage()
+
+            def get_og_image_alt(self):
+                return "Event alt"
+
+        _add_content_auto_fields(schema, request, MockPage(), None)
+
+        assert "image" in schema
+        assert "event-image.jpg" in schema["image"]
+
+    def test_adds_provider_for_course(self, rf, site, db):
+        """Test adds provider for Course schema."""
+        request = rf.get("/")
+        schema = {"@type": "Course"}
+
+        class MockPage:
+            og_image = None
+
+        settings = SEOSettings(site=site, organization_name="Test Academy")
+
+        _add_content_auto_fields(schema, request, MockPage(), settings)
+
+        assert schema["provider"]["@type"] == "Organization"
+        assert schema["provider"]["name"] == "Test Academy"
+
+    def test_adds_organizer_for_event(self, rf, site, db):
+        """Test adds organizer for Event schema."""
+        request = rf.get("/")
+        schema = {"@type": "Event"}
+
+        class MockPage:
+            og_image = None
+
+        settings = SEOSettings(site=site, organization_name="Event Organizer")
+
+        _add_content_auto_fields(schema, request, MockPage(), settings)
+
+        assert schema["organizer"]["@type"] == "Organization"
+        assert schema["organizer"]["name"] == "Event Organizer"
+
+    def test_adds_hiring_organization_for_job(self, rf, site, db):
+        """Test adds hiringOrganization for JobPosting schema."""
+        request = rf.get("/")
+        schema = {"@type": "JobPosting"}
+
+        class MockPage:
+            og_image = None
+
+        settings = SEOSettings(site=site, organization_name="Hiring Company")
+
+        _add_content_auto_fields(schema, request, MockPage(), settings)
+
+        assert schema["hiringOrganization"]["@type"] == "Organization"
+        assert schema["hiringOrganization"]["name"] == "Hiring Company"
+
+    def test_does_not_override_existing_provider(self, rf, site, db):
+        """Test does not override existing provider."""
+        request = rf.get("/")
+        schema = {"@type": "Course", "provider": {"name": "Existing"}}
+
+        class MockPage:
+            og_image = None
+
+        settings = SEOSettings(site=site, organization_name="New Provider")
+
+        _add_content_auto_fields(schema, request, MockPage(), settings)
+
+        # Should keep existing provider
+        assert schema["provider"]["name"] == "Existing"
+
+    def test_no_provider_without_organization(self, rf):
+        """Test no provider/organizer when no organization name."""
+        request = rf.get("/")
+        schema = {"@type": "Course"}
+
+        class MockPage:
+            og_image = None
+
+        _add_content_auto_fields(schema, request, MockPage(), None)
+
+        assert "provider" not in schema
+
+    def test_no_organizer_without_organization(self, rf):
+        """Test no organizer when no organization name."""
+        request = rf.get("/")
+        schema = {"@type": "Event"}
+
+        class MockPage:
+            og_image = None
+
+        _add_content_auto_fields(schema, request, MockPage(), None)
+
+        assert "organizer" not in schema
+
+
+class TestGetLogoUrl:
+    """Tests for _get_logo_url function."""
+
+    def test_returns_empty_for_none_logo(self, rf):
+        """Test returns empty string for None logo."""
+        request = rf.get("/")
+        result = _get_logo_url(request, None)
+        assert result == ""
+
+    def test_returns_rendition_url(self, rf):
+        """Test returns rendition URL when successful."""
+        request = rf.get("/")
+
+        class MockLogo:
+            def get_rendition(self, spec):
+                return MockRendition()
+
+        class MockRendition:
+            url = "/media/logo-112.jpg"
+
+        result = _get_logo_url(request, MockLogo())
+        assert "logo-112.jpg" in result
+
+    def test_falls_back_on_rendition_error(self, rf):
+        """Test falls back to original URL on rendition error."""
+        request = rf.get("/")
+
+        class MockFile:
+            url = "/media/original-logo.jpg"
+
+        class MockLogo:
+            file = MockFile()
+
+            def get_rendition(self, spec):
+                raise Exception("Rendition error")
+
+        result = _get_logo_url(request, MockLogo())
+        assert "original-logo.jpg" in result
+
+
+class TestGetImageUrl:
+    """Tests for _get_image_url function."""
+
+    def test_returns_empty_for_none(self, rf):
+        """Test returns empty string for None image."""
+        request = rf.get("/")
+        result = _get_image_url(request, None)
+        assert result == ""
+
+    def test_uses_file_url_when_available(self, rf):
+        """Test uses image.file.url when available."""
+        request = rf.get("/")
+
+        class MockFile:
+            url = "/media/images/test.jpg"
+
+        class MockImage:
+            url = "/media/wrong.jpg"
+            file = MockFile()
+
+        result = _get_image_url(request, MockImage())
+        assert "test.jpg" in result
+
+    def test_uses_url_attribute_when_no_file(self, rf):
+        """Test uses url attribute when file not available."""
+        request = rf.get("/")
+
+        class MockImage:
+            url = "/media/direct.jpg"
+
+        result = _get_image_url(request, MockImage())
+        assert "direct.jpg" in result
+
+
+class TestOgImageDataEdgeCases:
+    """Tests for _get_og_image_data edge cases."""
+
+    def test_uses_og_image_alt_attribute_when_no_method(self, rf):
+        """Test uses og_image_alt attribute when get_og_image_alt not available."""
+        request = rf.get("/")
+
+        class MockImage:
+            width = 1200
+            height = 630
+
+            def get_rendition(self, spec):
+                return MockRendition()
+
+        class MockRendition:
+            url = "/media/og.jpg"
+            width = 1200
+            height = 630
+
+        class MockPage:
+            og_image = MockImage()
+            og_image_alt = "Alt from attribute"
+            # No get_og_image_alt method
+
+        result = _get_og_image_data(request, MockPage(), None)
+
+        assert result["alt"] == "Alt from attribute"
+
+    def test_falls_back_on_rendition_error(self, rf):
+        """Test falls back to original image on rendition error."""
+        request = rf.get("/")
+
+        class MockFile:
+            url = "/media/original.jpg"
+
+        class MockImage:
+            file = MockFile()
+            width = 800
+            height = 600
+
+            def get_rendition(self, spec):
+                raise Exception("Rendition error")
+
+        class MockPage:
+            og_image = MockImage()
+            og_image_alt = "Alt text"
+
+            def get_og_image_alt(self):
+                return "Alt text"
+
+        result = _get_og_image_data(request, MockPage(), None)
+
+        assert "original.jpg" in result["url"]
+        assert result["width"] == 800
+        assert result["height"] == 600
+
+
+class TestMakeAbsoluteUrlEdgeCases:
+    """Tests for _make_absolute_url edge cases."""
+
+    def test_returns_relative_url_without_request(self):
+        """Test returns relative URL when no request available."""
+        result = _make_absolute_url(None, "/media/image.jpg")
+        assert result == "/media/image.jpg"
+
+
+class TestBuildSchemaForTypeContentTypes:
+    """Tests for _build_schema_for_type with content types."""
+
+    def test_event_type(self, rf, site, db):
+        """Test Event schema generation."""
+        request = rf.get("/")
+
+        class MockPage:
+            title = "Test Event"
+            full_url = "https://example.com/event/"
+
+        settings = SEOSettings(site=site, organization_name="Event Org")
+
+        result = _build_schema_for_type(request, MockPage(), settings, "Event", {})
+
+        assert result["@type"] == "Event"
+        assert "organizer" in result
+
+    def test_course_type(self, rf, site, db):
+        """Test Course schema generation."""
+        request = rf.get("/")
+
+        class MockPage:
+            title = "Test Course"
+            full_url = "https://example.com/course/"
+
+        settings = SEOSettings(site=site, organization_name="Course Provider")
+
+        result = _build_schema_for_type(request, MockPage(), settings, "Course", {})
+
+        assert result["@type"] == "Course"
+        assert "provider" in result
+
+    def test_job_posting_type(self, rf, site, db):
+        """Test JobPosting schema generation."""
+        request = rf.get("/")
+
+        class MockPage:
+            title = "Software Engineer"
+            full_url = "https://example.com/jobs/engineer/"
+
+        settings = SEOSettings(site=site, organization_name="Tech Company")
+
+        result = _build_schema_for_type(request, MockPage(), settings, "JobPosting", {})
+
+        assert result["@type"] == "JobPosting"
+        assert "hiringOrganization" in result
+
+    def test_recipe_type(self, rf):
+        """Test Recipe schema generation."""
+        request = rf.get("/")
+
+        class MockPage:
+            title = "Chocolate Cake"
+            full_url = "https://example.com/recipes/chocolate-cake/"
+
+        result = _build_schema_for_type(request, MockPage(), None, "Recipe", {})
+
+        assert result["@type"] == "Recipe"
+        assert result["name"] == "Chocolate Cake"
+
+    def test_howto_type(self, rf):
+        """Test HowTo schema generation."""
+        request = rf.get("/")
+
+        class MockPage:
+            title = "How to Build a Birdhouse"
+            full_url = "https://example.com/howto/birdhouse/"
+
+        result = _build_schema_for_type(request, MockPage(), None, "HowTo", {})
+
+        assert result["@type"] == "HowTo"
+        assert result["name"] == "How to Build a Birdhouse"

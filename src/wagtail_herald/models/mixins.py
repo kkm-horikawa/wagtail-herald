@@ -2,10 +2,22 @@
 SEO mixin for Wagtail Page models.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
 from wagtail.images import get_image_model_string
+
+if TYPE_CHECKING:
+    from wagtail_herald.widgets import SchemaWidget
+
+
+def _get_schema_data_default() -> dict[str, Any]:
+    """Return default value for schema_data field."""
+    return {"types": [], "properties": {}}
 
 
 class SEOPageMixin(models.Model):
@@ -57,6 +69,23 @@ class SEOPageMixin(models.Model):
         ),
     )
 
+    schema_data = models.JSONField(
+        _("Structured data"),
+        default=_get_schema_data_default,
+        blank=True,
+        help_text=_("Schema.org structured data configuration for this page"),
+    )
+
+    class Meta:
+        abstract = True
+
+    @staticmethod
+    def _get_schema_widget() -> type[SchemaWidget]:
+        """Import SchemaWidget lazily to avoid circular imports."""
+        from wagtail_herald.widgets import SchemaWidget
+
+        return SchemaWidget
+
     seo_panels = [
         MultiFieldPanel(
             [
@@ -68,10 +97,13 @@ class SEOPageMixin(models.Model):
             ],
             heading=_("SEO"),
         ),
+        MultiFieldPanel(
+            [
+                FieldPanel("schema_data"),
+            ],
+            heading=_("Structured Data"),
+        ),
     ]
-
-    class Meta:
-        abstract = True
 
     def get_robots_meta(self) -> str:
         """Return robots meta content based on noindex/nofollow settings.

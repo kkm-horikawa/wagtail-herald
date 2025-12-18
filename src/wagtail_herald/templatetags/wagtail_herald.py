@@ -51,7 +51,7 @@ def seo_head(context: dict[str, Any]) -> SafeString:
 
 @register.simple_tag(takes_context=True)
 def seo_schema(context: dict[str, Any]) -> SafeString:
-    """Output JSON-LD structured data for WebSite and Organization.
+    """Output JSON-LD structured data for WebSite, Organization, and BreadcrumbList.
 
     Usage in templates:
         {% load wagtail_herald %}
@@ -60,6 +60,7 @@ def seo_schema(context: dict[str, Any]) -> SafeString:
         </head>
     """
     request = context.get("request")
+    page = context.get("page") or context.get("self")
 
     from wagtail_herald.models import SEOSettings
 
@@ -79,6 +80,12 @@ def seo_schema(context: dict[str, Any]) -> SafeString:
         org_schema = _build_organization_schema(request, seo_settings)
         if org_schema:
             schemas.append(org_schema)
+
+    # BreadcrumbList schema (auto-generated from page hierarchy)
+    if page:
+        breadcrumb_schema = _build_breadcrumb_schema(request, page)
+        if breadcrumb_schema:
+            schemas.append(breadcrumb_schema)
 
     if not schemas:
         return mark_safe("")
@@ -162,6 +169,75 @@ def _build_organization_schema(
         schema["sameAs"] = same_as
 
     return schema
+
+
+def _build_breadcrumb_schema(
+    request: HttpRequest | None,
+    page: Any,
+) -> dict[str, Any] | None:
+    """Build BreadcrumbList schema from page hierarchy.
+
+    Args:
+        request: HTTP request object.
+        page: Wagtail page instance.
+
+    Returns:
+        BreadcrumbList schema dict or None if not applicable.
+    """
+    if not page:
+        return None
+
+    # Get ancestors excluding root (depth=1)
+    try:
+        ancestors = list(page.get_ancestors().filter(depth__gt=1))
+    except Exception:
+        return None
+
+    # Skip if page is at root level (depth <= 2)
+    if not ancestors and getattr(page, "depth", 0) <= 2:
+        return None
+
+    items: list[dict[str, Any]] = []
+    position = 1
+
+    # Add ancestor pages
+    for ancestor in ancestors:
+        # Skip unpublished ancestors
+        if not getattr(ancestor, "live", True):
+            continue
+
+        item: dict[str, Any] = {
+            "@type": "ListItem",
+            "position": position,
+            "name": ancestor.title,
+        }
+
+        # Add URL for ancestors (not for current page)
+        url = getattr(ancestor, "url", None)
+        if url:
+            item["item"] = _make_absolute_url(request, url)
+
+        items.append(item)
+        position += 1
+
+    # Add current page (without "item" URL per Google guidelines)
+    items.append(
+        {
+            "@type": "ListItem",
+            "position": position,
+            "name": page.title,
+        }
+    )
+
+    # Need at least 2 items for a meaningful breadcrumb
+    if len(items) < 2:
+        return None
+
+    return {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": items,
+    }
 
 
 def _get_logo_url(request: HttpRequest | None, logo: Any) -> str:

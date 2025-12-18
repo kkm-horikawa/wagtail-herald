@@ -6,6 +6,7 @@ from django.template import Context, Template
 
 from wagtail_herald.models import SEOSettings
 from wagtail_herald.templatetags.wagtail_herald import (
+    _build_breadcrumb_schema,
     _build_organization_schema,
     _build_website_schema,
     _get_canonical_url,
@@ -624,3 +625,175 @@ class TestBuildOrganizationSchema:
         result = _build_organization_schema(request, settings)
 
         assert "sameAs" not in result
+
+
+class TestBuildBreadcrumbSchema:
+    """Tests for _build_breadcrumb_schema function."""
+
+    def test_returns_none_for_none_page(self, rf):
+        """Test returns None when page is None."""
+        request = rf.get("/")
+        result = _build_breadcrumb_schema(request, None)
+        assert result is None
+
+    def test_returns_none_for_page_without_ancestors(self, rf):
+        """Test returns None for page at root level without ancestors."""
+        request = rf.get("/")
+
+        class MockPage:
+            title = "Home"
+            depth = 2
+
+            def get_ancestors(self):
+                class MockQuerySet:
+                    def filter(self, **kwargs):
+                        return []
+
+                return MockQuerySet()
+
+        result = _build_breadcrumb_schema(request, MockPage())
+        assert result is None
+
+    def test_generates_breadcrumb_for_nested_page(self, rf):
+        """Test generates valid BreadcrumbList for nested page."""
+        request = rf.get("/")
+
+        class MockAncestor:
+            title = "Parent Page"
+            url = "/parent/"
+            live = True
+
+        class MockPage:
+            title = "Child Page"
+            depth = 3
+
+            def get_ancestors(self):
+                class MockQuerySet:
+                    def filter(self, **kwargs):
+                        return [MockAncestor()]
+
+                return MockQuerySet()
+
+        result = _build_breadcrumb_schema(request, MockPage())
+
+        assert result is not None
+        assert result["@context"] == "https://schema.org"
+        assert result["@type"] == "BreadcrumbList"
+        assert len(result["itemListElement"]) == 2
+
+    def test_ancestors_have_item_url(self, rf):
+        """Test ancestor items have 'item' URL, current page does not."""
+        request = rf.get("/")
+
+        class MockAncestor:
+            title = "Parent Page"
+            url = "/parent/"
+            live = True
+
+        class MockPage:
+            title = "Child Page"
+            depth = 3
+
+            def get_ancestors(self):
+                class MockQuerySet:
+                    def filter(self, **kwargs):
+                        return [MockAncestor()]
+
+                return MockQuerySet()
+
+        result = _build_breadcrumb_schema(request, MockPage())
+
+        # First item (ancestor) should have 'item' URL
+        assert "item" in result["itemListElement"][0]
+
+        # Last item (current page) should not have 'item'
+        assert "item" not in result["itemListElement"][-1]
+
+    def test_position_is_sequential(self, rf):
+        """Test position numbers are sequential starting from 1."""
+        request = rf.get("/")
+
+        class MockAncestor1:
+            title = "Level 1"
+            url = "/level1/"
+            live = True
+
+        class MockAncestor2:
+            title = "Level 2"
+            url = "/level1/level2/"
+            live = True
+
+        class MockPage:
+            title = "Current Page"
+            depth = 4
+
+            def get_ancestors(self):
+                class MockQuerySet:
+                    def filter(self, **kwargs):
+                        return [MockAncestor1(), MockAncestor2()]
+
+                return MockQuerySet()
+
+        result = _build_breadcrumb_schema(request, MockPage())
+
+        positions = [item["position"] for item in result["itemListElement"]]
+        assert positions == [1, 2, 3]
+
+    def test_skips_unpublished_ancestors(self, rf):
+        """Test unpublished ancestors are skipped."""
+        request = rf.get("/")
+
+        class MockUnpublishedAncestor:
+            title = "Unpublished"
+            url = "/unpublished/"
+            live = False
+
+        class MockPublishedAncestor:
+            title = "Published"
+            url = "/published/"
+            live = True
+
+        class MockPage:
+            title = "Current"
+            depth = 4
+
+            def get_ancestors(self):
+                class MockQuerySet:
+                    def filter(self, **kwargs):
+                        return [MockUnpublishedAncestor(), MockPublishedAncestor()]
+
+                return MockQuerySet()
+
+        result = _build_breadcrumb_schema(request, MockPage())
+
+        names = [item["name"] for item in result["itemListElement"]]
+        assert "Unpublished" not in names
+        assert "Published" in names
+
+    def test_seo_schema_includes_breadcrumb(self, rf, site, db):
+        """Test seo_schema tag includes breadcrumb for nested pages."""
+
+        class MockAncestor:
+            title = "Parent"
+            url = "/parent/"
+            live = True
+
+        class MockPage:
+            title = "Child"
+            depth = 3
+
+            def get_ancestors(self):
+                class MockQuerySet:
+                    def filter(self, **kwargs):
+                        return [MockAncestor()]
+
+                return MockQuerySet()
+
+        request = rf.get("/")
+        request.site = site
+        template = Template("{% load wagtail_herald %}{% seo_schema %}")
+        context = Context({"request": request, "page": MockPage()})
+        html = template.render(context)
+
+        assert '"@type": "BreadcrumbList"' in html
+        assert '"itemListElement"' in html

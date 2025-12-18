@@ -128,6 +128,52 @@ describe('initSchemaWidget', () => {
     expect(autoFields?.textContent).toContain('datePublished')
   })
 
+  it('should show "None" when template has no auto-fields', () => {
+    initSchemaWidget(container, {
+      types: ['FAQPage'],
+      properties: {},
+    })
+
+    const autoFields = container.querySelector('.schema-widget__auto-fields')
+    expect(autoFields?.textContent).toContain('None')
+  })
+
+  it('should show "なし" in Japanese when template has no auto-fields', () => {
+    document.documentElement.lang = 'ja'
+    initSchemaWidget(container, {
+      types: ['FAQPage'],
+      properties: {},
+    })
+
+    const autoFields = container.querySelector('.schema-widget__auto-fields')
+    expect(autoFields?.textContent).toContain('なし')
+
+    document.documentElement.lang = 'en'
+  })
+
+  it('should not show example section when example is empty', () => {
+    initSchemaWidget(container, {
+      types: ['Organization'],
+      properties: {},
+    })
+
+    // Organization has empty example object, so example section should not be shown
+    const example = container.querySelector('.schema-widget__example')
+    expect(example).toBeNull()
+  })
+
+  it('should show example section when example has content', () => {
+    initSchemaWidget(container, {
+      types: ['WebSite'],
+      properties: {},
+    })
+
+    // WebSite has non-empty example, so example section should be shown
+    const example = container.querySelector('.schema-widget__example')
+    expect(example).not.toBeNull()
+    expect(example?.textContent).toContain('Example')
+  })
+
   it('should show required and optional fields', () => {
     initSchemaWidget(container, {
       types: ['FAQPage'],
@@ -447,5 +493,76 @@ describe('JSON textarea after checkbox change', () => {
 
     const state = widget.getState()
     expect(state.properties.Product).toEqual({ brand: 'NewBrand' })
+  })
+})
+
+describe('Edge cases', () => {
+  it('should not duplicate type when checkbox is checked twice', () => {
+    const container = document.createElement('div')
+    // Start with Article already selected
+    const widget = initSchemaWidget(container, {
+      types: ['Article'],
+      properties: { Article: { custom: 'value' } },
+    })
+
+    // Try to "check" the already checked checkbox (simulating double event)
+    const checkbox = container.querySelector(
+      'input[value="Article"]',
+    ) as HTMLInputElement
+    checkbox.checked = true
+    checkbox.dispatchEvent(new Event('change'))
+
+    // Type should still only appear once
+    const state = widget.getState()
+    expect(state.types.filter((t) => t === 'Article').length).toBe(1)
+    // Properties should be preserved
+    expect(state.properties.Article).toEqual({ custom: 'value' })
+  })
+
+  it('should use placeholder when type has no existing properties', () => {
+    const container = document.createElement('div')
+    const widget = initSchemaWidget(container)
+
+    // Check a type that has no existing properties
+    const checkbox = container.querySelector(
+      'input[value="Article"]',
+    ) as HTMLInputElement
+    checkbox.checked = true
+    checkbox.dispatchEvent(new Event('change'))
+
+    const state = widget.getState()
+    expect(state.types).toContain('Article')
+    // Should have placeholder properties (empty object for Article)
+    expect(state.properties.Article).toBeDefined()
+  })
+
+  it('should handle textarea without data-schema-type attribute', () => {
+    const container = document.createElement('div')
+    initSchemaWidget(container, {
+      types: ['Product'],
+      properties: {},
+    })
+
+    // Get the textarea and remove its data attribute
+    const textarea = container.querySelector(
+      '.schema-widget__json',
+    ) as HTMLTextAreaElement
+    delete textarea.dataset.schemaType
+
+    // Trigger blur - should not throw
+    textarea.value = '{"brand": "Test"}'
+    expect(() => textarea.dispatchEvent(new Event('blur'))).not.toThrow()
+  })
+
+  it('should handle type with no template gracefully', () => {
+    const container = document.createElement('div')
+    // Create widget with a type that might not have a template
+    initSchemaWidget(container, {
+      types: ['UnknownType'],
+      properties: {},
+    })
+
+    // Should not throw and should render without crashing
+    expect(container.querySelector('.schema-widget')).not.toBeNull()
   })
 })

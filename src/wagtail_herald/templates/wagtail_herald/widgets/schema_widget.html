@@ -1,0 +1,11 @@
+<div class="schema-widget-wrapper">
+  <input type="hidden"
+         name="{{ widget.name }}"
+         id="{{ widget.attrs.id }}"
+         value="{{ widget.value_json }}">
+  <div id="{{ widget.attrs.id }}-container"
+       class="schema-widget-container"
+       data-schema-widget
+       data-initial-state='{{ widget.value_json }}'>
+  </div>
+</div>

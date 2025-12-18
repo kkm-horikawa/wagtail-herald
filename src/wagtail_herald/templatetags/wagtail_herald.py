@@ -51,7 +51,7 @@ def seo_head(context: dict[str, Any]) -> SafeString:
 
 @register.simple_tag(takes_context=True)
 def seo_schema(context: dict[str, Any]) -> SafeString:
-    """Output JSON-LD structured data for WebSite and Organization.
+    """Output JSON-LD structured data for WebSite, Organization, and BreadcrumbList.
 
     Usage in templates:
         {% load wagtail_herald %}
@@ -60,6 +60,7 @@ def seo_schema(context: dict[str, Any]) -> SafeString:
         </head>
     """
     request = context.get("request")
+    page = context.get("page") or context.get("self")
 
     from wagtail_herald.models import SEOSettings
 
@@ -69,16 +70,38 @@ def seo_schema(context: dict[str, Any]) -> SafeString:
 
     schemas: list[dict[str, Any]] = []
 
-    # WebSite schema
-    website_schema = _build_website_schema(request)
-    if website_schema:
-        schemas.append(website_schema)
+    # Get enabled schema types from page's schema_data
+    schema_data = getattr(page, "schema_data", None) if page else None
+    enabled_types = (
+        schema_data.get("types", []) if isinstance(schema_data, dict) else []
+    )
 
-    # Organization schema (only if organization_name is set)
-    if seo_settings and seo_settings.organization_name:
+    # WebSite schema (only if enabled in schema_data)
+    if "WebSite" in enabled_types:
+        website_schema = _build_website_schema(request)
+        if website_schema:
+            schemas.append(website_schema)
+
+    # Organization schema (only if enabled and organization_name is set)
+    if (
+        "Organization" in enabled_types
+        and seo_settings
+        and seo_settings.organization_name
+    ):
         org_schema = _build_organization_schema(request, seo_settings)
         if org_schema:
             schemas.append(org_schema)
+
+    # BreadcrumbList schema (only if enabled)
+    if "BreadcrumbList" in enabled_types and page:
+        breadcrumb_schema = _build_breadcrumb_schema(request, page)
+        if breadcrumb_schema:
+            schemas.append(breadcrumb_schema)
+
+    # Page-specific schemas (from schema_data field)
+    if page:
+        page_schemas = _build_page_schemas(request, page, seo_settings)
+        schemas.extend(page_schemas)
 
     if not schemas:
         return mark_safe("")
@@ -162,6 +185,317 @@ def _build_organization_schema(
         schema["sameAs"] = same_as
 
     return schema
+
+
+def _build_breadcrumb_schema(
+    request: HttpRequest | None,
+    page: Any,
+) -> dict[str, Any] | None:
+    """Build BreadcrumbList schema from page hierarchy.
+
+    Args:
+        request: HTTP request object.
+        page: Wagtail page instance.
+
+    Returns:
+        BreadcrumbList schema dict or None if not applicable.
+    """
+    if not page:
+        return None
+
+    # Get ancestors excluding root (depth=1)
+    try:
+        ancestors = list(page.get_ancestors().filter(depth__gt=1))
+    except Exception:
+        return None
+
+    # Skip if page is at root level (depth <= 2)
+    if not ancestors and getattr(page, "depth", 0) <= 2:
+        return None
+
+    items: list[dict[str, Any]] = []
+    position = 1
+
+    # Add ancestor pages
+    for ancestor in ancestors:
+        # Skip unpublished ancestors
+        if not getattr(ancestor, "live", True):
+            continue
+
+        item: dict[str, Any] = {
+            "@type": "ListItem",
+            "position": position,
+            "name": ancestor.title,
+        }
+
+        # Add URL for ancestors (not for current page)
+        url = getattr(ancestor, "url", None)
+        if url:
+            item["item"] = _make_absolute_url(request, url)
+
+        items.append(item)
+        position += 1
+
+    # Add current page (without "item" URL per Google guidelines)
+    items.append(
+        {
+            "@type": "ListItem",
+            "position": position,
+            "name": page.title,
+        }
+    )
+
+    # Need at least 2 items for a meaningful breadcrumb
+    if len(items) < 2:
+        return None
+
+    return {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": items,
+    }
+
+
+def _build_page_schemas(
+    request: HttpRequest | None,
+    page: Any,
+    settings: Any,
+) -> list[dict[str, Any]]:
+    """Build schemas from page's schema_data field.
+
+    Args:
+        request: HTTP request object.
+        page: Wagtail page instance.
+        settings: SEOSettings instance.
+
+    Returns:
+        List of schema dicts for selected types.
+    """
+    schemas: list[dict[str, Any]] = []
+
+    schema_data = getattr(page, "schema_data", None)
+    if not schema_data or not isinstance(schema_data, dict):
+        return schemas
+
+    schema_types = schema_data.get("types", [])
+    schema_properties = schema_data.get("properties", {})
+
+    for schema_type in schema_types:
+        # Skip site-wide schemas (handled separately)
+        if schema_type in ("WebSite", "Organization", "BreadcrumbList"):
+            continue
+
+        custom_props = schema_properties.get(schema_type, {})
+        schema = _build_schema_for_type(
+            request, page, settings, schema_type, custom_props
+        )
+        if schema:
+            schemas.append(schema)
+
+    return schemas
+
+
+def _build_schema_for_type(
+    request: HttpRequest | None,
+    page: Any,
+    settings: Any,
+    schema_type: str,
+    custom_properties: dict[str, Any],
+) -> dict[str, Any] | None:
+    """Build a single schema with auto-populated and custom fields.
+
+    Args:
+        request: HTTP request object.
+        page: Wagtail page instance.
+        settings: SEOSettings instance.
+        schema_type: Schema.org type name.
+        custom_properties: Custom properties from user input.
+
+    Returns:
+        Schema dict or None.
+    """
+    schema: dict[str, Any] = {
+        "@context": "https://schema.org",
+        "@type": schema_type,
+        "name": _get_page_title(page),
+        "url": _get_canonical_url(request, page),
+    }
+
+    # Add description if available
+    description = getattr(page, "search_description", "")
+    if description:
+        schema["description"] = description
+
+    # Type-specific auto fields
+    if schema_type in ("Article", "NewsArticle", "BlogPosting"):
+        _add_article_auto_fields(schema, request, page, settings)
+    elif schema_type == "Product":
+        _add_product_auto_fields(schema, request, page, settings)
+    elif schema_type in ("Event", "Course", "Recipe", "HowTo", "JobPosting"):
+        _add_content_auto_fields(schema, request, page, settings)
+
+    # Filter out empty values from custom properties before merging
+    filtered_props = _filter_empty_values(custom_properties)
+    if filtered_props and isinstance(filtered_props, dict):
+        _deep_merge(schema, filtered_props)
+
+    return schema
+
+
+def _add_article_auto_fields(
+    schema: dict[str, Any],
+    request: HttpRequest | None,
+    page: Any,
+    settings: Any,
+) -> None:
+    """Add auto-populated fields for Article types."""
+    # headline
+    schema["headline"] = _get_page_title(page)
+
+    # author
+    owner = getattr(page, "owner", None)
+    if owner:
+        name = getattr(owner, "get_full_name", lambda: "")() or getattr(
+            owner, "username", ""
+        )
+        if name:
+            schema["author"] = {"@type": "Person", "name": name}
+
+    # dates
+    first_pub = getattr(page, "first_published_at", None)
+    if first_pub:
+        schema["datePublished"] = first_pub.isoformat()
+
+    last_pub = getattr(page, "last_published_at", None)
+    if last_pub:
+        schema["dateModified"] = last_pub.isoformat()
+
+    # publisher
+    if settings and getattr(settings, "organization_name", None):
+        publisher: dict[str, Any] = {
+            "@type": "Organization",
+            "name": settings.organization_name,
+        }
+        logo = getattr(settings, "organization_logo", None)
+        if logo:
+            logo_url = _get_logo_url(request, logo)
+            if logo_url:
+                publisher["logo"] = {"@type": "ImageObject", "url": logo_url}
+        schema["publisher"] = publisher
+
+    # image
+    og_data = _get_og_image_data(request, page, settings)
+    if og_data.get("url"):
+        schema["image"] = og_data["url"]
+
+
+def _add_product_auto_fields(
+    schema: dict[str, Any],
+    request: HttpRequest | None,
+    page: Any,
+    settings: Any,
+) -> None:
+    """Add auto-populated fields for Product type."""
+    # image
+    og_data = _get_og_image_data(request, page, settings)
+    if og_data.get("url"):
+        schema["image"] = og_data["url"]
+
+
+def _add_content_auto_fields(
+    schema: dict[str, Any],
+    request: HttpRequest | None,
+    page: Any,
+    settings: Any,
+) -> None:
+    """Add auto-populated fields for content types (Event, Course, etc.)."""
+    # image
+    og_data = _get_og_image_data(request, page, settings)
+    if og_data.get("url"):
+        schema["image"] = og_data["url"]
+
+    # provider/organizer for Course, Event, JobPosting
+    if settings and getattr(settings, "organization_name", None):
+        org = {"@type": "Organization", "name": settings.organization_name}
+        schema_type = schema.get("@type", "")
+        if schema_type == "Course":
+            schema.setdefault("provider", org)
+        elif schema_type == "Event":
+            schema.setdefault("organizer", org)
+        elif schema_type == "JobPosting":
+            schema.setdefault("hiringOrganization", org)
+
+
+def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    """Deep merge override into base dict.
+
+    Args:
+        base: Base dictionary to merge into.
+        override: Dictionary with values to override.
+
+    Returns:
+        Merged dictionary (base is modified in place).
+    """
+    for key, value in override.items():
+        if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+            _deep_merge(base[key], value)
+        else:
+            base[key] = value
+    return base
+
+
+def _filter_empty_values(data: Any) -> Any:
+    """Recursively filter out empty values from data.
+
+    Removes:
+    - Empty strings ""
+    - Empty lists []
+    - Dicts with only empty values (after filtering)
+    - None values
+
+    Preserves:
+    - Numbers (including 0)
+    - Booleans (including False)
+    - Non-empty strings, lists, dicts
+
+    Args:
+        data: Data to filter (dict, list, or primitive).
+
+    Returns:
+        Filtered data, or None if entirely empty.
+    """
+    if data is None:
+        return None
+
+    if isinstance(data, str):
+        return data if data else None
+
+    if isinstance(data, bool):
+        return data
+
+    if isinstance(data, (int, float)):
+        return data
+
+    if isinstance(data, list):
+        filtered_list = [_filter_empty_values(item) for item in data]
+        filtered_list = [item for item in filtered_list if item is not None]
+        return filtered_list if filtered_list else None
+
+    if isinstance(data, dict):
+        filtered_dict: dict[str, Any] = {}
+        for key, value in data.items():
+            # Keep @type and @context even if technically "empty check" passes
+            if key in ("@type", "@context"):
+                filtered_dict[key] = value
+                continue
+            filtered_value = _filter_empty_values(value)
+            if filtered_value is not None:
+                filtered_dict[key] = filtered_value
+        # Return None if only @type/@context remain (no actual data)
+        meaningful_keys = [k for k in filtered_dict if k not in ("@type", "@context")]
+        return filtered_dict if meaningful_keys else None
+
+    return data
 
 
 def _get_logo_url(request: HttpRequest | None, logo: Any) -> str:

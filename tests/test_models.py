@@ -125,6 +125,26 @@ class TestSEOPageMixin:
         assert "noindex" in field_names
         assert "nofollow" in field_names
         assert "canonical_url" in field_names
+        assert "schema_data" in field_names
+
+    def test_schema_data_default(self):
+        """Test that schema_data has correct default value."""
+        from wagtail_herald.models.mixins import _get_schema_data_default
+
+        default = _get_schema_data_default()
+        assert default == {"types": [], "properties": {}}
+
+    def test_schema_data_uses_custom_field(self):
+        """Test that schema_data uses SchemaJSONField with validation."""
+        from wagtail_herald.widgets import SchemaFormField, SchemaJSONField
+
+        # Verify the model field is SchemaJSONField
+        field = SEOPageMixin._meta.get_field("schema_data")
+        assert isinstance(field, SchemaJSONField)
+
+        # Verify the formfield is SchemaFormField (which includes validation)
+        formfield = field.formfield()
+        assert isinstance(formfield, SchemaFormField)
 
     def test_field_help_texts(self):
         """Test that all fields have help_text defined."""

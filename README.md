@@ -2,7 +2,9 @@
 
 [![PyPI version](https://badge.fury.io/py/wagtail-herald.svg)](https://badge.fury.io/py/wagtail-herald)
 [![CI](https://github.com/kkm-horikawa/wagtail-herald/actions/workflows/ci.yml/badge.svg)](https://github.com/kkm-horikawa/wagtail-herald/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/kkm-horikawa/wagtail-herald/graph/badge.svg)](https://codecov.io/gh/kkm-horikawa/wagtail-herald)
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+[![Published on Django Packages](https://img.shields.io/badge/Published%20on-Django%20Packages-0c3c26)](https://djangopackages.org/packages/p/wagtail-herald/)
 
 ## Philosophy
 

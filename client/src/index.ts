@@ -44,23 +44,27 @@ if (typeof window !== 'undefined') {
   ).WagtailHeraldSchema = WagtailHeraldSchema
 }
 
+/**
+ * Auto-initialize all schema widgets in the document
+ * @internal Exported for testing purposes
+ */
+export function autoInit(): void {
+  const elements = document.querySelectorAll<HTMLElement>(
+    '[data-schema-widget]',
+  )
+  for (const el of elements) {
+    // Skip if already initialized
+    if (el.dataset.schemaWidgetInitialized) continue
+    el.dataset.schemaWidgetInitialized = 'true'
+    initSchemaWidget(el)
+  }
+}
+
 // Auto-init for non-Telepath usage (when DOM is ready)
 if (typeof document !== 'undefined') {
-  const init = () => {
-    const elements = document.querySelectorAll<HTMLElement>(
-      '[data-schema-widget]',
-    )
-    for (const el of elements) {
-      // Skip if already initialized
-      if (el.dataset.schemaWidgetInitialized) continue
-      el.dataset.schemaWidgetInitialized = 'true'
-      initSchemaWidget(el)
-    }
-  }
-
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init)
+    document.addEventListener('DOMContentLoaded', autoInit)
   } else {
-    init()
+    autoInit()
   }
 }

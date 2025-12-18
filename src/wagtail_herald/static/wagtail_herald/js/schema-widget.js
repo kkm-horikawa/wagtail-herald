@@ -1194,27 +1194,28 @@ const WagtailHeraldSchema = {
 if (typeof window !== "undefined") {
   window.WagtailHeraldSchema = WagtailHeraldSchema;
 }
+function autoInit() {
+  const elements = document.querySelectorAll(
+    "[data-schema-widget]"
+  );
+  for (const el of elements) {
+    if (el.dataset.schemaWidgetInitialized) continue;
+    el.dataset.schemaWidgetInitialized = "true";
+    initSchemaWidget(el);
+  }
+}
 if (typeof document !== "undefined") {
-  const init = () => {
-    const elements = document.querySelectorAll(
-      "[data-schema-widget]"
-    );
-    for (const el of elements) {
-      if (el.dataset.schemaWidgetInitialized) continue;
-      el.dataset.schemaWidgetInitialized = "true";
-      initSchemaWidget(el);
-    }
-  };
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
+    document.addEventListener("DOMContentLoaded", autoInit);
   } else {
-    init();
+    autoInit();
   }
 }
 export {
   SCHEMA_TEMPLATES,
   VERSION,
   WagtailHeraldSchema,
+  autoInit,
   getAllTypes,
   getDefaultOnTemplates,
   getTemplate,

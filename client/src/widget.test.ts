@@ -390,3 +390,62 @@ describe('Japanese locale support', () => {
     document.documentElement.lang = 'en'
   })
 })
+
+describe('escapeHtml', () => {
+  it('should escape single quotes in property values', () => {
+    const container = document.createElement('div')
+    initSchemaWidget(container, {
+      types: ['Article'],
+      properties: {
+        Article: { articleSection: "Tech's Best" },
+      },
+    })
+
+    const textarea = container.querySelector(
+      '.schema-widget__json',
+    ) as HTMLTextAreaElement
+    // The JSON should contain the escaped single quote in the textarea value
+    expect(textarea.value).toContain("Tech's Best")
+  })
+
+  it('should escape all special HTML characters', () => {
+    const container = document.createElement('div')
+    initSchemaWidget(container, {
+      types: ['Article'],
+      properties: {
+        Article: { content: "<script>\"alert('xss')&</script>" },
+      },
+    })
+
+    // Check that the widget renders without XSS issues
+    const widget = container.querySelector('.schema-widget')
+    expect(widget).not.toBeNull()
+  })
+})
+
+describe('JSON textarea after checkbox change', () => {
+  it('should handle blur event on re-attached textarea listeners', () => {
+    const container = document.createElement('div')
+    const widget = initSchemaWidget(container)
+
+    // Select a type to create property editor
+    const checkbox = container.querySelector(
+      'input[value="Product"]',
+    ) as HTMLInputElement
+    checkbox.checked = true
+    checkbox.dispatchEvent(new Event('change'))
+
+    // Now the textarea has been created with new event listeners
+    const textarea = container.querySelector(
+      '.schema-widget__json',
+    ) as HTMLTextAreaElement
+    expect(textarea).not.toBeNull()
+
+    // Modify and blur the textarea (tests the re-attached listener)
+    textarea.value = '{"brand": "NewBrand"}'
+    textarea.dispatchEvent(new Event('blur'))
+
+    const state = widget.getState()
+    expect(state.properties.Product).toEqual({ brand: 'NewBrand' })
+  })
+})

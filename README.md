@@ -19,8 +19,7 @@ The goal is to help content editors achieve **best-practice SEO** without touchi
 - **Page-level SEO** - Uses Wagtail's built-in SEO fields + OG image override
 - **13+ Schema Types** - Article, Product, FAQ, Event, LocalBusiness, and more
 - **Automatic BreadcrumbList** - Generated from page hierarchy
-- **Multi-language Support** - hreflang tags with wagtail-localize integration
-- **Locale Settings** - Per-page language/region targeting (ja_JP, en_US, etc.)
+- **Locale Support** - Per-page language/region targeting with `{% page_lang %}` tag
 - **Analytics Integration** - GTM, GA4, Facebook Pixel, Microsoft Clarity from admin
 - **robots.txt Management** - Configure robots.txt from admin interface
 - **Japanese UI** - Full Japanese localization for admin interface
@@ -40,7 +39,7 @@ The goal is to help content editors achieve **best-practice SEO** without touchi
 | Event Schema | No | No | **Yes** |
 | LocalBusiness Schema | No | No | **Yes** |
 | 13+ Schema types | No | No | **Yes** |
-| hreflang (i18n) | No | No | **Yes** |
+| Locale (og:locale) | No | No | **Yes** |
 | GTM/Analytics | No | No | **Yes** |
 | robots.txt | No | No | **Yes** |
 | Template tags | 3 includes | 1 tag | **2 tags** |
@@ -291,46 +290,27 @@ WAGTAIL_HERALD = {
 }
 ```
 
-## Multi-language & Locale Support
+## Locale Support
 
-wagtail-herald provides flexible language and region targeting:
+wagtail-herald provides per-page language and region targeting for mixed-language content.
 
-### Use Case 1: wagtail-localize Integration
-
-When using [wagtail-localize](https://wagtail-localize.org/), hreflang tags are generated automatically:
-
-```html
-<link rel="alternate" hreflang="ja" href="https://example.com/ja/page/">
-<link rel="alternate" hreflang="en" href="https://example.com/en/page/">
-<link rel="alternate" hreflang="x-default" href="https://example.com/ja/page/">
-```
-
-No additional configuration needed - it detects wagtail-localize automatically.
-
-### Use Case 2: Mixed Language Content
+### Use Case: Mixed Language Content
 
 Write Japanese and English articles on the same site by selecting locale per page:
 
 ```html
-<!-- Japanese article (locale: ja_JP) -->
-<html lang="ja">
-<meta property="og:locale" content="ja_JP">
-
-<!-- English article (locale: en_US) -->
-<html lang="en">
-<meta property="og:locale" content="en_US">
+{% load wagtail_herald %}
+<!DOCTYPE html>
+<html lang="{% page_lang %}">
+<head>
+    {% seo_head %}
+    <!-- Outputs: <meta property="og:locale" content="ja_JP"> -->
+</head>
 ```
 
-### Use Case 3: Regional Targeting
-
-Target specific regions with the same language:
-
-| Locale | Target |
-|--------|--------|
-| `en_US` | English (United States) |
-| `en_GB` | English (United Kingdom) |
-| `zh_CN` | Chinese (Simplified, China) |
-| `zh_TW` | Chinese (Traditional, Taiwan) |
+- `{% page_lang %}` - Returns language code (e.g., `ja`, `en`)
+- `{% page_locale %}` - Returns full locale (e.g., `ja_JP`, `en_US`)
+- `{% seo_head %}` - Automatically includes `og:locale` meta tag
 
 ### Available Locales
 
@@ -347,7 +327,7 @@ Target specific regions with the same language:
 | `es_ES` | Español (España) |
 | `pt_BR` | Português (Brasil) |
 
-Set the default locale in **Settings > SEO Settings**, then override per-page as needed.
+Set the default locale in **Settings > SEO Settings**, then override per-page using the SEOPageMixin.
 
 ## robots.txt Management
 

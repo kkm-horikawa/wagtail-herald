@@ -562,16 +562,6 @@ Instead, we focus on:
 - **Why** it's important (context and motivation)
 - **How** it relates to other work (dependencies)
 
-## Milestones and Roadmap
-
-| Milestone | Focus |
-|-----------|-------|
-| [v0.1.0](https://github.com/kkm-horikawa/wagtail-herald/milestone/1) | Core Models - SEOSettings, SEOPageMixin |
-| [v0.2.0](https://github.com/kkm-horikawa/wagtail-herald/milestone/2) | Template Tags - seo_head, seo_schema |
-| [v0.3.0](https://github.com/kkm-horikawa/wagtail-herald/milestone/3) | Schema.org - Article, FAQ, Product, etc. |
-| [v0.4.0](https://github.com/kkm-horikawa/wagtail-herald/milestone/4) | wagtail-localize Integration - hreflang |
-| [v1.0.0](https://github.com/kkm-horikawa/wagtail-herald/milestone/5) | Stable Release |
-
 ## Questions?
 
 Open an [Issue](https://github.com/kkm-horikawa/wagtail-herald/issues) for questions or discussions.

@@ -41,9 +41,6 @@ Issues = "https://github.com/kkm-horikawa/wagtail-herald/issues"
 Changelog = "https://github.com/kkm-horikawa/wagtail-herald/releases"
 
 [project.optional-dependencies]
-localize = [
-    "wagtail-localize>=1.5",
-]
 dev = [
     "pytest>=8.0",
     "pytest-django>=4.8",

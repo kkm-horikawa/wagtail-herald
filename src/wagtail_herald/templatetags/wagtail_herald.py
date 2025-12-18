@@ -113,6 +113,68 @@ def seo_schema(context: dict[str, Any]) -> SafeString:
     return mark_safe(output)
 
 
+@register.simple_tag(takes_context=True)
+def page_lang(context: dict[str, Any]) -> str:
+    """Return the language code for the current page (e.g., 'ja', 'en', 'zh').
+
+    Usage in templates:
+        {% load wagtail_herald %}
+        <html lang="{% page_lang %}">
+
+    Fallback chain:
+    1. Page's locale field (if SEOPageMixin)
+    2. SEOSettings.default_locale
+    3. 'en'
+    """
+    page = context.get("page") or context.get("self")
+
+    # Try to get from page's method
+    if page and hasattr(page, "get_page_lang"):
+        return str(page.get_page_lang())
+
+    # Fallback: try to get from SEOSettings
+    request = context.get("request")
+    if request:
+        from wagtail_herald.models import SEOSettings
+
+        settings = SEOSettings.for_request(request)
+        if settings and settings.default_locale:
+            return str(settings.default_locale).split("_")[0].lower()
+
+    return "en"
+
+
+@register.simple_tag(takes_context=True)
+def page_locale(context: dict[str, Any]) -> str:
+    """Return the full locale for the current page (e.g., 'ja_JP', 'en_US').
+
+    Usage in templates:
+        {% load wagtail_herald %}
+        <meta property="og:locale" content="{% page_locale %}">
+
+    Fallback chain:
+    1. Page's locale field (if SEOPageMixin)
+    2. SEOSettings.default_locale
+    3. 'en_US'
+    """
+    page = context.get("page") or context.get("self")
+
+    # Try to get from page's method
+    if page and hasattr(page, "get_page_locale"):
+        return str(page.get_page_locale())
+
+    # Fallback: try to get from SEOSettings
+    request = context.get("request")
+    if request:
+        from wagtail_herald.models import SEOSettings
+
+        settings = SEOSettings.for_request(request)
+        if settings and settings.default_locale:
+            return str(settings.default_locale)
+
+    return "en_US"
+
+
 def _build_website_schema(request: HttpRequest | None) -> dict[str, Any] | None:
     """Build WebSite schema.
 
@@ -320,6 +382,13 @@ def _build_schema_for_type(
         "name": _get_page_title(page),
         "url": _get_canonical_url(request, page),
     }
+
+    # Add inLanguage for applicable schema types
+    # Person type uses knowsLanguage instead of inLanguage
+    if schema_type != "Person":
+        lang = _get_schema_language(page, settings)
+        if lang:
+            schema["inLanguage"] = lang
 
     # Add description if available
     description = getattr(page, "search_description", "")
@@ -554,8 +623,12 @@ def build_seo_context(
     # OG Image with dimensions
     og_image_data = _get_og_image_data(request, page, settings)
 
-    # Locale
-    locale = settings.default_locale if settings else "en_US"
+    # Locale (page-specific takes priority over settings default)
+    locale = "en_US"
+    if page and hasattr(page, "get_page_locale"):
+        locale = page.get_page_locale()
+    elif settings and settings.default_locale:
+        locale = settings.default_locale
 
     # Favicon URLs
     favicon_svg_url = _get_image_url(request, settings.favicon_svg) if settings else ""
@@ -651,6 +724,36 @@ def _get_robots_meta(page: Any) -> str:
         return str(page.get_robots_meta())
 
     return ""
+
+
+def _get_schema_language(page: Any, settings: Any) -> str:
+    """Get BCP 47 language code for Schema.org inLanguage property.
+
+    Uses page's get_schema_language method if available (SEOPageMixin),
+    otherwise falls back to settings.default_locale or 'en'.
+
+    Args:
+        page: Wagtail page instance.
+        settings: SEOSettings instance.
+
+    Returns:
+        BCP 47 language code string (e.g., 'ja', 'en', 'zh-Hans').
+    """
+    # Try page's method first (SEOPageMixin)
+    if page and hasattr(page, "get_schema_language"):
+        return str(page.get_schema_language())
+
+    # Fall back to settings default_locale
+    if settings and hasattr(settings, "default_locale") and settings.default_locale:
+        locale = str(settings.default_locale)
+        # Chinese requires script subtags
+        if locale == "zh_CN":
+            return "zh-Hans"
+        elif locale == "zh_TW":
+            return "zh-Hant"
+        return locale.split("_")[0].lower()
+
+    return "en"
 
 
 def _get_og_image_data(

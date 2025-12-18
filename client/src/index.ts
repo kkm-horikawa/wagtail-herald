@@ -68,3 +68,6 @@ if (typeof document !== 'undefined') {
     autoInit()
   }
 }
+
+// Import telepath adapter to ensure it's registered
+import './telepath'

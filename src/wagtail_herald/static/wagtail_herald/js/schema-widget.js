@@ -1,3 +1,6 @@
+var __defProp = Object.defineProperty;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 const SCHEMA_TEMPLATES = {
   // ===================
   // Site-wide schemas (default ON)
@@ -1185,6 +1188,124 @@ function escapeHtml(str) {
     "'": "&#39;"
   };
   return str.replace(/[&<>"']/g, (char) => htmlEscapes[char]);
+}
+class BoundSchemaWidget {
+  constructor(container, hiddenInput, initialState) {
+    __publicField(this, "container");
+    __publicField(this, "hiddenInput");
+    __publicField(this, "widget", null);
+    this.container = container;
+    this.hiddenInput = hiddenInput;
+    try {
+      this.widget = initSchemaWidget(container, initialState);
+      this.setupSync();
+      this.syncToHiddenInput();
+    } catch (error) {
+      console.error("WagtailHerald: Failed to initialize schema widget", error);
+    }
+  }
+  /**
+   * Set up event listeners to sync widget state to hidden input
+   */
+  setupSync() {
+    this.container.addEventListener("change", (e) => {
+      const target = e.target;
+      if (target.tagName === "INPUT") {
+        this.syncToHiddenInput();
+      }
+    });
+    this.container.addEventListener(
+      "blur",
+      (e) => {
+        const target = e.target;
+        if (target.tagName === "TEXTAREA") {
+          this.syncToHiddenInput();
+        }
+      },
+      true
+    );
+  }
+  /**
+   * Sync widget state to hidden input for form submission
+   */
+  syncToHiddenInput() {
+    var _a;
+    const state = (_a = this.widget) == null ? void 0 : _a.getState();
+    if (state) {
+      this.hiddenInput.value = JSON.stringify(state);
+    }
+  }
+  /**
+   * Get the HTML ID for label association
+   */
+  get idForLabel() {
+    return this.hiddenInput.id || null;
+  }
+  /**
+   * Get the current value for form submission
+   */
+  getValue() {
+    return this.hiddenInput.value;
+  }
+  /**
+   * Get the current state for re-initialization
+   */
+  getState() {
+    var _a;
+    return ((_a = this.widget) == null ? void 0 : _a.getState()) ?? { types: [], properties: {} };
+  }
+  /**
+   * Set a new state value
+   */
+  setState(newState) {
+    var _a;
+    (_a = this.widget) == null ? void 0 : _a.setState(newState);
+    this.syncToHiddenInput();
+  }
+  /**
+   * Focus the first input in the widget
+   */
+  focus() {
+    const firstInput = this.container.querySelector("input");
+    if (firstInput) {
+      firstInput.focus();
+    }
+  }
+}
+class SchemaWidgetDefinition {
+  constructor(html) {
+    __publicField(this, "html");
+    this.html = html;
+  }
+  /**
+   * Render the widget into the page
+   */
+  render(placeholder, name, id, initialState) {
+    const renderedHtml = this.html.replace(/__NAME__/g, name).replace(/__ID__/g, id);
+    placeholder.outerHTML = renderedHtml;
+    const container = document.getElementById(`${id}-container`);
+    const hiddenInput = document.getElementById(id);
+    if (!container || !hiddenInput) {
+      throw new Error(`WagtailHerald: Elements not found for id "${id}"`);
+    }
+    let state;
+    if (typeof initialState === "string") {
+      try {
+        state = JSON.parse(initialState || '{"types":[],"properties":{}}');
+      } catch {
+        state = { types: [], properties: {} };
+      }
+    } else {
+      state = initialState ?? { types: [], properties: {} };
+    }
+    return new BoundSchemaWidget(container, hiddenInput, state);
+  }
+}
+if (typeof window !== "undefined" && window.telepath) {
+  window.telepath.register(
+    "wagtail_herald.widgets.SchemaWidget",
+    SchemaWidgetDefinition
+  );
 }
 const VERSION = "0.2.0";
 const WagtailHeraldSchema = {

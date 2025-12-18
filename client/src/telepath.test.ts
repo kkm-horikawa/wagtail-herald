@@ -123,12 +123,10 @@ describe('Telepath adapter', () => {
       const placeholder = document.createElement('div')
       document.body.appendChild(placeholder)
 
-      definition.render(
-        placeholder,
-        'schema_data',
-        'id_schema_data',
-        { types: [], properties: {} },
-      )
+      definition.render(placeholder, 'schema_data', 'id_schema_data', {
+        types: [],
+        properties: {},
+      })
 
       // Find and check a checkbox
       const container = document.getElementById('id_schema_data-container')

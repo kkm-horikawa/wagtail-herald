@@ -207,6 +207,7 @@ class TestSEOPageMixinMethods:
             get_page_locale = SEOPageMixin.get_page_locale
             get_page_lang = SEOPageMixin.get_page_lang
             get_html_lang = SEOPageMixin.get_html_lang
+            get_schema_language = SEOPageMixin.get_schema_language
 
         return MockPage()
 
@@ -358,3 +359,38 @@ class TestSEOPageMixinMethods:
         # Should fall back to default without raising
         result = mixin_instance.get_page_locale()
         assert result == "en_US"
+
+    def test_get_schema_language_default(self, mixin_instance):
+        """Test get_schema_language returns 'en' by default."""
+        result = mixin_instance.get_schema_language()
+        assert result == "en"
+
+    def test_get_schema_language_japanese(self, mixin_instance):
+        """Test get_schema_language returns 'ja' for Japanese locale."""
+        mixin_instance.locale = "ja_JP"
+        result = mixin_instance.get_schema_language()
+        assert result == "ja"
+
+    def test_get_schema_language_simplified_chinese(self, mixin_instance):
+        """Test get_schema_language returns 'zh-Hans' for Simplified Chinese."""
+        mixin_instance.locale = "zh_CN"
+        result = mixin_instance.get_schema_language()
+        assert result == "zh-Hans"
+
+    def test_get_schema_language_traditional_chinese(self, mixin_instance):
+        """Test get_schema_language returns 'zh-Hant' for Traditional Chinese."""
+        mixin_instance.locale = "zh_TW"
+        result = mixin_instance.get_schema_language()
+        assert result == "zh-Hant"
+
+    def test_get_schema_language_german(self, mixin_instance):
+        """Test get_schema_language returns 'de' for German locale."""
+        mixin_instance.locale = "de_DE"
+        result = mixin_instance.get_schema_language()
+        assert result == "de"
+
+    def test_get_schema_language_korean(self, mixin_instance):
+        """Test get_schema_language returns 'ko' for Korean locale."""
+        mixin_instance.locale = "ko_KR"
+        result = mixin_instance.get_schema_language()
+        assert result == "ko"

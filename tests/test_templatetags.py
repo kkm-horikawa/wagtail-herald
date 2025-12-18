@@ -2037,3 +2037,266 @@ class TestBuildSeoContextLocale:
         result = build_seo_context(request, MockPage(), None)
 
         assert result["og_locale"] == "en_US"
+
+
+class TestSchemaInLanguage:
+    """Tests for inLanguage property in Schema.org output."""
+
+    def test_inlanguage_with_page_locale(self, rf):
+        """Test inLanguage uses page's get_schema_language method."""
+
+        class MockPage:
+            title = "Test Article"
+            full_url = "https://example.com/article/"
+
+            def get_schema_language(self):
+                return "ja"
+
+        result = _build_schema_for_type(rf.get("/"), MockPage(), None, "Article", {})
+
+        assert result["inLanguage"] == "ja"
+
+    def test_inlanguage_simplified_chinese(self, rf):
+        """Test inLanguage returns zh-Hans for Simplified Chinese."""
+
+        class MockPage:
+            title = "Test Article"
+            full_url = "https://example.com/article/"
+
+            def get_schema_language(self):
+                return "zh-Hans"
+
+        result = _build_schema_for_type(rf.get("/"), MockPage(), None, "Article", {})
+
+        assert result["inLanguage"] == "zh-Hans"
+
+    def test_inlanguage_traditional_chinese(self, rf):
+        """Test inLanguage returns zh-Hant for Traditional Chinese."""
+
+        class MockPage:
+            title = "Test Article"
+            full_url = "https://example.com/article/"
+
+            def get_schema_language(self):
+                return "zh-Hant"
+
+        result = _build_schema_for_type(rf.get("/"), MockPage(), None, "Article", {})
+
+        assert result["inLanguage"] == "zh-Hant"
+
+    def test_inlanguage_fallback_to_settings(self, rf, site, db):
+        """Test inLanguage falls back to settings when page has no method."""
+        from wagtail_herald.models import SEOSettings
+
+        settings = SEOSettings.objects.create(site=site, default_locale="fr_FR")
+
+        class MockPage:
+            title = "Test Article"
+            full_url = "https://example.com/article/"
+
+        result = _build_schema_for_type(
+            rf.get("/"), MockPage(), settings, "Article", {}
+        )
+
+        assert result["inLanguage"] == "fr"
+
+    def test_inlanguage_fallback_to_english(self, rf):
+        """Test inLanguage defaults to 'en' when no locale available."""
+
+        class MockPage:
+            title = "Test Article"
+            full_url = "https://example.com/article/"
+
+        result = _build_schema_for_type(rf.get("/"), MockPage(), None, "Article", {})
+
+        assert result["inLanguage"] == "en"
+
+    def test_inlanguage_not_added_to_person(self, rf):
+        """Test inLanguage is NOT added to Person schema type."""
+
+        class MockPage:
+            title = "John Doe"
+            full_url = "https://example.com/person/"
+
+            def get_schema_language(self):
+                return "ja"
+
+        result = _build_schema_for_type(rf.get("/"), MockPage(), None, "Person", {})
+
+        assert "inLanguage" not in result
+
+    def test_inlanguage_in_blogposting(self, rf):
+        """Test inLanguage is added to BlogPosting."""
+
+        class MockPage:
+            title = "My Blog Post"
+            full_url = "https://example.com/blog/post/"
+
+            def get_schema_language(self):
+                return "de"
+
+        result = _build_schema_for_type(
+            rf.get("/"), MockPage(), None, "BlogPosting", {}
+        )
+
+        assert result["inLanguage"] == "de"
+
+    def test_inlanguage_in_newsarticle(self, rf):
+        """Test inLanguage is added to NewsArticle."""
+
+        class MockPage:
+            title = "News Article"
+            full_url = "https://example.com/news/article/"
+
+            def get_schema_language(self):
+                return "ko"
+
+        result = _build_schema_for_type(
+            rf.get("/"), MockPage(), None, "NewsArticle", {}
+        )
+
+        assert result["inLanguage"] == "ko"
+
+    def test_inlanguage_in_event(self, rf):
+        """Test inLanguage is added to Event."""
+
+        class MockPage:
+            title = "Conference 2024"
+            full_url = "https://example.com/events/conference/"
+
+            def get_schema_language(self):
+                return "es"
+
+        result = _build_schema_for_type(rf.get("/"), MockPage(), None, "Event", {})
+
+        assert result["inLanguage"] == "es"
+
+    def test_inlanguage_in_product(self, rf):
+        """Test inLanguage is added to Product."""
+
+        class MockPage:
+            title = "Super Widget"
+            full_url = "https://example.com/products/widget/"
+
+            def get_schema_language(self):
+                return "pt"
+
+        result = _build_schema_for_type(rf.get("/"), MockPage(), None, "Product", {})
+
+        assert result["inLanguage"] == "pt"
+
+    def test_inlanguage_settings_chinese_simplified(self, rf, site, db):
+        """Test settings-based Chinese Simplified returns zh-Hans."""
+        from wagtail_herald.models import SEOSettings
+
+        settings = SEOSettings.objects.create(site=site, default_locale="zh_CN")
+
+        class MockPage:
+            title = "Test"
+            full_url = "https://example.com/"
+
+        result = _build_schema_for_type(
+            rf.get("/"), MockPage(), settings, "Article", {}
+        )
+
+        assert result["inLanguage"] == "zh-Hans"
+
+    def test_inlanguage_settings_chinese_traditional(self, rf, site, db):
+        """Test settings-based Chinese Traditional returns zh-Hant."""
+        from wagtail_herald.models import SEOSettings
+
+        settings = SEOSettings.objects.create(site=site, default_locale="zh_TW")
+
+        class MockPage:
+            title = "Test"
+            full_url = "https://example.com/"
+
+        result = _build_schema_for_type(
+            rf.get("/"), MockPage(), settings, "Article", {}
+        )
+
+        assert result["inLanguage"] == "zh-Hant"
+
+
+class TestGetSchemaLanguageHelper:
+    """Tests for _get_schema_language helper function."""
+
+    def test_uses_page_method(self, rf):
+        """Test helper uses page's get_schema_language method."""
+        from wagtail_herald.templatetags.wagtail_herald import _get_schema_language
+
+        class MockPage:
+            def get_schema_language(self):
+                return "ja"
+
+        result = _get_schema_language(MockPage(), None)
+        assert result == "ja"
+
+    def test_fallback_to_settings_japanese(self, rf, site, db):
+        """Test helper falls back to settings for Japanese."""
+        from wagtail_herald.models import SEOSettings
+        from wagtail_herald.templatetags.wagtail_herald import _get_schema_language
+
+        settings = SEOSettings.objects.create(site=site, default_locale="ja_JP")
+
+        class MockPage:
+            pass
+
+        result = _get_schema_language(MockPage(), settings)
+        assert result == "ja"
+
+    def test_fallback_to_settings_simplified_chinese(self, rf, site, db):
+        """Test helper falls back to settings for Simplified Chinese."""
+        from wagtail_herald.models import SEOSettings
+        from wagtail_herald.templatetags.wagtail_herald import _get_schema_language
+
+        settings = SEOSettings.objects.create(site=site, default_locale="zh_CN")
+
+        class MockPage:
+            pass
+
+        result = _get_schema_language(MockPage(), settings)
+        assert result == "zh-Hans"
+
+    def test_fallback_to_settings_traditional_chinese(self, rf, site, db):
+        """Test helper falls back to settings for Traditional Chinese."""
+        from wagtail_herald.models import SEOSettings
+        from wagtail_herald.templatetags.wagtail_herald import _get_schema_language
+
+        settings = SEOSettings.objects.create(site=site, default_locale="zh_TW")
+
+        class MockPage:
+            pass
+
+        result = _get_schema_language(MockPage(), settings)
+        assert result == "zh-Hant"
+
+    def test_fallback_to_english(self, rf):
+        """Test helper falls back to 'en' when nothing available."""
+        from wagtail_herald.templatetags.wagtail_herald import _get_schema_language
+
+        class MockPage:
+            pass
+
+        result = _get_schema_language(MockPage(), None)
+        assert result == "en"
+
+    def test_no_page(self, rf):
+        """Test helper handles None page."""
+        from wagtail_herald.templatetags.wagtail_herald import _get_schema_language
+
+        result = _get_schema_language(None, None)
+        assert result == "en"
+
+    def test_settings_with_empty_locale(self, rf, site, db):
+        """Test helper handles settings with empty default_locale."""
+        from wagtail_herald.models import SEOSettings
+        from wagtail_herald.templatetags.wagtail_herald import _get_schema_language
+
+        settings = SEOSettings.objects.create(site=site, default_locale="")
+
+        class MockPage:
+            pass
+
+        result = _get_schema_language(MockPage(), settings)
+        assert result == "en"

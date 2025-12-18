@@ -111,10 +111,37 @@ jobs:
       - name: Run mypy
         run: uv run mypy src/
 
+  client-test:
+    name: Client Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Run TypeScript check
+        working-directory: client
+        run: npm run typecheck
+
+      - name: Run Biome lint
+        working-directory: client
+        run: npm run lint
+
+      - name: Run Vitest tests
+        working-directory: client
+        run: npm run test:coverage
+
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [lint, test, type-check]
+    needs: [lint, test, type-check, client-test]
     steps:
       - uses: actions/checkout@v4
 

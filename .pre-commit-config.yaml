@@ -24,3 +24,10 @@ repos:
         types: [python]
         files: ^src/
         pass_filenames: false
+
+      - id: biome-check
+        name: biome check
+        entry: bash -c 'cd client && npx biome check --write --files-ignore-unknown=true --no-errors-on-unmatched "$@"' --
+        language: system
+        files: ^client/.*\.(jsx?|tsx?|json)$
+        pass_filenames: true

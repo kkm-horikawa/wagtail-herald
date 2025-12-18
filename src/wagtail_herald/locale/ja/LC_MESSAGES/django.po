@@ -1,0 +1,229 @@
+# wagtail-herald Japanese translation file.
+# Copyright (C) 2024 wagtail-herald contributors
+# This file is distributed under the same license as the wagtail-herald package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: wagtail-herald\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-12-18 01:56+0000\n"
+"PO-Revision-Date: 2025-12-18 10:00+0900\n"
+"Last-Translator: \n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: apps.py:14
+msgid "Wagtail Herald"
+msgstr "Wagtail Herald"
+
+#: models/mixins.py:25
+msgid "OG image override"
+msgstr "OG画像オーバーライド"
+
+#: models/mixins.py:26
+msgid "Override the default Open Graph image. Recommended: 1200x630px"
+msgstr "デフォルトのOpen Graph画像を上書きします。推奨: 1200x630px"
+
+#: models/mixins.py:30
+msgid "OG image alt text"
+msgstr "OG画像代替テキスト"
+
+#: models/mixins.py:33
+msgid "Alt text for OG image. Describe the image for accessibility"
+msgstr "OG画像の代替テキスト。アクセシビリティのために画像を説明してください"
+
+#: models/mixins.py:37
+msgid "noindex"
+msgstr "noindex"
+
+#: models/mixins.py:40
+msgid ""
+"Prevent search engines from indexing this page. Use for private or duplicate "
+"content"
+msgstr ""
+"検索エンジンによるこのページのインデックスを防止します。"
+"プライベートコンテンツや重複コンテンツに使用してください"
+
+#: models/mixins.py:46
+msgid "nofollow"
+msgstr "nofollow"
+
+#: models/mixins.py:48
+msgid "Prevent search engines from following links on this page"
+msgstr "検索エンジンがこのページのリンクをたどることを防止します"
+
+#: models/mixins.py:52
+msgid "Canonical URL"
+msgstr "カノニカルURL"
+
+#: models/mixins.py:55
+msgid ""
+"Override the canonical URL. Must be absolute URL with protocol (e.g., "
+"'https://example.com/page/')"
+msgstr ""
+"カノニカルURLを上書きします。プロトコルを含む絶対URLである必要があります"
+"（例: 'https://example.com/page/'）"
+
+#: models/mixins.py:69
+msgid "SEO"
+msgstr "SEO"
+
+#: models/settings.py:40
+msgid "SEO Settings"
+msgstr "SEO設定"
+
+#: models/settings.py:44
+msgid "Organization name"
+msgstr "組織名"
+
+#: models/settings.py:47
+msgid "Organization name for Schema.org structured data"
+msgstr "Schema.org構造化データ用の組織名"
+
+#: models/settings.py:50
+msgid "Organization type"
+msgstr "組織タイプ"
+
+#: models/settings.py:55
+msgid "Organization type for Schema.org (e.g., Corporation, LocalBusiness)"
+msgstr "Schema.org用の組織タイプ（例: Corporation, LocalBusiness）"
+
+#: models/settings.py:64
+msgid "Organization logo"
+msgstr "組織ロゴ"
+
+#: models/settings.py:65
+msgid "Logo for Schema.org. Recommended: 112x112px minimum, PNG/JPEG"
+msgstr "Schema.org用のロゴ。推奨: 最小112x112px、PNG/JPEG"
+
+#: models/settings.py:70
+msgid "Twitter handle"
+msgstr "Twitterハンドル"
+
+#: models/settings.py:73
+msgid "Twitter username without @ (e.g., 'example' not '@example')"
+msgstr "@なしのTwitterユーザー名（例: '@example'ではなく'example'）"
+
+#: models/settings.py:76
+msgid "Facebook URL"
+msgstr "Facebook URL"
+
+#: models/settings.py:78
+msgid "Full Facebook page URL (e.g., 'https://facebook.com/example')"
+msgstr "FacebookページのフルURL（例: 'https://facebook.com/example'）"
+
+#: models/settings.py:83
+msgid "Title separator"
+msgstr "タイトル区切り文字"
+
+#: models/settings.py:87
+msgid "Character(s) between page title and site name (e.g., '|', '-', '·')"
+msgstr "ページタイトルとサイト名の間の文字（例: '|', '-', '·'）"
+
+#: models/settings.py:91
+msgid "Default locale"
+msgstr "デフォルトロケール"
+
+#: models/settings.py:95
+msgid "Default locale for og:locale meta tag (e.g., en_US, ja_JP)"
+msgstr "og:localeメタタグのデフォルトロケール（例: en_US, ja_JP）"
+
+#: models/settings.py:105
+msgid "Default OG image"
+msgstr "デフォルトOG画像"
+
+#: models/settings.py:107
+msgid "Default image for social sharing. Recommended: 1200x630px, JPEG/PNG"
+msgstr "ソーシャルシェア用のデフォルト画像。推奨: 1200x630px、JPEG/PNG"
+
+#: models/settings.py:111
+msgid "Default OG image alt text"
+msgstr "デフォルトOG画像代替テキスト"
+
+#: models/settings.py:115
+msgid "Alt text for default OG image. Describe the image for accessibility"
+msgstr "デフォルトOG画像の代替テキスト。アクセシビリティのために画像を説明してください"
+
+#: models/settings.py:124
+msgid "Favicon (SVG)"
+msgstr "ファビコン（SVG）"
+
+#: models/settings.py:126
+msgid ""
+"SVG favicon for modern browsers. Requires WAGTAILIMAGES_EXTENSIONS to "
+"include 'svg' in settings"
+msgstr ""
+"モダンブラウザ用のSVGファビコン。"
+"設定でWAGTAILIMAGES_EXTENSIONSに'svg'を含める必要があります"
+
+#: models/settings.py:136
+msgid "Favicon (PNG)"
+msgstr "ファビコン（PNG）"
+
+#: models/settings.py:137
+msgid "PNG favicon fallback. Minimum: 48x48px (Google requirement)"
+msgstr "PNGファビコンフォールバック。最小: 48x48px（Google要件）"
+
+#: models/settings.py:145
+msgid "Apple Touch Icon"
+msgstr "Apple Touchアイコン"
+
+#: models/settings.py:146
+msgid "iOS home screen icon. Recommended: 180x180px, PNG format"
+msgstr "iOSホーム画面アイコン。推奨: 180x180px、PNG形式"
+
+#: models/settings.py:151
+msgid "Google site verification"
+msgstr "Googleサイト認証"
+
+#: models/settings.py:154
+msgid "Verification code from Google Search Console (value only)"
+msgstr "Google Search Consoleからの認証コード（値のみ）"
+
+#: models/settings.py:157
+msgid "Bing site verification"
+msgstr "Bingサイト認証"
+
+#: models/settings.py:160
+msgid "Verification code from Bing Webmaster Tools (value only)"
+msgstr "Bing Webmaster Toolsからの認証コード（値のみ）"
+
+#: models/settings.py:165
+msgid "Custom head HTML"
+msgstr "カスタムhead HTML"
+
+#: models/settings.py:168
+msgid ""
+"Custom HTML to insert in <head>. Use for additional verification tags, "
+"analytics code, preload links, etc. No validation - use with caution."
+msgstr ""
+"<head>に挿入するカスタムHTML。追加の認証タグ、アナリティクスコード、"
+"プリロードリンクなどに使用。バリデーションなし - 注意して使用してください。"
+
+#: models/settings.py:180
+msgid "Organization"
+msgstr "組織"
+
+#: models/settings.py:187
+msgid "Social Profiles"
+msgstr "ソーシャルプロフィール"
+
+#: models/settings.py:194
+msgid "Default SEO Settings"
+msgstr "デフォルトSEO設定"
+
+#: models/settings.py:204
+msgid "Images"
+msgstr "画像"
+
+#: models/settings.py:211
+msgid "Site Verification"
+msgstr "サイト認証"
+
+#: models/settings.py:217
+msgid "Custom Code"
+msgstr "カスタムコード"

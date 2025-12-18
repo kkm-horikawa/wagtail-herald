@@ -1,0 +1,221 @@
+# wagtail-herald English translation file.
+# Copyright (C) 2024 wagtail-herald contributors
+# This file is distributed under the same license as the wagtail-herald package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: wagtail-herald\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-12-18 01:56+0000\n"
+"PO-Revision-Date: 2025-12-18 10:00+0900\n"
+"Last-Translator: \n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: apps.py:14
+msgid "Wagtail Herald"
+msgstr ""
+
+#: models/mixins.py:25
+msgid "OG image override"
+msgstr ""
+
+#: models/mixins.py:26
+msgid "Override the default Open Graph image. Recommended: 1200x630px"
+msgstr ""
+
+#: models/mixins.py:30
+msgid "OG image alt text"
+msgstr ""
+
+#: models/mixins.py:33
+msgid "Alt text for OG image. Describe the image for accessibility"
+msgstr ""
+
+#: models/mixins.py:37
+msgid "noindex"
+msgstr ""
+
+#: models/mixins.py:40
+msgid ""
+"Prevent search engines from indexing this page. Use for private or duplicate "
+"content"
+msgstr ""
+
+#: models/mixins.py:46
+msgid "nofollow"
+msgstr ""
+
+#: models/mixins.py:48
+msgid "Prevent search engines from following links on this page"
+msgstr ""
+
+#: models/mixins.py:52
+msgid "Canonical URL"
+msgstr ""
+
+#: models/mixins.py:55
+msgid ""
+"Override the canonical URL. Must be absolute URL with protocol (e.g., "
+"'https://example.com/page/')"
+msgstr ""
+
+#: models/mixins.py:69
+msgid "SEO"
+msgstr ""
+
+#: models/settings.py:40
+msgid "SEO Settings"
+msgstr ""
+
+#: models/settings.py:44
+msgid "Organization name"
+msgstr ""
+
+#: models/settings.py:47
+msgid "Organization name for Schema.org structured data"
+msgstr ""
+
+#: models/settings.py:50
+msgid "Organization type"
+msgstr ""
+
+#: models/settings.py:55
+msgid "Organization type for Schema.org (e.g., Corporation, LocalBusiness)"
+msgstr ""
+
+#: models/settings.py:64
+msgid "Organization logo"
+msgstr ""
+
+#: models/settings.py:65
+msgid "Logo for Schema.org. Recommended: 112x112px minimum, PNG/JPEG"
+msgstr ""
+
+#: models/settings.py:70
+msgid "Twitter handle"
+msgstr ""
+
+#: models/settings.py:73
+msgid "Twitter username without @ (e.g., 'example' not '@example')"
+msgstr ""
+
+#: models/settings.py:76
+msgid "Facebook URL"
+msgstr ""
+
+#: models/settings.py:78
+msgid "Full Facebook page URL (e.g., 'https://facebook.com/example')"
+msgstr ""
+
+#: models/settings.py:83
+msgid "Title separator"
+msgstr ""
+
+#: models/settings.py:87
+msgid "Character(s) between page title and site name (e.g., '|', '-', '·')"
+msgstr ""
+
+#: models/settings.py:91
+msgid "Default locale"
+msgstr ""
+
+#: models/settings.py:95
+msgid "Default locale for og:locale meta tag (e.g., en_US, ja_JP)"
+msgstr ""
+
+#: models/settings.py:105
+msgid "Default OG image"
+msgstr ""
+
+#: models/settings.py:107
+msgid "Default image for social sharing. Recommended: 1200x630px, JPEG/PNG"
+msgstr ""
+
+#: models/settings.py:111
+msgid "Default OG image alt text"
+msgstr ""
+
+#: models/settings.py:115
+msgid "Alt text for default OG image. Describe the image for accessibility"
+msgstr ""
+
+#: models/settings.py:124
+msgid "Favicon (SVG)"
+msgstr ""
+
+#: models/settings.py:126
+msgid ""
+"SVG favicon for modern browsers. Requires WAGTAILIMAGES_EXTENSIONS to "
+"include 'svg' in settings"
+msgstr ""
+
+#: models/settings.py:136
+msgid "Favicon (PNG)"
+msgstr ""
+
+#: models/settings.py:137
+msgid "PNG favicon fallback. Minimum: 48x48px (Google requirement)"
+msgstr ""
+
+#: models/settings.py:145
+msgid "Apple Touch Icon"
+msgstr ""
+
+#: models/settings.py:146
+msgid "iOS home screen icon. Recommended: 180x180px, PNG format"
+msgstr ""
+
+#: models/settings.py:151
+msgid "Google site verification"
+msgstr ""
+
+#: models/settings.py:154
+msgid "Verification code from Google Search Console (value only)"
+msgstr ""
+
+#: models/settings.py:157
+msgid "Bing site verification"
+msgstr ""
+
+#: models/settings.py:160
+msgid "Verification code from Bing Webmaster Tools (value only)"
+msgstr ""
+
+#: models/settings.py:165
+msgid "Custom head HTML"
+msgstr ""
+
+#: models/settings.py:168
+msgid ""
+"Custom HTML to insert in <head>. Use for additional verification tags, "
+"analytics code, preload links, etc. No validation - use with caution."
+msgstr ""
+
+#: models/settings.py:180
+msgid "Organization"
+msgstr ""
+
+#: models/settings.py:187
+msgid "Social Profiles"
+msgstr ""
+
+#: models/settings.py:194
+msgid "Default SEO Settings"
+msgstr ""
+
+#: models/settings.py:204
+msgid "Images"
+msgstr ""
+
+#: models/settings.py:211
+msgid "Site Verification"
+msgstr ""
+
+#: models/settings.py:217
+msgid "Custom Code"
+msgstr ""

@@ -69,8 +69,8 @@ class SEOPageMixin(models.Model):
         ),
     )
 
-    locale = models.CharField(
-        _("Page locale"),
+    seo_locale = models.CharField(
+        _("SEO locale"),
         max_length=10,
         choices=LOCALE_CHOICES,
         blank=True,
@@ -92,7 +92,7 @@ class SEOPageMixin(models.Model):
             [
                 FieldPanel("og_image"),
                 FieldPanel("og_image_alt"),
-                FieldPanel("locale"),
+                FieldPanel("seo_locale"),
                 FieldPanel("noindex"),
                 FieldPanel("nofollow"),
                 FieldPanel("canonical_url"),
@@ -153,15 +153,15 @@ class SEOPageMixin(models.Model):
         """Return the page locale (og:locale format, e.g., 'ja_JP').
 
         Fallback chain:
-        1. Page's locale field
+        1. Page's seo_locale field
         2. SEOSettings.default_locale
         3. 'en_US'
 
         Returns:
             The locale string in og:locale format (underscore separator).
         """
-        if self.locale:
-            return self.locale
+        if self.seo_locale:
+            return self.seo_locale
 
         # Try to get from site settings
         try:

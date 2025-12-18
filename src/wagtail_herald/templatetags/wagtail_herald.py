@@ -11,6 +11,7 @@ from django import template
 from django.http import HttpRequest
 from django.template.loader import render_to_string
 from django.utils.safestring import SafeString, mark_safe
+from wagtail.models import Site
 
 if TYPE_CHECKING:
     from wagtail_herald.models import SEOSettings
@@ -101,7 +102,7 @@ def _build_website_schema(request: HttpRequest | None) -> dict[str, Any] | None:
     if not request:
         return None
 
-    site = getattr(request, "site", None)
+    site = Site.find_for_request(request)
     if not site:
         return None
 
@@ -199,7 +200,7 @@ def build_seo_context(
     Returns:
         Dictionary with all SEO template variables.
     """
-    site = getattr(request, "site", None) if request else None
+    site = Site.find_for_request(request) if request else None
 
     # Title with separator
     page_title = _get_page_title(page)

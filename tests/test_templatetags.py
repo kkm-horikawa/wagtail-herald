@@ -535,24 +535,24 @@ class TestBuildWebsiteSchema:
         result = _build_website_schema(None)
         assert result is None
 
-    def test_returns_none_without_site(self, rf):
-        """Test returns None when no site on request."""
-        request = rf.get("/")
+    def test_returns_none_without_site(self, rf, db):
+        """Test returns None when no site matches request."""
+        # Use a hostname that doesn't match any site
+        request = rf.get("/", HTTP_HOST="unknown.example.com")
         result = _build_website_schema(request)
         assert result is None
 
     def test_returns_none_without_site_name(self, rf, site):
         """Test returns None when site has no name."""
-        request = rf.get("/")
         site.site_name = ""
-        request.site = site
+        site.save()
+        request = rf.get("/")
         result = _build_website_schema(request)
         assert result is None
 
     def test_returns_schema_with_site(self, rf, site):
         """Test returns valid schema with site."""
         request = rf.get("/")
-        request.site = site
         result = _build_website_schema(request)
 
         assert result["@context"] == "https://schema.org"

@@ -123,7 +123,7 @@ describe('Telepath adapter', () => {
       const placeholder = document.createElement('div')
       document.body.appendChild(placeholder)
 
-      const boundWidget = definition.render(
+      definition.render(
         placeholder,
         'schema_data',
         'id_schema_data',

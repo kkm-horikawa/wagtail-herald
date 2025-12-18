@@ -197,7 +197,7 @@ class TestSEOPageMixinMethods:
             canonical_url = ""
             og_image = None
             og_image_alt = ""
-            locale = ""
+            seo_locale = ""
             url = "/test-page/"
             full_url = "https://example.com/test-page/"
 
@@ -284,10 +284,10 @@ class TestSEOPageMixinMethods:
         result = mixin_instance.get_og_image_alt()
         assert result == "Explicit Alt"
 
-    def test_locale_field_exists(self, mixin_instance):
-        """Test that locale field exists and is empty by default."""
-        assert hasattr(mixin_instance, "locale")
-        assert mixin_instance.locale == ""
+    def test_seo_locale_field_exists(self, mixin_instance):
+        """Test that seo_locale field exists and is empty by default."""
+        assert hasattr(mixin_instance, "seo_locale")
+        assert mixin_instance.seo_locale == ""
 
     def test_get_page_locale_default(self, mixin_instance):
         """Test get_page_locale returns en_US when no locale set."""
@@ -296,7 +296,7 @@ class TestSEOPageMixinMethods:
 
     def test_get_page_locale_explicit(self, mixin_instance):
         """Test get_page_locale returns explicit value."""
-        mixin_instance.locale = "ja_JP"
+        mixin_instance.seo_locale = "ja_JP"
         result = mixin_instance.get_page_locale()
         assert result == "ja_JP"
 
@@ -307,13 +307,13 @@ class TestSEOPageMixinMethods:
 
     def test_get_page_lang_explicit(self, mixin_instance):
         """Test get_page_lang extracts language from locale."""
-        mixin_instance.locale = "ja_JP"
+        mixin_instance.seo_locale = "ja_JP"
         result = mixin_instance.get_page_lang()
         assert result == "ja"
 
     def test_get_page_lang_chinese(self, mixin_instance):
         """Test get_page_lang handles Chinese locales."""
-        mixin_instance.locale = "zh_CN"
+        mixin_instance.seo_locale = "zh_CN"
         result = mixin_instance.get_page_lang()
         assert result == "zh"
 
@@ -324,13 +324,13 @@ class TestSEOPageMixinMethods:
 
     def test_get_html_lang_explicit(self, mixin_instance):
         """Test get_html_lang converts underscore to hyphen."""
-        mixin_instance.locale = "ja_JP"
+        mixin_instance.seo_locale = "ja_JP"
         result = mixin_instance.get_html_lang()
         assert result == "ja-JP"
 
     def test_get_html_lang_german(self, mixin_instance):
         """Test get_html_lang works for German locale."""
-        mixin_instance.locale = "de_DE"
+        mixin_instance.seo_locale = "de_DE"
         result = mixin_instance.get_html_lang()
         assert result == "de-DE"
 
@@ -367,30 +367,30 @@ class TestSEOPageMixinMethods:
 
     def test_get_schema_language_japanese(self, mixin_instance):
         """Test get_schema_language returns 'ja' for Japanese locale."""
-        mixin_instance.locale = "ja_JP"
+        mixin_instance.seo_locale = "ja_JP"
         result = mixin_instance.get_schema_language()
         assert result == "ja"
 
     def test_get_schema_language_simplified_chinese(self, mixin_instance):
         """Test get_schema_language returns 'zh-Hans' for Simplified Chinese."""
-        mixin_instance.locale = "zh_CN"
+        mixin_instance.seo_locale = "zh_CN"
         result = mixin_instance.get_schema_language()
         assert result == "zh-Hans"
 
     def test_get_schema_language_traditional_chinese(self, mixin_instance):
         """Test get_schema_language returns 'zh-Hant' for Traditional Chinese."""
-        mixin_instance.locale = "zh_TW"
+        mixin_instance.seo_locale = "zh_TW"
         result = mixin_instance.get_schema_language()
         assert result == "zh-Hant"
 
     def test_get_schema_language_german(self, mixin_instance):
         """Test get_schema_language returns 'de' for German locale."""
-        mixin_instance.locale = "de_DE"
+        mixin_instance.seo_locale = "de_DE"
         result = mixin_instance.get_schema_language()
         assert result == "de"
 
     def test_get_schema_language_korean(self, mixin_instance):
         """Test get_schema_language returns 'ko' for Korean locale."""
-        mixin_instance.locale = "ko_KR"
+        mixin_instance.seo_locale = "ko_KR"
         result = mixin_instance.get_schema_language()
         assert result == "ko"

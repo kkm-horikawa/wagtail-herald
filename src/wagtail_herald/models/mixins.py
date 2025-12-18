@@ -11,6 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
 from wagtail.images import get_image_model_string
 
+from wagtail_herald.models.settings import LOCALE_CHOICES
 from wagtail_herald.widgets import SchemaJSONField
 
 
@@ -68,6 +69,14 @@ class SEOPageMixin(models.Model):
         ),
     )
 
+    locale = models.CharField(
+        _("Page locale"),
+        max_length=10,
+        choices=LOCALE_CHOICES,
+        blank=True,
+        help_text=_("Override locale for this page (og:locale, html lang attribute)"),
+    )
+
     schema_data = SchemaJSONField(
         _("Structured data"),
         default=_get_schema_data_default,
@@ -83,6 +92,7 @@ class SEOPageMixin(models.Model):
             [
                 FieldPanel("og_image"),
                 FieldPanel("og_image_alt"),
+                FieldPanel("locale"),
                 FieldPanel("noindex"),
                 FieldPanel("nofollow"),
                 FieldPanel("canonical_url"),
@@ -138,3 +148,54 @@ class SEOPageMixin(models.Model):
         if self.og_image and hasattr(self.og_image, "title"):
             return str(self.og_image.title)
         return ""
+
+    def get_page_locale(self) -> str:
+        """Return the page locale (og:locale format, e.g., 'ja_JP').
+
+        Fallback chain:
+        1. Page's locale field
+        2. SEOSettings.default_locale
+        3. 'en_US'
+
+        Returns:
+            The locale string in og:locale format (underscore separator).
+        """
+        if self.locale:
+            return self.locale
+
+        # Try to get from site settings
+        try:
+            from wagtail_herald.models import SEOSettings
+
+            # Get the site from page if available
+            site = getattr(self, "get_site", lambda: None)()
+            if site:
+                settings = SEOSettings.for_site(site)
+                if settings and settings.default_locale:
+                    return str(settings.default_locale)
+        except Exception:
+            pass
+
+        return "en_US"
+
+    def get_page_lang(self) -> str:
+        """Return the language code (e.g., 'ja', 'en', 'zh').
+
+        Extracts the language portion from the full locale.
+
+        Returns:
+            The language code string.
+        """
+        locale = self.get_page_locale()
+        return locale.split("_")[0].lower()
+
+    def get_html_lang(self) -> str:
+        """Return the locale in HTML lang attribute format (BCP 47).
+
+        Converts underscore format (ja_JP) to hyphen format (ja-JP).
+
+        Returns:
+            The locale string in BCP 47 format (hyphen separator).
+        """
+        locale = self.get_page_locale()
+        return locale.replace("_", "-")

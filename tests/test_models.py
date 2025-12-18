@@ -197,12 +197,16 @@ class TestSEOPageMixinMethods:
             canonical_url = ""
             og_image = None
             og_image_alt = ""
+            locale = ""
             url = "/test-page/"
             full_url = "https://example.com/test-page/"
 
             get_robots_meta = SEOPageMixin.get_robots_meta
             get_canonical_url = SEOPageMixin.get_canonical_url
             get_og_image_alt = SEOPageMixin.get_og_image_alt
+            get_page_locale = SEOPageMixin.get_page_locale
+            get_page_lang = SEOPageMixin.get_page_lang
+            get_html_lang = SEOPageMixin.get_html_lang
 
         return MockPage()
 
@@ -278,3 +282,79 @@ class TestSEOPageMixinMethods:
         mixin_instance.og_image_alt = "Explicit Alt"
         result = mixin_instance.get_og_image_alt()
         assert result == "Explicit Alt"
+
+    def test_locale_field_exists(self, mixin_instance):
+        """Test that locale field exists and is empty by default."""
+        assert hasattr(mixin_instance, "locale")
+        assert mixin_instance.locale == ""
+
+    def test_get_page_locale_default(self, mixin_instance):
+        """Test get_page_locale returns en_US when no locale set."""
+        result = mixin_instance.get_page_locale()
+        assert result == "en_US"
+
+    def test_get_page_locale_explicit(self, mixin_instance):
+        """Test get_page_locale returns explicit value."""
+        mixin_instance.locale = "ja_JP"
+        result = mixin_instance.get_page_locale()
+        assert result == "ja_JP"
+
+    def test_get_page_lang_default(self, mixin_instance):
+        """Test get_page_lang returns 'en' when no locale set."""
+        result = mixin_instance.get_page_lang()
+        assert result == "en"
+
+    def test_get_page_lang_explicit(self, mixin_instance):
+        """Test get_page_lang extracts language from locale."""
+        mixin_instance.locale = "ja_JP"
+        result = mixin_instance.get_page_lang()
+        assert result == "ja"
+
+    def test_get_page_lang_chinese(self, mixin_instance):
+        """Test get_page_lang handles Chinese locales."""
+        mixin_instance.locale = "zh_CN"
+        result = mixin_instance.get_page_lang()
+        assert result == "zh"
+
+    def test_get_html_lang_default(self, mixin_instance):
+        """Test get_html_lang returns en-US by default."""
+        result = mixin_instance.get_html_lang()
+        assert result == "en-US"
+
+    def test_get_html_lang_explicit(self, mixin_instance):
+        """Test get_html_lang converts underscore to hyphen."""
+        mixin_instance.locale = "ja_JP"
+        result = mixin_instance.get_html_lang()
+        assert result == "ja-JP"
+
+    def test_get_html_lang_german(self, mixin_instance):
+        """Test get_html_lang works for German locale."""
+        mixin_instance.locale = "de_DE"
+        result = mixin_instance.get_html_lang()
+        assert result == "de-DE"
+
+    def test_get_page_locale_fallback_to_settings(self, mixin_instance, db, site):
+        """Test get_page_locale falls back to SEOSettings.default_locale."""
+        from wagtail_herald.models import SEOSettings
+
+        # Create settings with custom locale
+        SEOSettings.objects.create(site=site, default_locale="fr_FR")
+
+        # Give the mock page a get_site method that returns our site
+        mixin_instance.get_site = lambda: site
+
+        result = mixin_instance.get_page_locale()
+        assert result == "fr_FR"
+
+    def test_get_page_locale_handles_exception(self, mixin_instance):
+        """Test get_page_locale handles exceptions gracefully."""
+
+        # Make get_site raise an exception
+        def raise_error():
+            raise RuntimeError("Test error")
+
+        mixin_instance.get_site = raise_error
+
+        # Should fall back to default without raising
+        result = mixin_instance.get_page_locale()
+        assert result == "en_US"

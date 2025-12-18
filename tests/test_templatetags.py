@@ -1891,3 +1891,149 @@ class TestFilterEmptyValues:
         # Test with a tuple (not dict, list, str, bool, int, float, or None)
         result = _filter_empty_values((1, 2, 3))
         assert result == (1, 2, 3)
+
+
+class TestPageLangTemplateTag:
+    """Tests for page_lang template tag."""
+
+    def test_page_lang_with_seo_mixin(self, rf, db):
+        """Test page_lang returns language from page with SEOPageMixin."""
+
+        class MockPage:
+            def get_page_lang(self):
+                return "ja"
+
+        request = rf.get("/")
+        context = {"request": request, "page": MockPage()}
+
+        from wagtail_herald.templatetags.wagtail_herald import page_lang
+
+        result = page_lang(context)
+        assert result == "ja"
+
+    def test_page_lang_fallback_to_settings(self, rf, db, site):
+        """Test page_lang falls back to settings default_locale."""
+        from wagtail_herald.models import SEOSettings
+        from wagtail_herald.templatetags.wagtail_herald import page_lang
+
+        SEOSettings.objects.create(site=site, default_locale="de_DE")
+
+        request = rf.get("/")
+        request.site = site
+        context = {"request": request, "page": None}
+
+        result = page_lang(context)
+        assert result == "de"
+
+    def test_page_lang_default(self, rf, db):
+        """Test page_lang returns 'en' when no locale available."""
+        from wagtail_herald.templatetags.wagtail_herald import page_lang
+
+        context = {"request": None, "page": None}
+
+        result = page_lang(context)
+        assert result == "en"
+
+
+class TestPageLocaleTemplateTag:
+    """Tests for page_locale template tag."""
+
+    def test_page_locale_with_seo_mixin(self, rf, db):
+        """Test page_locale returns full locale from page with SEOPageMixin."""
+
+        class MockPage:
+            def get_page_locale(self):
+                return "ja_JP"
+
+        request = rf.get("/")
+        context = {"request": request, "page": MockPage()}
+
+        from wagtail_herald.templatetags.wagtail_herald import page_locale
+
+        result = page_locale(context)
+        assert result == "ja_JP"
+
+    def test_page_locale_fallback_to_settings(self, rf, db, site):
+        """Test page_locale falls back to settings default_locale."""
+        from wagtail_herald.models import SEOSettings
+        from wagtail_herald.templatetags.wagtail_herald import page_locale
+
+        SEOSettings.objects.create(site=site, default_locale="fr_FR")
+
+        request = rf.get("/")
+        request.site = site
+        context = {"request": request, "page": None}
+
+        result = page_locale(context)
+        assert result == "fr_FR"
+
+    def test_page_locale_default(self, rf, db):
+        """Test page_locale returns 'en_US' when no locale available."""
+        from wagtail_herald.templatetags.wagtail_herald import page_locale
+
+        context = {"request": None, "page": None}
+
+        result = page_locale(context)
+        assert result == "en_US"
+
+
+class TestBuildSeoContextLocale:
+    """Tests for build_seo_context locale handling."""
+
+    def test_og_locale_from_page(self, rf, db):
+        """Test og_locale uses page locale when available."""
+        from wagtail_herald.templatetags.wagtail_herald import build_seo_context
+
+        class MockPage:
+            title = "Test Page"
+            search_description = ""
+            full_url = "https://example.com/test/"
+
+            def get_page_locale(self):
+                return "ko_KR"
+
+            def get_canonical_url(self, request=None):
+                return self.full_url
+
+        request = rf.get("/")
+        result = build_seo_context(request, MockPage(), None)
+
+        assert result["og_locale"] == "ko_KR"
+
+    def test_og_locale_fallback_to_settings(self, rf, db, site):
+        """Test og_locale falls back to settings when page has no locale."""
+        from wagtail_herald.models import SEOSettings
+        from wagtail_herald.templatetags.wagtail_herald import build_seo_context
+
+        settings = SEOSettings.objects.create(site=site, default_locale="es_ES")
+
+        class MockPage:
+            title = "Test Page"
+            search_description = ""
+            full_url = "https://example.com/test/"
+
+            def get_canonical_url(self, request=None):
+                return self.full_url
+
+        request = rf.get("/")
+        request.site = site
+        result = build_seo_context(request, MockPage(), settings)
+
+        assert result["og_locale"] == "es_ES"
+
+    def test_og_locale_default(self, rf, db):
+        """Test og_locale defaults to en_US."""
+        from wagtail_herald.templatetags.wagtail_herald import build_seo_context
+
+        class MockPage:
+            title = "Test Page"
+            search_description = ""
+            full_url = "https://example.com/test/"
+
+            def get_canonical_url(self, request=None):
+                return self.full_url
+
+        request = rf.get("/")
+        result = build_seo_context(request, MockPage(), None)
+
+        assert result["og_locale"] == "en_US"

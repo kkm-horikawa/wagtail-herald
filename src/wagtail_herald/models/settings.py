@@ -36,6 +36,15 @@ ORGANIZATION_TYPE_CHOICES = [
 class SEOSettings(BaseSiteSetting):
     """Site-wide SEO configuration."""
 
+    # Fetch all image ForeignKeys in a single query
+    select_related = [
+        "organization_logo",
+        "default_og_image",
+        "favicon_svg",
+        "favicon_png",
+        "apple_touch_icon",
+    ]
+
     class Meta:
         verbose_name = _("SEO Settings")
 

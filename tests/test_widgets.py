@@ -4,9 +4,15 @@ from __future__ import annotations
 
 import json
 
+import pytest
+from django.core.exceptions import ValidationError
 from django.forms import Form
 
-from wagtail_herald.widgets import SchemaWidget
+from wagtail_herald.widgets import (
+    SchemaFormField,
+    SchemaWidget,
+    _is_empty_value,
+)
 
 
 class TestSchemaWidget:
@@ -57,31 +63,32 @@ class TestSchemaWidget:
         # Should fall back to empty state
         assert "types" in html
 
-    def test_value_from_datadict_parses_json(self) -> None:
-        """Widget should parse JSON from form data."""
+    def test_value_from_datadict_returns_json_string(self) -> None:
+        """Widget should return raw JSON string from form data."""
         widget = SchemaWidget()
         data = {"schema_data": '{"types": ["FAQPage"], "properties": {}}'}
 
         result = widget.value_from_datadict(data, {}, "schema_data")
 
-        assert result == {"types": ["FAQPage"], "properties": {}}
+        assert result == '{"types": ["FAQPage"], "properties": {}}'
 
     def test_value_from_datadict_handles_empty(self) -> None:
-        """Widget should handle empty form data."""
+        """Widget should return default JSON string for empty form data."""
         widget = SchemaWidget()
 
         result = widget.value_from_datadict({}, {}, "schema_data")
 
-        assert result == {"types": [], "properties": {}}
+        assert result == '{"types":[],"properties":{}}'
 
     def test_value_from_datadict_handles_invalid_json(self) -> None:
-        """Widget should handle invalid JSON in form data."""
+        """Widget should return invalid JSON string as-is (let form field validate)."""
         widget = SchemaWidget()
         data = {"schema_data": "{ invalid }"}
 
         result = widget.value_from_datadict(data, {}, "schema_data")
 
-        assert result == {"types": [], "properties": {}}
+        # Invalid JSON is returned as-is; validation happens in the form field
+        assert result == "{ invalid }"
 
     def test_format_value_with_dict(self) -> None:
         """format_value should convert dict to JSON string."""
@@ -157,3 +164,223 @@ class TestSchemaWidgetInForm:
         html = str(form)
 
         assert "Article" in html
+
+
+class TestIsEmptyValue:
+    """Tests for _is_empty_value helper function."""
+
+    def test_none_is_empty(self) -> None:
+        """None should be considered empty."""
+        assert _is_empty_value(None, "string") is True
+        assert _is_empty_value(None, "array") is True
+        assert _is_empty_value(None, "object") is True
+
+    def test_empty_string_is_empty(self) -> None:
+        """Empty strings should be considered empty."""
+        assert _is_empty_value("", "string") is True
+        assert _is_empty_value("   ", "string") is True
+
+    def test_non_empty_string_is_not_empty(self) -> None:
+        """Non-empty strings should not be considered empty."""
+        assert _is_empty_value("hello", "string") is False
+        assert _is_empty_value("2025-01-15", "datetime") is False
+
+    def test_empty_array_is_empty(self) -> None:
+        """Empty arrays should be considered empty."""
+        assert _is_empty_value([], "array") is True
+
+    def test_array_with_empty_objects_is_empty(self) -> None:
+        """Arrays containing only empty objects should be considered empty."""
+        assert _is_empty_value([{"@type": "Question", "name": "", "text": ""}], "array") is True
+        assert _is_empty_value([{"@type": "HowToStep", "text": ""}], "array") is True
+
+    def test_array_with_content_is_not_empty(self) -> None:
+        """Arrays with non-empty content should not be considered empty."""
+        assert _is_empty_value(["ingredient1", "ingredient2"], "array") is False
+        assert _is_empty_value([{"@type": "Question", "name": "What?"}], "array") is False
+
+    def test_empty_object_is_empty(self) -> None:
+        """Objects with only empty values should be considered empty."""
+        assert _is_empty_value({}, "object") is True
+        assert _is_empty_value({"@type": "PostalAddress"}, "object") is True
+        assert _is_empty_value({"@type": "PostalAddress", "streetAddress": ""}, "object") is True
+
+    def test_object_with_content_is_not_empty(self) -> None:
+        """Objects with non-empty values should not be considered empty."""
+        assert _is_empty_value({"streetAddress": "123 Main St"}, "object") is False
+        assert _is_empty_value({"@type": "Place", "name": "Tokyo"}, "object") is False
+
+
+class TestSchemaFormFieldValidation:
+    """Tests for SchemaFormField validation."""
+
+    def test_valid_data_passes(self) -> None:
+        """Valid data should pass validation."""
+        field = SchemaFormField()
+        value = {
+            "types": ["Article"],
+            "properties": {"Article": {"articleSection": "Tech"}},
+        }
+        result = field.clean(value)
+        assert result == value
+
+    def test_empty_data_passes(self) -> None:
+        """Empty data should pass validation."""
+        field = SchemaFormField()
+        result = field.clean(None)
+        assert result == {"types": [], "properties": {}}
+
+    def test_invalid_json_raises_error(self) -> None:
+        """Invalid JSON string should raise ValidationError."""
+        field = SchemaFormField()
+        with pytest.raises(ValidationError) as exc_info:
+            field.clean("{ invalid json }")
+        assert "Invalid JSON" in str(exc_info.value)
+
+    def test_invalid_data_format_raises_error(self) -> None:
+        """Non-dict value should raise ValidationError."""
+        field = SchemaFormField()
+        with pytest.raises(ValidationError) as exc_info:
+            field.clean(["not", "a", "dict"])
+        assert "Invalid schema data format" in str(exc_info.value)
+
+    def test_recipe_without_ingredients_fails(self) -> None:
+        """Recipe without ingredients should fail validation."""
+        field = SchemaFormField()
+        value = {
+            "types": ["Recipe"],
+            "properties": {
+                "Recipe": {
+                    "recipeIngredient": [],
+                    "recipeInstructions": [{"@type": "HowToStep", "text": "Step 1"}],
+                }
+            },
+        }
+        with pytest.raises(ValidationError) as exc_info:
+            field.clean(value)
+        assert "Ingredients" in str(exc_info.value)
+
+    def test_recipe_without_instructions_fails(self) -> None:
+        """Recipe without instructions should fail validation."""
+        field = SchemaFormField()
+        value = {
+            "types": ["Recipe"],
+            "properties": {
+                "Recipe": {
+                    "recipeIngredient": ["flour", "sugar"],
+                    "recipeInstructions": [],
+                }
+            },
+        }
+        with pytest.raises(ValidationError) as exc_info:
+            field.clean(value)
+        assert "Instructions" in str(exc_info.value)
+
+    def test_recipe_with_both_passes(self) -> None:
+        """Recipe with both ingredients and instructions should pass."""
+        field = SchemaFormField()
+        value = {
+            "types": ["Recipe"],
+            "properties": {
+                "Recipe": {
+                    "recipeIngredient": ["flour", "sugar"],
+                    "recipeInstructions": [{"@type": "HowToStep", "text": "Mix"}],
+                }
+            },
+        }
+        result = field.clean(value)
+        assert result == value
+
+    def test_faqpage_without_questions_fails(self) -> None:
+        """FAQPage without questions should fail validation."""
+        field = SchemaFormField()
+        value = {
+            "types": ["FAQPage"],
+            "properties": {
+                "FAQPage": {
+                    "mainEntity": [
+                        {"@type": "Question", "name": "", "acceptedAnswer": {"@type": "Answer", "text": ""}}
+                    ]
+                }
+            },
+        }
+        with pytest.raises(ValidationError) as exc_info:
+            field.clean(value)
+        assert "Questions" in str(exc_info.value)
+
+    def test_faqpage_with_questions_passes(self) -> None:
+        """FAQPage with questions should pass validation."""
+        field = SchemaFormField()
+        value = {
+            "types": ["FAQPage"],
+            "properties": {
+                "FAQPage": {
+                    "mainEntity": [
+                        {"@type": "Question", "name": "What is this?", "acceptedAnswer": {"@type": "Answer", "text": "A test"}}
+                    ]
+                }
+            },
+        }
+        result = field.clean(value)
+        assert result == value
+
+    def test_event_without_start_date_fails(self) -> None:
+        """Event without startDate should fail validation."""
+        field = SchemaFormField()
+        value = {
+            "types": ["Event"],
+            "properties": {
+                "Event": {
+                    "startDate": "",
+                    "location": {"@type": "Place", "name": "Tokyo"},
+                }
+            },
+        }
+        with pytest.raises(ValidationError) as exc_info:
+            field.clean(value)
+        assert "Start Date" in str(exc_info.value)
+
+    def test_event_without_location_fails(self) -> None:
+        """Event without location should fail validation."""
+        field = SchemaFormField()
+        value = {
+            "types": ["Event"],
+            "properties": {
+                "Event": {
+                    "startDate": "2025-03-15T19:00:00",
+                    "location": {"@type": "Place", "name": ""},
+                }
+            },
+        }
+        with pytest.raises(ValidationError) as exc_info:
+            field.clean(value)
+        assert "Location" in str(exc_info.value)
+
+    def test_multiple_types_with_one_invalid(self) -> None:
+        """Multiple types where one is invalid should fail validation."""
+        field = SchemaFormField()
+        value = {
+            "types": ["Article", "Recipe"],
+            "properties": {
+                "Article": {"articleSection": "Tech"},
+                "Recipe": {"recipeIngredient": [], "recipeInstructions": []},
+            },
+        }
+        with pytest.raises(ValidationError) as exc_info:
+            field.clean(value)
+        # Both Recipe errors should be present in a single joined message
+        error_str = str(exc_info.value)
+        assert "Ingredients" in error_str
+        assert "Instructions" in error_str
+        # Errors should be joined with semicolon
+        assert ";" in error_str
+
+    def test_types_without_required_fields_pass(self) -> None:
+        """Schema types without required fields should pass."""
+        field = SchemaFormField()
+        value = {
+            "types": ["Article", "Product", "Person"],
+            "properties": {},
+        }
+        result = field.clean(value)
+        assert result == value

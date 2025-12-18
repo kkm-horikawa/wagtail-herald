@@ -33,11 +33,20 @@ const SCHEMA_TEMPLATES = {
         description: "SearchAction for sitelinks search box"
       }
     ],
-    placeholder: {},
+    placeholder: {
+      name: "(自動: サイト名)",
+      url: "(自動: サイトURL)"
+    },
     example: {
       potentialAction: {
         "@type": "SearchAction",
         target: "https://example.com/search?q={search_term_string}"
+      }
+    },
+    exampleJa: {
+      potentialAction: {
+        "@type": "SearchAction",
+        target: "https://example.co.jp/search?q={search_term_string}"
       }
     },
     googleDocsUrl: "https://schema.org/WebSite"
@@ -74,8 +83,14 @@ const SCHEMA_TEMPLATES = {
     ],
     requiredFields: [],
     optionalFields: [],
-    placeholder: {},
+    placeholder: {
+      name: "(自動: 組織名)",
+      url: "(自動: サイトURL)",
+      logo: "(自動: ロゴ画像)",
+      sameAs: "(自動: SNSリンク)"
+    },
     example: {},
+    exampleJa: {},
     googleDocsUrl: "https://developers.google.com/search/docs/appearance/structured-data/organization"
   },
   BreadcrumbList: {
@@ -95,8 +110,11 @@ const SCHEMA_TEMPLATES = {
     ],
     requiredFields: [],
     optionalFields: [],
-    placeholder: {},
+    placeholder: {
+      itemListElement: "(自動: ページ階層から生成)"
+    },
     example: {},
+    exampleJa: {},
     googleDocsUrl: "https://developers.google.com/search/docs/appearance/structured-data/breadcrumb"
   },
   // ===================
@@ -130,6 +148,7 @@ const SCHEMA_TEMPLATES = {
     optionalFields: [],
     placeholder: {},
     example: {},
+    exampleJa: {},
     googleDocsUrl: "https://schema.org/WebPage"
   },
   Article: {
@@ -180,8 +199,11 @@ const SCHEMA_TEMPLATES = {
       },
       { name: "wordCount", type: "number", description: "Word count" }
     ],
-    placeholder: {},
-    example: { articleSection: "Technology", wordCount: 1500 },
+    placeholder: {
+      articleSection: ""
+    },
+    example: { articleSection: "Technology" },
+    exampleJa: { articleSection: "テクノロジー" },
     googleDocsUrl: "https://developers.google.com/search/docs/appearance/structured-data/article"
   },
   NewsArticle: {
@@ -231,8 +253,11 @@ const SCHEMA_TEMPLATES = {
         description: "News dateline location"
       }
     ],
-    placeholder: {},
+    placeholder: {
+      dateline: ""
+    },
     example: { dateline: "TOKYO" },
+    exampleJa: { dateline: "東京" },
     googleDocsUrl: "https://developers.google.com/search/docs/appearance/structured-data/article"
   },
   BlogPosting: {
@@ -283,8 +308,12 @@ const SCHEMA_TEMPLATES = {
         description: "Comma-separated keywords"
       }
     ],
-    placeholder: {},
+    placeholder: {
+      articleSection: "",
+      keywords: ""
+    },
     example: { articleSection: "Tech Blog", keywords: "wagtail, cms, python" },
+    exampleJa: { articleSection: "技術ブログ", keywords: "Wagtail, CMS, Python, Web開発" },
     googleDocsUrl: "https://developers.google.com/search/docs/appearance/structured-data/article"
   },
   // ===================
@@ -325,14 +354,53 @@ const SCHEMA_TEMPLATES = {
       offers: {
         "@type": "Offer",
         price: "",
-        priceCurrency: "JPY",
-        availability: "https://schema.org/InStock"
-      }
+        priceCurrency: "USD",
+        availability: "https://schema.org/InStock",
+        url: ""
+      },
+      brand: "",
+      sku: "",
+      gtin: "",
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: "",
+        reviewCount: ""
+      },
+      review: []
     },
     example: {
-      offers: { "@type": "Offer", price: "1999", priceCurrency: "JPY" },
-      brand: "Example Brand",
-      sku: "PROD-001"
+      offers: {
+        "@type": "Offer",
+        price: "29.99",
+        priceCurrency: "USD",
+        availability: "https://schema.org/InStock",
+        url: "https://example.com/products/wireless-earbuds"
+      },
+      brand: "TechBrand",
+      sku: "WE-2024-001",
+      gtin: "012345678905",
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: "4.5",
+        reviewCount: "128"
+      }
+    },
+    exampleJa: {
+      offers: {
+        "@type": "Offer",
+        price: "3980",
+        priceCurrency: "JPY",
+        availability: "https://schema.org/InStock",
+        url: "https://example.co.jp/products/wireless-earbuds"
+      },
+      brand: "サンプルブランド",
+      sku: "WE-2024-001",
+      gtin: "4901234567890",
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: "4.3",
+        reviewCount: "156"
+      }
     },
     googleDocsUrl: "https://developers.google.com/search/docs/appearance/structured-data/product"
   },
@@ -384,20 +452,78 @@ const SCHEMA_TEMPLATES = {
         addressLocality: "",
         addressRegion: "",
         postalCode: "",
-        addressCountry: "JP"
+        addressCountry: "US"
+      },
+      telephone: "",
+      priceRange: "",
+      openingHoursSpecification: [],
+      geo: {
+        "@type": "GeoCoordinates",
+        latitude: "",
+        longitude: ""
       }
     },
     example: {
       address: {
         "@type": "PostalAddress",
-        streetAddress: "1-1-1 Shibuya",
-        addressLocality: "Shibuya-ku",
-        addressRegion: "Tokyo",
+        streetAddress: "123 Main Street, Suite 100",
+        addressLocality: "San Francisco",
+        addressRegion: "CA",
+        postalCode: "94102",
+        addressCountry: "US"
+      },
+      telephone: "+1-415-555-1234",
+      priceRange: "$$",
+      geo: {
+        "@type": "GeoCoordinates",
+        latitude: "37.7749",
+        longitude: "-122.4194"
+      },
+      openingHoursSpecification: [
+        {
+          "@type": "OpeningHoursSpecification",
+          dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+          opens: "09:00",
+          closes: "18:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          dayOfWeek: ["Saturday"],
+          opens: "10:00",
+          closes: "15:00"
+        }
+      ]
+    },
+    exampleJa: {
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: "渋谷1-1-1 渋谷ビル3F",
+        addressLocality: "渋谷区",
+        addressRegion: "東京都",
         postalCode: "150-0002",
         addressCountry: "JP"
       },
-      telephone: "+81-3-1234-5678",
-      priceRange: "$$"
+      telephone: "03-1234-5678",
+      priceRange: "¥¥",
+      geo: {
+        "@type": "GeoCoordinates",
+        latitude: "35.6595",
+        longitude: "139.7004"
+      },
+      openingHoursSpecification: [
+        {
+          "@type": "OpeningHoursSpecification",
+          dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+          opens: "10:00",
+          closes: "19:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          dayOfWeek: ["Saturday", "Sunday"],
+          opens: "11:00",
+          closes: "18:00"
+        }
+      ]
     },
     googleDocsUrl: "https://developers.google.com/search/docs/appearance/structured-data/local-business"
   },
@@ -431,10 +557,49 @@ const SCHEMA_TEMPLATES = {
       { name: "areaServed", type: "string", description: "Service area" },
       { name: "offers", type: "object", description: "Service pricing" }
     ],
-    placeholder: {},
+    placeholder: {
+      serviceType: "",
+      areaServed: "",
+      offers: {
+        "@type": "Offer",
+        price: "",
+        priceCurrency: "USD"
+      },
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: "",
+        reviewCount: ""
+      },
+      hoursAvailable: "",
+      brand: ""
+    },
     example: {
       serviceType: "Web Development",
-      areaServed: "Japan"
+      areaServed: "San Francisco Bay Area",
+      offers: {
+        "@type": "Offer",
+        price: "5000",
+        priceCurrency: "USD"
+      },
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: "4.8",
+        reviewCount: "156"
+      }
+    },
+    exampleJa: {
+      serviceType: "Webサイト制作",
+      areaServed: "東京都、神奈川県、埼玉県、千葉県",
+      offers: {
+        "@type": "Offer",
+        price: "300000",
+        priceCurrency: "JPY"
+      },
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: "4.7",
+        reviewCount: "89"
+      }
     },
     googleDocsUrl: "https://schema.org/Service"
   },
@@ -463,6 +628,11 @@ const SCHEMA_TEMPLATES = {
           "@type": "Question",
           name: "",
           acceptedAnswer: { "@type": "Answer", text: "" }
+        },
+        {
+          "@type": "Question",
+          name: "",
+          acceptedAnswer: { "@type": "Answer", text: "" }
         }
       ]
     },
@@ -475,6 +645,42 @@ const SCHEMA_TEMPLATES = {
             "@type": "Answer",
             text: "A comprehensive SEO toolkit for Wagtail CMS."
           }
+        },
+        {
+          "@type": "Question",
+          name: "How do I install it?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Run pip install wagtail-herald and add to INSTALLED_APPS."
+          }
+        }
+      ]
+    },
+    exampleJa: {
+      mainEntity: [
+        {
+          "@type": "Question",
+          name: "送料はいくらですか？",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "全国一律550円（税込）です。5,000円以上のご購入で送料無料となります。"
+          }
+        },
+        {
+          "@type": "Question",
+          name: "返品・交換はできますか？",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "商品到着後7日以内であれば、未開封・未使用の商品に限り返品・交換を承ります。"
+          }
+        },
+        {
+          "@type": "Question",
+          name: "支払い方法は何がありますか？",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "クレジットカード、銀行振込、代金引換、コンビニ決済がご利用いただけます。"
+          }
         }
       ]
     },
@@ -485,8 +691,8 @@ const SCHEMA_TEMPLATES = {
     label: "How-To",
     labelJa: "ハウツー",
     category: "interactive",
-    helpText: "Step-by-step instructions. Shows steps in search results.",
-    helpTextJa: "ステップバイステップの手順。検索結果に手順が表示されます。",
+    helpText: "Step-by-step instructions. (Note: Rich results deprecated Sep 2023)",
+    helpTextJa: "ステップバイステップの手順。(※2023年9月リッチリザルト廃止)",
     autoFields: [
       {
         schemaProperty: "name",
@@ -523,8 +729,21 @@ const SCHEMA_TEMPLATES = {
           "@type": "HowToStep",
           name: "",
           text: ""
+        },
+        {
+          "@type": "HowToStep",
+          name: "",
+          text: ""
         }
-      ]
+      ],
+      totalTime: "",
+      estimatedCost: {
+        "@type": "MonetaryAmount",
+        currency: "USD",
+        value: ""
+      },
+      supply: [],
+      tool: []
     },
     example: {
       step: [
@@ -540,6 +759,31 @@ const SCHEMA_TEMPLATES = {
         }
       ],
       totalTime: "PT10M"
+    },
+    exampleJa: {
+      step: [
+        {
+          "@type": "HowToStep",
+          name: "材料を準備する",
+          text: "必要な材料をすべて計量し、室温に戻しておきます。"
+        },
+        {
+          "@type": "HowToStep",
+          name: "生地を作る",
+          text: "ボウルに粉類を入れ、よく混ぜ合わせます。"
+        },
+        {
+          "@type": "HowToStep",
+          name: "焼き上げる",
+          text: "180度に予熱したオーブンで30分焼きます。"
+        }
+      ],
+      totalTime: "PT45M",
+      estimatedCost: {
+        "@type": "MonetaryAmount",
+        currency: "JPY",
+        value: "500"
+      }
     },
     googleDocsUrl: "https://developers.google.com/search/docs/appearance/structured-data/how-to"
   },
@@ -608,6 +852,7 @@ const SCHEMA_TEMPLATES = {
     ],
     placeholder: {
       startDate: "",
+      endDate: "",
       location: {
         "@type": "Place",
         name: "",
@@ -615,25 +860,79 @@ const SCHEMA_TEMPLATES = {
           "@type": "PostalAddress",
           streetAddress: "",
           addressLocality: "",
-          addressCountry: "JP"
+          addressCountry: "US"
         }
+      },
+      eventStatus: "https://schema.org/EventScheduled",
+      eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+      offers: {
+        "@type": "Offer",
+        price: "",
+        priceCurrency: "USD",
+        availability: "https://schema.org/InStock",
+        url: ""
+      },
+      performer: {
+        "@type": "Person",
+        name: ""
+      },
+      organizer: {
+        "@type": "Organization",
+        name: ""
       }
     },
     example: {
-      startDate: "2025-03-15T19:00:00+09:00",
-      endDate: "2025-03-15T21:00:00+09:00",
+      startDate: "2025-03-15T19:00:00-08:00",
+      endDate: "2025-03-15T21:00:00-08:00",
       location: {
         "@type": "Place",
-        name: "Tokyo International Forum",
+        name: "Moscone Center",
         address: {
           "@type": "PostalAddress",
-          streetAddress: "3-5-1 Marunouchi",
-          addressLocality: "Chiyoda-ku",
-          addressCountry: "JP"
+          streetAddress: "747 Howard St",
+          addressLocality: "San Francisco",
+          addressRegion: "CA",
+          postalCode: "94103",
+          addressCountry: "US"
         }
       },
       eventStatus: "https://schema.org/EventScheduled",
       eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode"
+    },
+    exampleJa: {
+      startDate: "2025-04-20T14:00:00+09:00",
+      endDate: "2025-04-20T17:00:00+09:00",
+      location: {
+        "@type": "Place",
+        name: "東京国際フォーラム ホールA",
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: "丸の内3-5-1",
+          addressLocality: "千代田区",
+          addressRegion: "東京都",
+          postalCode: "100-0005",
+          addressCountry: "JP"
+        }
+      },
+      eventStatus: "https://schema.org/EventScheduled",
+      eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+      offers: {
+        "@type": "Offer",
+        price: "5000",
+        priceCurrency: "JPY",
+        availability: "https://schema.org/InStock",
+        url: "https://example.co.jp/events/spring-concert/tickets",
+        validFrom: "2025-02-01T10:00:00+09:00"
+      },
+      performer: {
+        "@type": "Person",
+        name: "山田太郎"
+      },
+      organizer: {
+        "@type": "Organization",
+        name: "株式会社サンプルイベント",
+        url: "https://example.co.jp"
+      }
     },
     googleDocsUrl: "https://developers.google.com/search/docs/appearance/structured-data/event"
   },
@@ -676,11 +975,41 @@ const SCHEMA_TEMPLATES = {
         description: "Educational organization"
       }
     ],
-    placeholder: {},
+    placeholder: {
+      jobTitle: "",
+      worksFor: { "@type": "Organization", name: "" },
+      email: "",
+      url: "",
+      sameAs: [],
+      alumniOf: { "@type": "EducationalOrganization", name: "" },
+      knowsAbout: [],
+      award: []
+    },
     example: {
-      jobTitle: "Software Engineer",
-      worksFor: { "@type": "Organization", name: "Example Corp" },
-      sameAs: ["https://twitter.com/example", "https://github.com/example"]
+      jobTitle: "Senior Software Engineer",
+      worksFor: { "@type": "Organization", name: "TechCorp Inc." },
+      url: "https://example.com/team/jane-smith",
+      sameAs: [
+        "https://twitter.com/janesmith_dev",
+        "https://github.com/janesmith",
+        "https://linkedin.com/in/janesmith"
+      ],
+      alumniOf: { "@type": "EducationalOrganization", name: "Stanford University" },
+      knowsAbout: ["Python", "Django", "Wagtail CMS", "Cloud Architecture"],
+      award: ["Best Developer 2024", "Google Developer Expert"]
+    },
+    exampleJa: {
+      jobTitle: "シニアエンジニア",
+      worksFor: { "@type": "Organization", name: "株式会社サンプルテック" },
+      url: "https://example.co.jp/team/tanaka-hanako",
+      sameAs: [
+        "https://twitter.com/tanaka_dev",
+        "https://github.com/tanaka-hanako",
+        "https://qiita.com/tanaka_hanako"
+      ],
+      alumniOf: { "@type": "EducationalOrganization", name: "東京大学" },
+      knowsAbout: ["Python", "Django", "Wagtail CMS", "クラウドアーキテクチャ"],
+      award: ["2024年度 社内MVP賞", "OSS貢献賞"]
     },
     googleDocsUrl: "https://schema.org/Person"
   },
@@ -759,8 +1088,30 @@ const SCHEMA_TEMPLATES = {
       }
     ],
     placeholder: {
-      recipeIngredient: [],
-      recipeInstructions: [{ "@type": "HowToStep", text: "" }]
+      recipeIngredient: ["", "", ""],
+      recipeInstructions: [
+        { "@type": "HowToStep", text: "" },
+        { "@type": "HowToStep", text: "" }
+      ],
+      prepTime: "",
+      cookTime: "",
+      totalTime: "",
+      recipeYield: "",
+      recipeCategory: "",
+      recipeCuisine: "",
+      keywords: "",
+      nutrition: {
+        "@type": "NutritionInformation",
+        calories: ""
+      },
+      video: {
+        "@type": "VideoObject",
+        name: "",
+        description: "",
+        thumbnailUrl: "",
+        contentUrl: "",
+        uploadDate: ""
+      }
     },
     example: {
       recipeIngredient: ["2 cups flour", "1 cup sugar", "2 eggs"],
@@ -771,8 +1122,59 @@ const SCHEMA_TEMPLATES = {
       ],
       prepTime: "PT15M",
       cookTime: "PT30M",
+      totalTime: "PT45M",
       recipeYield: "8 servings",
-      recipeCuisine: "American"
+      recipeCategory: "Dessert",
+      recipeCuisine: "American",
+      keywords: "cake, easy baking, dessert",
+      nutrition: {
+        "@type": "NutritionInformation",
+        calories: "280 kcal"
+      },
+      video: {
+        "@type": "VideoObject",
+        name: "How to Make Easy Cake",
+        description: "Step by step video tutorial",
+        thumbnailUrl: "https://example.com/cake-video-thumb.jpg",
+        contentUrl: "https://example.com/cake-video.mp4",
+        uploadDate: "2025-01-15T08:00:00+09:00"
+      }
+    },
+    exampleJa: {
+      recipeIngredient: [
+        "豚バラ肉 300g",
+        "大根 1/2本",
+        "こんにゃく 1枚",
+        "醤油 大さじ3",
+        "みりん 大さじ2",
+        "砂糖 大さじ1",
+        "だし汁 400ml"
+      ],
+      recipeInstructions: [
+        { "@type": "HowToStep", text: "豚バラ肉は3cm幅に切り、大根は2cm厚さのいちょう切りにする。" },
+        { "@type": "HowToStep", text: "こんにゃくは手でちぎり、下茹でする。" },
+        { "@type": "HowToStep", text: "鍋に豚肉を入れて炒め、色が変わったら大根とこんにゃくを加える。" },
+        { "@type": "HowToStep", text: "だし汁と調味料を加え、落し蓋をして弱火で40分煮込む。" }
+      ],
+      prepTime: "PT20M",
+      cookTime: "PT40M",
+      totalTime: "PT60M",
+      recipeYield: "4人分",
+      recipeCategory: "主菜",
+      recipeCuisine: "和食",
+      keywords: "豚の角煮, 和食, 煮物, 家庭料理",
+      nutrition: {
+        "@type": "NutritionInformation",
+        calories: "450 kcal"
+      },
+      video: {
+        "@type": "VideoObject",
+        name: "豚の角煮の作り方",
+        description: "プロが教える本格豚の角煮レシピ",
+        thumbnailUrl: "https://example.co.jp/recipes/kakuni-thumb.jpg",
+        contentUrl: "https://example.co.jp/recipes/kakuni-video.mp4",
+        uploadDate: "2025-01-15T08:00:00+09:00"
+      }
     },
     googleDocsUrl: "https://developers.google.com/search/docs/appearance/structured-data/recipe"
   },
@@ -820,7 +1222,21 @@ const SCHEMA_TEMPLATES = {
         description: "Total enrollments"
       }
     ],
-    placeholder: {},
+    placeholder: {
+      hasCourseInstance: [
+        {
+          "@type": "CourseInstance",
+          courseMode: "",
+          startDate: "",
+          endDate: ""
+        }
+      ],
+      offers: {
+        "@type": "Offer",
+        price: "",
+        priceCurrency: "USD"
+      }
+    },
     example: {
       courseCode: "CS101",
       educationalLevel: "Beginner",
@@ -831,6 +1247,24 @@ const SCHEMA_TEMPLATES = {
           startDate: "2025-04-01"
         }
       ]
+    },
+    exampleJa: {
+      courseCode: "WEB-001",
+      educationalLevel: "初級",
+      hasCourseInstance: [
+        {
+          "@type": "CourseInstance",
+          courseMode: "オンライン",
+          startDate: "2025-04-01",
+          endDate: "2025-06-30"
+        }
+      ],
+      offers: {
+        "@type": "Offer",
+        price: "29800",
+        priceCurrency: "JPY"
+      },
+      totalHistoricalEnrollment: 1500
     },
     googleDocsUrl: "https://developers.google.com/search/docs/appearance/structured-data/course"
   },
@@ -902,19 +1336,58 @@ const SCHEMA_TEMPLATES = {
           addressLocality: "",
           addressRegion: "",
           postalCode: "",
-          addressCountry: "JP"
+          addressCountry: "US"
         }
-      }
+      },
+      employmentType: "",
+      validThrough: "",
+      baseSalary: {
+        "@type": "MonetaryAmount",
+        currency: "USD",
+        value: {
+          "@type": "QuantitativeValue",
+          minValue: "",
+          maxValue: "",
+          unitText: "YEAR"
+        }
+      },
+      jobLocationType: "",
+      directApply: true
     },
     example: {
       jobLocation: {
         "@type": "Place",
         address: {
           "@type": "PostalAddress",
-          streetAddress: "1-1-1 Shibuya",
-          addressLocality: "Shibuya-ku",
-          addressRegion: "Tokyo",
-          postalCode: "150-0002",
+          streetAddress: "100 Main Street",
+          addressLocality: "San Francisco",
+          addressRegion: "CA",
+          postalCode: "94102",
+          addressCountry: "US"
+        }
+      },
+      employmentType: "FULL_TIME",
+      baseSalary: {
+        "@type": "MonetaryAmount",
+        currency: "USD",
+        value: {
+          "@type": "QuantitativeValue",
+          minValue: 12e4,
+          maxValue: 18e4,
+          unitText: "YEAR"
+        }
+      },
+      validThrough: "2025-06-30T23:59:59-08:00"
+    },
+    exampleJa: {
+      jobLocation: {
+        "@type": "Place",
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: "渋谷2-21-1 渋谷ヒカリエ",
+          addressLocality: "渋谷区",
+          addressRegion: "東京都",
+          postalCode: "150-8510",
           addressCountry: "JP"
         }
       },
@@ -924,12 +1397,17 @@ const SCHEMA_TEMPLATES = {
         currency: "JPY",
         value: {
           "@type": "QuantitativeValue",
-          minValue: 5e6,
-          maxValue: 8e6,
+          minValue: 45e5,
+          maxValue: 7e6,
           unitText: "YEAR"
         }
       },
-      validThrough: "2025-06-30T23:59:59+09:00"
+      validThrough: "2025-03-31T23:59:59+09:00",
+      jobLocationType: "TELECOMMUTE",
+      applicantLocationRequirements: {
+        "@type": "Country",
+        name: "Japan"
+      }
     },
     googleDocsUrl: "https://developers.google.com/search/docs/appearance/structured-data/job-posting"
   }
@@ -976,8 +1454,17 @@ function isJapaneseLocale() {
   const htmlLang = document.documentElement.lang;
   return (htmlLang == null ? void 0 : htmlLang.startsWith("ja")) ?? false;
 }
+function createDefaultState() {
+  const state = { types: [], properties: {} };
+  const defaultOnTemplates = getDefaultOnTemplates();
+  for (const template of defaultOnTemplates) {
+    state.types.push(template.type);
+    state.properties[template.type] = { ...template.placeholder };
+  }
+  return state;
+}
 function initSchemaWidget(container, initialState) {
-  const state = initialState ?? { types: [], properties: {} };
+  const state = initialState ? { types: [...initialState.types], properties: { ...initialState.properties } } : createDefaultState();
   const isJa = isJapaneseLocale();
   render(container, state, isJa);
   return {
@@ -1039,6 +1526,7 @@ function renderTypeCheckboxes(selectedTypes, isJa) {
     `;
   }).join("");
 }
+const AUTO_GENERATED_TYPES = ["WebSite", "Organization", "BreadcrumbList", "WebPage"];
 function renderPropertyEditors(state, isJa) {
   if (state.types.length === 0) {
     const emptyMessage = isJa ? "スキーマタイプを選択してプロパティを設定してください" : "Select schema types above to configure properties";
@@ -1047,14 +1535,38 @@ function renderPropertyEditors(state, isJa) {
   return state.types.map((type) => {
     const template = SCHEMA_TEMPLATES[type];
     if (!template) return "";
-    const properties = state.properties[type] ?? template.placeholder;
+    const savedProps = state.properties[type];
+    const properties = savedProps && Object.keys(savedProps).length > 0 ? savedProps : template.placeholder;
     const label = isJa ? template.labelJa : template.label;
     const helpText = isJa ? template.helpTextJa : template.helpText;
+    const isAutoGenerated = AUTO_GENERATED_TYPES.includes(type);
     const autoFieldsLabel = isJa ? "自動入力" : "Auto-filled";
     const exampleLabel = isJa ? "例" : "Example";
     const requiredLabel = isJa ? "必須項目" : "Required";
     const optionalLabel = isJa ? "オプション" : "Optional";
     const autoFieldsList = template.autoFields.length > 0 ? template.autoFields.map((f) => f.schemaProperty).join(", ") : isJa ? "なし" : "None";
+    if (isAutoGenerated) {
+      const fullyAutoMessage = isJa ? "※ このスキーマは完全自動生成されます。カスタマイズは不要です。" : "※ This schema is fully auto-generated. No customization needed.";
+      return `
+        <details class="schema-widget__editor">
+          <summary class="schema-widget__editor-header">
+            <span class="schema-widget__editor-title">${escapeHtml(label)}</span>
+            <a href="${escapeHtml(template.googleDocsUrl)}"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="schema-widget__docs-link"
+               title="View documentation">?</a>
+          </summary>
+          <div class="schema-widget__editor-content">
+            <div class="schema-widget__help">${escapeHtml(helpText)}</div>
+            <div class="schema-widget__auto-fields">
+              <strong>${escapeHtml(autoFieldsLabel)}:</strong> ${escapeHtml(autoFieldsList)}
+            </div>
+            <div class="schema-widget__fully-auto">${escapeHtml(fullyAutoMessage)}</div>
+          </div>
+        </details>
+      `;
+    }
     return `
       <details class="schema-widget__editor" open>
         <summary class="schema-widget__editor-header">
@@ -1086,12 +1598,15 @@ function renderPropertyEditors(state, isJa) {
             >${escapeHtml(JSON.stringify(properties, null, 2))}</textarea>
           </div>
 
-          ${Object.keys(template.example).length > 0 ? `
-            <div class="schema-widget__example">
-              <strong>${escapeHtml(exampleLabel)}:</strong>
-              <code>${escapeHtml(JSON.stringify(template.example))}</code>
-            </div>
-          ` : ""}
+          ${(() => {
+      const example = isJa && Object.keys(template.exampleJa).length > 0 ? template.exampleJa : template.example;
+      return Object.keys(example).length > 0 ? `
+            <details class="schema-widget__example">
+              <summary class="schema-widget__example-header">${escapeHtml(exampleLabel)}</summary>
+              <code>${escapeHtml(JSON.stringify(example, null, 2))}</code>
+            </details>
+          ` : "";
+    })()}
         </div>
       </details>
     `;
@@ -1130,7 +1645,7 @@ function attachEventListeners(container, state, isJa) {
     ".schema-widget__json"
   );
   for (const textarea of textareas) {
-    textarea.addEventListener("blur", () => {
+    textarea.addEventListener("input", () => {
       handleJsonChange(state, textarea);
     });
   }
@@ -1162,7 +1677,7 @@ function handleCheckboxChange(container, state, checkbox, isJa) {
       ".schema-widget__json"
     );
     for (const textarea of textareas) {
-      textarea.addEventListener("blur", () => {
+      textarea.addEventListener("input", () => {
         handleJsonChange(state, textarea);
       });
     }
@@ -1197,6 +1712,7 @@ class BoundSchemaWidget {
     this.container = container;
     this.hiddenInput = hiddenInput;
     try {
+      container.dataset.schemaWidgetInitialized = "true";
       this.widget = initSchemaWidget(container, initialState);
       this.setupSync();
       this.syncToHiddenInput();
@@ -1214,16 +1730,18 @@ class BoundSchemaWidget {
         this.syncToHiddenInput();
       }
     });
-    this.container.addEventListener(
-      "blur",
-      (e) => {
-        const target = e.target;
-        if (target.tagName === "TEXTAREA") {
-          this.syncToHiddenInput();
-        }
-      },
-      true
-    );
+    this.container.addEventListener("input", (e) => {
+      const target = e.target;
+      if (target.tagName === "TEXTAREA") {
+        this.syncToHiddenInput();
+      }
+    });
+    const form = this.hiddenInput.closest("form");
+    if (form) {
+      form.addEventListener("submit", () => {
+        this.syncToHiddenInput();
+      });
+    }
   }
   /**
    * Sync widget state to hidden input for form submission
@@ -1322,7 +1840,40 @@ function autoInit() {
   for (const el of elements) {
     if (el.dataset.schemaWidgetInitialized) continue;
     el.dataset.schemaWidgetInitialized = "true";
-    initSchemaWidget(el);
+    let initialState;
+    const initialStateJson = el.dataset.initialState;
+    if (initialStateJson) {
+      try {
+        initialState = JSON.parse(initialStateJson);
+      } catch {
+      }
+    }
+    const widget = initSchemaWidget(el, initialState);
+    const containerId = el.id;
+    if (containerId && containerId.endsWith("-container")) {
+      const hiddenInputId = containerId.replace(/-container$/, "");
+      const hiddenInput = document.getElementById(
+        hiddenInputId
+      );
+      if (hiddenInput) {
+        hiddenInput.value = JSON.stringify(widget.getState());
+        el.addEventListener("change", () => {
+          hiddenInput.value = JSON.stringify(widget.getState());
+        });
+        el.addEventListener("input", (e) => {
+          const target = e.target;
+          if (target.tagName === "TEXTAREA") {
+            hiddenInput.value = JSON.stringify(widget.getState());
+          }
+        });
+        const form = hiddenInput.closest("form");
+        if (form) {
+          form.addEventListener("submit", () => {
+            hiddenInput.value = JSON.stringify(widget.getState());
+          });
+        }
+      }
+    }
   }
 }
 if (typeof document !== "undefined") {

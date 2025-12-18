@@ -84,6 +84,7 @@ describe('Telepath adapter', () => {
         '{ invalid json }',
       )
 
+      // Invalid JSON falls back to explicit empty state
       const state = boundWidget.getState()
       expect(state.types).toEqual([])
       expect(state.properties).toEqual({})

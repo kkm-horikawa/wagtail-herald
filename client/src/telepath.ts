@@ -29,6 +29,9 @@ class BoundSchemaWidget {
     this.hiddenInput = hiddenInput
 
     try {
+      // Mark container as initialized to prevent autoInit from resetting it
+      container.dataset.schemaWidgetInitialized = 'true'
+
       this.widget = initSchemaWidget(container, initialState)
       this.setupSync()
       this.syncToHiddenInput()
@@ -49,17 +52,22 @@ class BoundSchemaWidget {
       }
     })
 
-    // Sync on textarea blur (JSON edits)
-    this.container.addEventListener(
-      'blur',
-      (e) => {
-        const target = e.target as HTMLElement
-        if (target.tagName === 'TEXTAREA') {
-          this.syncToHiddenInput()
-        }
-      },
-      true,
-    )
+    // Sync on textarea input for real-time updates
+    // Note: widget.ts handles JSON parsing on input, so state is always up-to-date
+    this.container.addEventListener('input', (e) => {
+      const target = e.target as HTMLElement
+      if (target.tagName === 'TEXTAREA') {
+        this.syncToHiddenInput()
+      }
+    })
+
+    // Sync before form submission to ensure latest state is saved
+    const form = this.hiddenInput.closest('form')
+    if (form) {
+      form.addEventListener('submit', () => {
+        this.syncToHiddenInput()
+      })
+    }
   }
 
   /**

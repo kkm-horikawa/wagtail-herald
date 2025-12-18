@@ -66,6 +66,40 @@ describe('autoInit', () => {
     expect(el1.querySelector('.schema-widget')).not.toBeNull()
     expect(el2.querySelector('.schema-widget')).not.toBeNull()
   })
+
+  it('should read initial state from data-initial-state attribute', () => {
+    // Create element with initial state
+    const el = document.createElement('div')
+    el.setAttribute('data-schema-widget', '')
+    el.dataset.initialState = JSON.stringify({
+      types: ['Article'],
+      properties: { Article: { articleSection: 'Tech' } },
+    })
+    document.body.appendChild(el)
+
+    // Run autoInit
+    autoInit()
+
+    // Element should have widget with Article selected
+    const articleCheckbox = el.querySelector(
+      'input[value="Article"]',
+    ) as HTMLInputElement
+    expect(articleCheckbox.checked).toBe(true)
+  })
+
+  it('should handle invalid JSON in data-initial-state gracefully', () => {
+    // Create element with invalid initial state
+    const el = document.createElement('div')
+    el.setAttribute('data-schema-widget', '')
+    el.dataset.initialState = '{ invalid json }'
+    document.body.appendChild(el)
+
+    // Run autoInit - should not throw
+    expect(() => autoInit()).not.toThrow()
+
+    // Element should be initialized with default state
+    expect(el.querySelector('.schema-widget')).not.toBeNull()
+  })
 })
 
 describe('DOMContentLoaded handling', () => {

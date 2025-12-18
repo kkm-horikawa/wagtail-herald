@@ -235,3 +235,53 @@ msgstr "サイト認証"
 #: models/settings.py:217
 msgid "Custom Code"
 msgstr "カスタムコード"
+
+#: models/mixins.py:103
+msgid "Structured Data"
+msgstr "構造化データ"
+
+#: widgets.py:19
+msgid "Address"
+msgstr "住所"
+
+#: widgets.py:22
+msgid "Questions"
+msgstr "質問"
+
+#: widgets.py:25
+msgid "Steps"
+msgstr "ステップ"
+
+#: widgets.py:28
+msgid "Start Date"
+msgstr "開始日"
+
+#: widgets.py:29
+msgid "Location"
+msgstr "場所"
+
+#: widgets.py:32
+msgid "Ingredients"
+msgstr "材料"
+
+#: widgets.py:33
+msgid "Instructions"
+msgstr "手順"
+
+#: widgets.py:36
+msgid "Job Location"
+msgstr "勤務地"
+
+#: widgets.py:184
+#, python-format
+msgid "Invalid JSON: %(error)s"
+msgstr "無効なJSON: %(error)s"
+
+#: widgets.py:192
+msgid "Invalid schema data format"
+msgstr "無効なスキーマデータ形式です"
+
+#: widgets.py:207
+#, python-format
+msgid "%(schema_type)s: %(field_name)s is required"
+msgstr "%(schema_type)s: %(field_name)sは必須です"

@@ -125,6 +125,21 @@ class TestSEOPageMixin:
         assert "noindex" in field_names
         assert "nofollow" in field_names
         assert "canonical_url" in field_names
+        assert "schema_data" in field_names
+
+    def test_schema_data_default(self):
+        """Test that schema_data has correct default value."""
+        from wagtail_herald.models.mixins import _get_schema_data_default
+
+        default = _get_schema_data_default()
+        assert default == {"types": [], "properties": {}}
+
+    def test_get_schema_widget(self):
+        """Test _get_schema_widget returns SchemaWidget class."""
+        from wagtail_herald.widgets import SchemaWidget
+
+        widget_class = SEOPageMixin._get_schema_widget()
+        assert widget_class is SchemaWidget
 
     def test_field_help_texts(self):
         """Test that all fields have help_text defined."""

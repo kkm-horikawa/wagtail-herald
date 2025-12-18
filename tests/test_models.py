@@ -348,6 +348,7 @@ class TestSEOPageMixinMethods:
 
     def test_get_page_locale_handles_exception(self, mixin_instance):
         """Test get_page_locale handles exceptions gracefully."""
+
         # Make get_site raise an exception
         def raise_error():
             raise RuntimeError("Test error")

@@ -383,6 +383,13 @@ def _build_schema_for_type(
         "url": _get_canonical_url(request, page),
     }
 
+    # Add inLanguage for applicable schema types
+    # Person type uses knowsLanguage instead of inLanguage
+    if schema_type != "Person":
+        lang = _get_schema_language(page, settings)
+        if lang:
+            schema["inLanguage"] = lang
+
     # Add description if available
     description = getattr(page, "search_description", "")
     if description:
@@ -717,6 +724,36 @@ def _get_robots_meta(page: Any) -> str:
         return str(page.get_robots_meta())
 
     return ""
+
+
+def _get_schema_language(page: Any, settings: Any) -> str:
+    """Get BCP 47 language code for Schema.org inLanguage property.
+
+    Uses page's get_schema_language method if available (SEOPageMixin),
+    otherwise falls back to settings.default_locale or 'en'.
+
+    Args:
+        page: Wagtail page instance.
+        settings: SEOSettings instance.
+
+    Returns:
+        BCP 47 language code string (e.g., 'ja', 'en', 'zh-Hans').
+    """
+    # Try page's method first (SEOPageMixin)
+    if page and hasattr(page, "get_schema_language"):
+        return str(page.get_schema_language())
+
+    # Fall back to settings default_locale
+    if settings and hasattr(settings, "default_locale") and settings.default_locale:
+        locale = str(settings.default_locale)
+        # Chinese requires script subtags
+        if locale == "zh_CN":
+            return "zh-Hans"
+        elif locale == "zh_TW":
+            return "zh-Hant"
+        return locale.split("_")[0].lower()
+
+    return "en"
 
 
 def _get_og_image_data(

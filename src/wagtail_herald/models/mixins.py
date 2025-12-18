@@ -199,3 +199,23 @@ class SEOPageMixin(models.Model):
         """
         locale = self.get_page_locale()
         return locale.replace("_", "-")
+
+    def get_schema_language(self) -> str:
+        """Return BCP 47 language code for Schema.org inLanguage property.
+
+        Uses script subtags for Chinese (zh-Hans, zh-Hant) as recommended
+        by W3C, since the difference is script-based rather than regional.
+
+        Returns:
+            The language code string in BCP 47 format.
+        """
+        locale = self.get_page_locale()
+
+        # Chinese requires script subtags (W3C recommendation)
+        if locale == "zh_CN":
+            return "zh-Hans"
+        elif locale == "zh_TW":
+            return "zh-Hant"
+
+        # Other locales: use simple language code
+        return locale.split("_")[0].lower()

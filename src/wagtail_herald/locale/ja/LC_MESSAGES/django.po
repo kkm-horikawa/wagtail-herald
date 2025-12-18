@@ -285,3 +285,11 @@ msgstr "無効なスキーマデータ形式です"
 #, python-format
 msgid "%(schema_type)s: %(field_name)s is required"
 msgstr "%(schema_type)s: %(field_name)sは必須です"
+
+#: models/mixins.py:72
+msgid "Page locale"
+msgstr "ページのロケール"
+
+#: models/mixins.py:77
+msgid "Override locale for this page (og:locale, html lang attribute)"
+msgstr "このページのロケールを上書き（og:locale、html lang属性）"

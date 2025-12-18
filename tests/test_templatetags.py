@@ -15,6 +15,7 @@ from wagtail_herald.templatetags.wagtail_herald import (
     _build_schema_for_type,
     _build_website_schema,
     _deep_merge,
+    _filter_empty_values,
     _get_canonical_url,
     _get_image_url,
     _get_logo_url,
@@ -1800,3 +1801,93 @@ class TestBuildSchemaForTypeContentTypes:
 
         assert result["@type"] == "HowTo"
         assert result["name"] == "How to Build a Birdhouse"
+
+
+class TestFilterEmptyValues:
+    """Tests for _filter_empty_values helper function."""
+
+    def test_none_returns_none(self):
+        """None should return None."""
+        assert _filter_empty_values(None) is None
+
+    def test_empty_string_returns_none(self):
+        """Empty string should return None."""
+        assert _filter_empty_values("") is None
+
+    def test_non_empty_string_returns_string(self):
+        """Non-empty string should return the string."""
+        assert _filter_empty_values("hello") == "hello"
+
+    def test_bool_returns_bool(self):
+        """Boolean values should be preserved."""
+        assert _filter_empty_values(True) is True
+        assert _filter_empty_values(False) is False
+
+    def test_int_returns_int(self):
+        """Integer values should be preserved."""
+        assert _filter_empty_values(0) == 0
+        assert _filter_empty_values(42) == 42
+
+    def test_float_returns_float(self):
+        """Float values should be preserved."""
+        assert _filter_empty_values(0.0) == 0.0
+        assert _filter_empty_values(3.14) == 3.14
+
+    def test_empty_list_returns_none(self):
+        """Empty list should return None."""
+        assert _filter_empty_values([]) is None
+
+    def test_list_with_none_items_returns_none(self):
+        """List with only None items should return None."""
+        assert _filter_empty_values([None, None]) is None
+
+    def test_list_with_valid_items(self):
+        """List with valid items should filter out None."""
+        assert _filter_empty_values(["a", None, "b"]) == ["a", "b"]
+
+    def test_nested_list_filtering(self):
+        """Nested lists should be filtered recursively."""
+        result = _filter_empty_values([{"name": "test"}, {"name": ""}])
+        assert result == [{"name": "test"}]
+
+    def test_empty_dict_returns_none(self):
+        """Empty dict should return None."""
+        assert _filter_empty_values({}) is None
+
+    def test_dict_with_only_type_returns_none(self):
+        """Dict with only @type should return None."""
+        assert _filter_empty_values({"@type": "Thing"}) is None
+
+    def test_dict_preserves_type_and_context(self):
+        """Dict should preserve @type and @context with other data."""
+        result = _filter_empty_values(
+            {"@type": "Thing", "@context": "https://schema.org", "name": "Test"}
+        )
+        assert result == {
+            "@type": "Thing",
+            "@context": "https://schema.org",
+            "name": "Test",
+        }
+
+    def test_dict_filters_empty_values(self):
+        """Dict should filter out empty values."""
+        result = _filter_empty_values(
+            {"name": "Test", "description": "", "value": None}
+        )
+        assert result == {"name": "Test"}
+
+    def test_dict_filters_recursively(self):
+        """Dict should filter nested objects recursively."""
+        result = _filter_empty_values(
+            {
+                "name": "Test",
+                "address": {"street": "123 Main", "city": ""},
+            }
+        )
+        assert result == {"name": "Test", "address": {"street": "123 Main"}}
+
+    def test_other_types_returned_as_is(self):
+        """Other types should be returned as-is."""
+        # Test with a tuple (not dict, list, str, bool, int, float, or None)
+        result = _filter_empty_values((1, 2, 3))
+        assert result == (1, 2, 3)

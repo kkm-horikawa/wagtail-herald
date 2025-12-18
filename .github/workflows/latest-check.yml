@@ -1,0 +1,105 @@
+name: Latest Version Check
+
+on:
+  schedule:
+    # 毎週月曜 9:00 JST (日曜 24:00 UTC)
+    - cron: '0 0 * * 1'
+  workflow_dispatch: # 手動実行も可能
+
+jobs:
+  test-python-latest:
+    name: Python/Django/Wagtail Latest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python (latest stable)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install latest dependencies
+        run: |
+          uv venv
+          uv pip install -e ".[dev]"
+          uv pip install --upgrade Django wagtail
+
+      - name: Show versions
+        id: versions
+        run: |
+          echo "python=$(.venv/bin/python --version)" >> $GITHUB_OUTPUT
+          echo "django=$(.venv/bin/python -c 'import django; print(django.__version__)')" >> $GITHUB_OUTPUT
+          echo "wagtail=$(.venv/bin/python -c 'import wagtail; print(wagtail.__version__)')" >> $GITHUB_OUTPUT
+          echo "### Versions" >> $GITHUB_STEP_SUMMARY
+          echo "- Python: $(.venv/bin/python --version)" >> $GITHUB_STEP_SUMMARY
+          echo "- Django: $(.venv/bin/python -c 'import django; print(django.__version__)')" >> $GITHUB_STEP_SUMMARY
+          echo "- Wagtail: $(.venv/bin/python -c 'import wagtail; print(wagtail.__version__)')" >> $GITHUB_STEP_SUMMARY
+
+      - name: Run tests
+        id: test
+        run: |
+          .venv/bin/pytest -v --tb=short 2>&1 | tee test-output.txt
+          echo "result=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+
+      - name: Create issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const testOutput = fs.existsSync('test-output.txt')
+              ? fs.readFileSync('test-output.txt', 'utf8').slice(-3000)
+              : 'No test output available';
+
+            const title = `🚨 Latest version test failed: Python/Django/Wagtail`;
+            const body = `## Weekly Latest Version Check Failed
+
+            **Versions tested:**
+            - Python: ${{ steps.versions.outputs.python }}
+            - Django: ${{ steps.versions.outputs.django }}
+            - Wagtail: ${{ steps.versions.outputs.wagtail }}
+
+            **Workflow run:** ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}
+
+            <details>
+            <summary>Test output (last 3000 chars)</summary>
+
+            \`\`\`
+            ${testOutput}
+            \`\`\`
+
+            </details>
+
+            ---
+            This issue was automatically created by the weekly latest version check workflow.
+            `;
+
+            // Check for existing open issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'latest-version-check'
+            });
+
+            const existingIssue = issues.data.find(i => i.title.includes('Python/Django/Wagtail'));
+
+            if (existingIssue) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `## New failure detected\n\n${body}`
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['latest-version-check', 'bug']
+              });
+            }

@@ -1,6 +1,6 @@
 # claude
-.claude/commands/
-.claude/outputs/
+CLAUDE.md
+.claude/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -42,6 +42,9 @@ htmlcov/
 .env
 .env.local
 media/
+
+# Demo project
+demo/
 
 # OS
 .DS_Store

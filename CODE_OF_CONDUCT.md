@@ -60,7 +60,7 @@ representative at an online or offline event.
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the community leaders by opening an issue or contacting the maintainers
-through [GitHub Discussions](https://github.com/kkm-horikawa/wagtail-seo-toolkit/discussions).
+through [GitHub Discussions](https://github.com/kkm-horikawa/wagtail-herald/discussions).
 
 All complaints will be reviewed and investigated promptly and fairly.
 

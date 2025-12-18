@@ -73,7 +73,7 @@ export function autoInit(): void {
     // Find the associated hidden input and set up sync
     // The hidden input should be a sibling with matching ID (container ID minus '-container')
     const containerId = el.id
-    if (containerId && containerId.endsWith('-container')) {
+    if (containerId?.endsWith('-container')) {
       const hiddenInputId = containerId.replace(/-container$/, '')
       const hiddenInput = document.getElementById(
         hiddenInputId,

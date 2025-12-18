@@ -72,7 +72,9 @@ def seo_schema(context: dict[str, Any]) -> SafeString:
 
     # Get enabled schema types from page's schema_data
     schema_data = getattr(page, "schema_data", None) if page else None
-    enabled_types = schema_data.get("types", []) if isinstance(schema_data, dict) else []
+    enabled_types = (
+        schema_data.get("types", []) if isinstance(schema_data, dict) else []
+    )
 
     # WebSite schema (only if enabled in schema_data)
     if "WebSite" in enabled_types:
@@ -81,7 +83,11 @@ def seo_schema(context: dict[str, Any]) -> SafeString:
             schemas.append(website_schema)
 
     # Organization schema (only if enabled and organization_name is set)
-    if "Organization" in enabled_types and seo_settings and seo_settings.organization_name:
+    if (
+        "Organization" in enabled_types
+        and seo_settings
+        and seo_settings.organization_name
+    ):
         org_schema = _build_organization_schema(request, seo_settings)
         if org_schema:
             schemas.append(org_schema)

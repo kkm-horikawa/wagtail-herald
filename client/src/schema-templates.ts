@@ -359,7 +359,10 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
       keywords: '',
     },
     example: { articleSection: 'Tech Blog', keywords: 'wagtail, cms, python' },
-    exampleJa: { articleSection: '技術ブログ', keywords: 'Wagtail, CMS, Python, Web開発' },
+    exampleJa: {
+      articleSection: '技術ブログ',
+      keywords: 'Wagtail, CMS, Python, Web開発',
+    },
     googleDocsUrl:
       'https://developers.google.com/search/docs/appearance/structured-data/article',
   },
@@ -746,7 +749,8 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
     label: 'How-To',
     labelJa: 'ハウツー',
     category: 'interactive',
-    helpText: 'Step-by-step instructions. (Note: Rich results deprecated Sep 2023)',
+    helpText:
+      'Step-by-step instructions. (Note: Rich results deprecated Sep 2023)',
     helpTextJa: 'ステップバイステップの手順。(※2023年9月リッチリザルト廃止)',
     autoFields: [
       {
@@ -1053,7 +1057,10 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
         'https://github.com/janesmith',
         'https://linkedin.com/in/janesmith',
       ],
-      alumniOf: { '@type': 'EducationalOrganization', name: 'Stanford University' },
+      alumniOf: {
+        '@type': 'EducationalOrganization',
+        name: 'Stanford University',
+      },
       knowsAbout: ['Python', 'Django', 'Wagtail CMS', 'Cloud Architecture'],
       award: ['Best Developer 2024', 'Google Developer Expert'],
     },
@@ -1212,10 +1219,19 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
         'だし汁 400ml',
       ],
       recipeInstructions: [
-        { '@type': 'HowToStep', text: '豚バラ肉は3cm幅に切り、大根は2cm厚さのいちょう切りにする。' },
+        {
+          '@type': 'HowToStep',
+          text: '豚バラ肉は3cm幅に切り、大根は2cm厚さのいちょう切りにする。',
+        },
         { '@type': 'HowToStep', text: 'こんにゃくは手でちぎり、下茹でする。' },
-        { '@type': 'HowToStep', text: '鍋に豚肉を入れて炒め、色が変わったら大根とこんにゃくを加える。' },
-        { '@type': 'HowToStep', text: 'だし汁と調味料を加え、落し蓋をして弱火で40分煮込む。' },
+        {
+          '@type': 'HowToStep',
+          text: '鍋に豚肉を入れて炒め、色が変わったら大根とこんにゃくを加える。',
+        },
+        {
+          '@type': 'HowToStep',
+          text: 'だし汁と調味料を加え、落し蓋をして弱火で40分煮込む。',
+        },
       ],
       prepTime: 'PT20M',
       cookTime: 'PT40M',

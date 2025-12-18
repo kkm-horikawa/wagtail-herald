@@ -191,19 +191,27 @@ class TestIsEmptyValue:
 
     def test_array_with_empty_objects_is_empty(self) -> None:
         """Arrays containing only empty objects should be considered empty."""
-        assert _is_empty_value([{"@type": "Question", "name": "", "text": ""}], "array") is True
+        assert (
+            _is_empty_value([{"@type": "Question", "name": "", "text": ""}], "array")
+            is True
+        )
         assert _is_empty_value([{"@type": "HowToStep", "text": ""}], "array") is True
 
     def test_array_with_content_is_not_empty(self) -> None:
         """Arrays with non-empty content should not be considered empty."""
         assert _is_empty_value(["ingredient1", "ingredient2"], "array") is False
-        assert _is_empty_value([{"@type": "Question", "name": "What?"}], "array") is False
+        assert (
+            _is_empty_value([{"@type": "Question", "name": "What?"}], "array") is False
+        )
 
     def test_empty_object_is_empty(self) -> None:
         """Objects with only empty values should be considered empty."""
         assert _is_empty_value({}, "object") is True
         assert _is_empty_value({"@type": "PostalAddress"}, "object") is True
-        assert _is_empty_value({"@type": "PostalAddress", "streetAddress": ""}, "object") is True
+        assert (
+            _is_empty_value({"@type": "PostalAddress", "streetAddress": ""}, "object")
+            is True
+        )
 
     def test_object_with_content_is_not_empty(self) -> None:
         """Objects with non-empty values should not be considered empty."""
@@ -299,7 +307,11 @@ class TestSchemaFormFieldValidation:
             "properties": {
                 "FAQPage": {
                     "mainEntity": [
-                        {"@type": "Question", "name": "", "acceptedAnswer": {"@type": "Answer", "text": ""}}
+                        {
+                            "@type": "Question",
+                            "name": "",
+                            "acceptedAnswer": {"@type": "Answer", "text": ""},
+                        }
                     ]
                 }
             },
@@ -316,7 +328,11 @@ class TestSchemaFormFieldValidation:
             "properties": {
                 "FAQPage": {
                     "mainEntity": [
-                        {"@type": "Question", "name": "What is this?", "acceptedAnswer": {"@type": "Answer", "text": "A test"}}
+                        {
+                            "@type": "Question",
+                            "name": "What is this?",
+                            "acceptedAnswer": {"@type": "Answer", "text": "A test"},
+                        }
                     ]
                 }
             },

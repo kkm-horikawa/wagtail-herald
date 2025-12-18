@@ -69,6 +69,14 @@ msgstr ""
 "（例: 'https://example.com/page/'）"
 
 #: models/mixins.py:69
+msgid "Structured data"
+msgstr "構造化データ"
+
+#: models/mixins.py:72
+msgid "Schema.org structured data configuration for this page"
+msgstr "このページのSchema.org構造化データ設定"
+
+#: models/mixins.py:97
 msgid "SEO"
 msgstr "SEO"
 

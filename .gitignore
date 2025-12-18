@@ -49,3 +49,6 @@ demo/
 # OS
 .DS_Store
 Thumbs.db
+
+# Node (for client build)
+node_modules/

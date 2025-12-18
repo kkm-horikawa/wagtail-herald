@@ -4,15 +4,14 @@ SEO mixin for Wagtail Page models.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
 from wagtail.images import get_image_model_string
 
-if TYPE_CHECKING:
-    from wagtail_herald.widgets import SchemaWidget
+from wagtail_herald.widgets import SchemaJSONField
 
 
 def _get_schema_data_default() -> dict[str, Any]:
@@ -69,7 +68,7 @@ class SEOPageMixin(models.Model):
         ),
     )
 
-    schema_data = models.JSONField(
+    schema_data = SchemaJSONField(
         _("Structured data"),
         default=_get_schema_data_default,
         blank=True,
@@ -78,13 +77,6 @@ class SEOPageMixin(models.Model):
 
     class Meta:
         abstract = True
-
-    @staticmethod
-    def _get_schema_widget() -> type[SchemaWidget]:
-        """Import SchemaWidget lazily to avoid circular imports."""
-        from wagtail_herald.widgets import SchemaWidget
-
-        return SchemaWidget
 
     seo_panels = [
         MultiFieldPanel(

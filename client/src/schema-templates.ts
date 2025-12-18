@@ -18,6 +18,7 @@ export interface SchemaTemplate {
   optionalFields: FieldDef[]
   placeholder: Record<string, unknown>
   example: Record<string, unknown>
+  exampleJa: Record<string, unknown>
   googleDocsUrl: string
 }
 
@@ -65,11 +66,20 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
         description: 'SearchAction for sitelinks search box',
       },
     ],
-    placeholder: {},
+    placeholder: {
+      name: '(自動: サイト名)',
+      url: '(自動: サイトURL)',
+    },
     example: {
       potentialAction: {
         '@type': 'SearchAction',
         target: 'https://example.com/search?q={search_term_string}',
+      },
+    },
+    exampleJa: {
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: 'https://example.co.jp/search?q={search_term_string}',
       },
     },
     googleDocsUrl: 'https://schema.org/WebSite',
@@ -107,8 +117,14 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
     ],
     requiredFields: [],
     optionalFields: [],
-    placeholder: {},
+    placeholder: {
+      name: '(自動: 組織名)',
+      url: '(自動: サイトURL)',
+      logo: '(自動: ロゴ画像)',
+      sameAs: '(自動: SNSリンク)',
+    },
     example: {},
+    exampleJa: {},
     googleDocsUrl:
       'https://developers.google.com/search/docs/appearance/structured-data/organization',
   },
@@ -131,8 +147,11 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
     ],
     requiredFields: [],
     optionalFields: [],
-    placeholder: {},
+    placeholder: {
+      itemListElement: '(自動: ページ階層から生成)',
+    },
     example: {},
+    exampleJa: {},
     googleDocsUrl:
       'https://developers.google.com/search/docs/appearance/structured-data/breadcrumb',
   },
@@ -168,6 +187,7 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
     optionalFields: [],
     placeholder: {},
     example: {},
+    exampleJa: {},
     googleDocsUrl: 'https://schema.org/WebPage',
   },
 
@@ -221,8 +241,11 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
       },
       { name: 'wordCount', type: 'number', description: 'Word count' },
     ],
-    placeholder: {},
-    example: { articleSection: 'Technology', wordCount: 1500 },
+    placeholder: {
+      articleSection: '',
+    },
+    example: { articleSection: 'Technology' },
+    exampleJa: { articleSection: 'テクノロジー' },
     googleDocsUrl:
       'https://developers.google.com/search/docs/appearance/structured-data/article',
   },
@@ -274,8 +297,11 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
         description: 'News dateline location',
       },
     ],
-    placeholder: {},
+    placeholder: {
+      dateline: '',
+    },
     example: { dateline: 'TOKYO' },
+    exampleJa: { dateline: '東京' },
     googleDocsUrl:
       'https://developers.google.com/search/docs/appearance/structured-data/article',
   },
@@ -328,8 +354,15 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
         description: 'Comma-separated keywords',
       },
     ],
-    placeholder: {},
+    placeholder: {
+      articleSection: '',
+      keywords: '',
+    },
     example: { articleSection: 'Tech Blog', keywords: 'wagtail, cms, python' },
+    exampleJa: {
+      articleSection: '技術ブログ',
+      keywords: 'Wagtail, CMS, Python, Web開発',
+    },
     googleDocsUrl:
       'https://developers.google.com/search/docs/appearance/structured-data/article',
   },
@@ -372,14 +405,53 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
       offers: {
         '@type': 'Offer',
         price: '',
-        priceCurrency: 'JPY',
+        priceCurrency: 'USD',
         availability: 'https://schema.org/InStock',
+        url: '',
       },
+      brand: '',
+      sku: '',
+      gtin: '',
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: '',
+        reviewCount: '',
+      },
+      review: [],
     },
     example: {
-      offers: { '@type': 'Offer', price: '1999', priceCurrency: 'JPY' },
-      brand: 'Example Brand',
-      sku: 'PROD-001',
+      offers: {
+        '@type': 'Offer',
+        price: '29.99',
+        priceCurrency: 'USD',
+        availability: 'https://schema.org/InStock',
+        url: 'https://example.com/products/wireless-earbuds',
+      },
+      brand: 'TechBrand',
+      sku: 'WE-2024-001',
+      gtin: '012345678905',
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: '4.5',
+        reviewCount: '128',
+      },
+    },
+    exampleJa: {
+      offers: {
+        '@type': 'Offer',
+        price: '3980',
+        priceCurrency: 'JPY',
+        availability: 'https://schema.org/InStock',
+        url: 'https://example.co.jp/products/wireless-earbuds',
+      },
+      brand: 'サンプルブランド',
+      sku: 'WE-2024-001',
+      gtin: '4901234567890',
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: '4.3',
+        reviewCount: '156',
+      },
     },
     googleDocsUrl:
       'https://developers.google.com/search/docs/appearance/structured-data/product',
@@ -433,20 +505,78 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
         addressLocality: '',
         addressRegion: '',
         postalCode: '',
-        addressCountry: 'JP',
+        addressCountry: 'US',
+      },
+      telephone: '',
+      priceRange: '',
+      openingHoursSpecification: [],
+      geo: {
+        '@type': 'GeoCoordinates',
+        latitude: '',
+        longitude: '',
       },
     },
     example: {
       address: {
         '@type': 'PostalAddress',
-        streetAddress: '1-1-1 Shibuya',
-        addressLocality: 'Shibuya-ku',
-        addressRegion: 'Tokyo',
+        streetAddress: '123 Main Street, Suite 100',
+        addressLocality: 'San Francisco',
+        addressRegion: 'CA',
+        postalCode: '94102',
+        addressCountry: 'US',
+      },
+      telephone: '+1-415-555-1234',
+      priceRange: '$$',
+      geo: {
+        '@type': 'GeoCoordinates',
+        latitude: '37.7749',
+        longitude: '-122.4194',
+      },
+      openingHoursSpecification: [
+        {
+          '@type': 'OpeningHoursSpecification',
+          dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+          opens: '09:00',
+          closes: '18:00',
+        },
+        {
+          '@type': 'OpeningHoursSpecification',
+          dayOfWeek: ['Saturday'],
+          opens: '10:00',
+          closes: '15:00',
+        },
+      ],
+    },
+    exampleJa: {
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: '渋谷1-1-1 渋谷ビル3F',
+        addressLocality: '渋谷区',
+        addressRegion: '東京都',
         postalCode: '150-0002',
         addressCountry: 'JP',
       },
-      telephone: '+81-3-1234-5678',
-      priceRange: '$$',
+      telephone: '03-1234-5678',
+      priceRange: '¥¥',
+      geo: {
+        '@type': 'GeoCoordinates',
+        latitude: '35.6595',
+        longitude: '139.7004',
+      },
+      openingHoursSpecification: [
+        {
+          '@type': 'OpeningHoursSpecification',
+          dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+          opens: '10:00',
+          closes: '19:00',
+        },
+        {
+          '@type': 'OpeningHoursSpecification',
+          dayOfWeek: ['Saturday', 'Sunday'],
+          opens: '11:00',
+          closes: '18:00',
+        },
+      ],
     },
     googleDocsUrl:
       'https://developers.google.com/search/docs/appearance/structured-data/local-business',
@@ -482,10 +612,49 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
       { name: 'areaServed', type: 'string', description: 'Service area' },
       { name: 'offers', type: 'object', description: 'Service pricing' },
     ],
-    placeholder: {},
+    placeholder: {
+      serviceType: '',
+      areaServed: '',
+      offers: {
+        '@type': 'Offer',
+        price: '',
+        priceCurrency: 'USD',
+      },
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: '',
+        reviewCount: '',
+      },
+      hoursAvailable: '',
+      brand: '',
+    },
     example: {
       serviceType: 'Web Development',
-      areaServed: 'Japan',
+      areaServed: 'San Francisco Bay Area',
+      offers: {
+        '@type': 'Offer',
+        price: '5000',
+        priceCurrency: 'USD',
+      },
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: '4.8',
+        reviewCount: '156',
+      },
+    },
+    exampleJa: {
+      serviceType: 'Webサイト制作',
+      areaServed: '東京都、神奈川県、埼玉県、千葉県',
+      offers: {
+        '@type': 'Offer',
+        price: '300000',
+        priceCurrency: 'JPY',
+      },
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: '4.7',
+        reviewCount: '89',
+      },
     },
     googleDocsUrl: 'https://schema.org/Service',
   },
@@ -516,6 +685,11 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
           name: '',
           acceptedAnswer: { '@type': 'Answer', text: '' },
         },
+        {
+          '@type': 'Question',
+          name: '',
+          acceptedAnswer: { '@type': 'Answer', text: '' },
+        },
       ],
     },
     example: {
@@ -526,6 +700,42 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
           acceptedAnswer: {
             '@type': 'Answer',
             text: 'A comprehensive SEO toolkit for Wagtail CMS.',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: 'How do I install it?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'Run pip install wagtail-herald and add to INSTALLED_APPS.',
+          },
+        },
+      ],
+    },
+    exampleJa: {
+      mainEntity: [
+        {
+          '@type': 'Question',
+          name: '送料はいくらですか？',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: '全国一律550円（税込）です。5,000円以上のご購入で送料無料となります。',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: '返品・交換はできますか？',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: '商品到着後7日以内であれば、未開封・未使用の商品に限り返品・交換を承ります。',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: '支払い方法は何がありますか？',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'クレジットカード、銀行振込、代金引換、コンビニ決済がご利用いただけます。',
           },
         },
       ],
@@ -539,8 +749,9 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
     label: 'How-To',
     labelJa: 'ハウツー',
     category: 'interactive',
-    helpText: 'Step-by-step instructions. Shows steps in search results.',
-    helpTextJa: 'ステップバイステップの手順。検索結果に手順が表示されます。',
+    helpText:
+      'Step-by-step instructions. (Note: Rich results deprecated Sep 2023)',
+    helpTextJa: 'ステップバイステップの手順。(※2023年9月リッチリザルト廃止)',
     autoFields: [
       {
         schemaProperty: 'name',
@@ -578,7 +789,20 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
           name: '',
           text: '',
         },
+        {
+          '@type': 'HowToStep',
+          name: '',
+          text: '',
+        },
       ],
+      totalTime: '',
+      estimatedCost: {
+        '@type': 'MonetaryAmount',
+        currency: 'USD',
+        value: '',
+      },
+      supply: [],
+      tool: [],
     },
     example: {
       step: [
@@ -594,6 +818,31 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
         },
       ],
       totalTime: 'PT10M',
+    },
+    exampleJa: {
+      step: [
+        {
+          '@type': 'HowToStep',
+          name: '材料を準備する',
+          text: '必要な材料をすべて計量し、室温に戻しておきます。',
+        },
+        {
+          '@type': 'HowToStep',
+          name: '生地を作る',
+          text: 'ボウルに粉類を入れ、よく混ぜ合わせます。',
+        },
+        {
+          '@type': 'HowToStep',
+          name: '焼き上げる',
+          text: '180度に予熱したオーブンで30分焼きます。',
+        },
+      ],
+      totalTime: 'PT45M',
+      estimatedCost: {
+        '@type': 'MonetaryAmount',
+        currency: 'JPY',
+        value: '500',
+      },
     },
     googleDocsUrl:
       'https://developers.google.com/search/docs/appearance/structured-data/how-to',
@@ -664,6 +913,7 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
     ],
     placeholder: {
       startDate: '',
+      endDate: '',
       location: {
         '@type': 'Place',
         name: '',
@@ -671,25 +921,79 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
           '@type': 'PostalAddress',
           streetAddress: '',
           addressLocality: '',
-          addressCountry: 'JP',
+          addressCountry: 'US',
         },
+      },
+      eventStatus: 'https://schema.org/EventScheduled',
+      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+      offers: {
+        '@type': 'Offer',
+        price: '',
+        priceCurrency: 'USD',
+        availability: 'https://schema.org/InStock',
+        url: '',
+      },
+      performer: {
+        '@type': 'Person',
+        name: '',
+      },
+      organizer: {
+        '@type': 'Organization',
+        name: '',
       },
     },
     example: {
-      startDate: '2025-03-15T19:00:00+09:00',
-      endDate: '2025-03-15T21:00:00+09:00',
+      startDate: '2025-03-15T19:00:00-08:00',
+      endDate: '2025-03-15T21:00:00-08:00',
       location: {
         '@type': 'Place',
-        name: 'Tokyo International Forum',
+        name: 'Moscone Center',
         address: {
           '@type': 'PostalAddress',
-          streetAddress: '3-5-1 Marunouchi',
-          addressLocality: 'Chiyoda-ku',
+          streetAddress: '747 Howard St',
+          addressLocality: 'San Francisco',
+          addressRegion: 'CA',
+          postalCode: '94103',
+          addressCountry: 'US',
+        },
+      },
+      eventStatus: 'https://schema.org/EventScheduled',
+      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    },
+    exampleJa: {
+      startDate: '2025-04-20T14:00:00+09:00',
+      endDate: '2025-04-20T17:00:00+09:00',
+      location: {
+        '@type': 'Place',
+        name: '東京国際フォーラム ホールA',
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: '丸の内3-5-1',
+          addressLocality: '千代田区',
+          addressRegion: '東京都',
+          postalCode: '100-0005',
           addressCountry: 'JP',
         },
       },
       eventStatus: 'https://schema.org/EventScheduled',
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+      offers: {
+        '@type': 'Offer',
+        price: '5000',
+        priceCurrency: 'JPY',
+        availability: 'https://schema.org/InStock',
+        url: 'https://example.co.jp/events/spring-concert/tickets',
+        validFrom: '2025-02-01T10:00:00+09:00',
+      },
+      performer: {
+        '@type': 'Person',
+        name: '山田太郎',
+      },
+      organizer: {
+        '@type': 'Organization',
+        name: '株式会社サンプルイベント',
+        url: 'https://example.co.jp',
+      },
     },
     googleDocsUrl:
       'https://developers.google.com/search/docs/appearance/structured-data/event',
@@ -734,11 +1038,44 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
         description: 'Educational organization',
       },
     ],
-    placeholder: {},
+    placeholder: {
+      jobTitle: '',
+      worksFor: { '@type': 'Organization', name: '' },
+      email: '',
+      url: '',
+      sameAs: [],
+      alumniOf: { '@type': 'EducationalOrganization', name: '' },
+      knowsAbout: [],
+      award: [],
+    },
     example: {
-      jobTitle: 'Software Engineer',
-      worksFor: { '@type': 'Organization', name: 'Example Corp' },
-      sameAs: ['https://twitter.com/example', 'https://github.com/example'],
+      jobTitle: 'Senior Software Engineer',
+      worksFor: { '@type': 'Organization', name: 'TechCorp Inc.' },
+      url: 'https://example.com/team/jane-smith',
+      sameAs: [
+        'https://twitter.com/janesmith_dev',
+        'https://github.com/janesmith',
+        'https://linkedin.com/in/janesmith',
+      ],
+      alumniOf: {
+        '@type': 'EducationalOrganization',
+        name: 'Stanford University',
+      },
+      knowsAbout: ['Python', 'Django', 'Wagtail CMS', 'Cloud Architecture'],
+      award: ['Best Developer 2024', 'Google Developer Expert'],
+    },
+    exampleJa: {
+      jobTitle: 'シニアエンジニア',
+      worksFor: { '@type': 'Organization', name: '株式会社サンプルテック' },
+      url: 'https://example.co.jp/team/tanaka-hanako',
+      sameAs: [
+        'https://twitter.com/tanaka_dev',
+        'https://github.com/tanaka-hanako',
+        'https://qiita.com/tanaka_hanako',
+      ],
+      alumniOf: { '@type': 'EducationalOrganization', name: '東京大学' },
+      knowsAbout: ['Python', 'Django', 'Wagtail CMS', 'クラウドアーキテクチャ'],
+      award: ['2024年度 社内MVP賞', 'OSS貢献賞'],
     },
     googleDocsUrl: 'https://schema.org/Person',
   },
@@ -819,8 +1156,30 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
       },
     ],
     placeholder: {
-      recipeIngredient: [],
-      recipeInstructions: [{ '@type': 'HowToStep', text: '' }],
+      recipeIngredient: ['', '', ''],
+      recipeInstructions: [
+        { '@type': 'HowToStep', text: '' },
+        { '@type': 'HowToStep', text: '' },
+      ],
+      prepTime: '',
+      cookTime: '',
+      totalTime: '',
+      recipeYield: '',
+      recipeCategory: '',
+      recipeCuisine: '',
+      keywords: '',
+      nutrition: {
+        '@type': 'NutritionInformation',
+        calories: '',
+      },
+      video: {
+        '@type': 'VideoObject',
+        name: '',
+        description: '',
+        thumbnailUrl: '',
+        contentUrl: '',
+        uploadDate: '',
+      },
     },
     example: {
       recipeIngredient: ['2 cups flour', '1 cup sugar', '2 eggs'],
@@ -831,8 +1190,68 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
       ],
       prepTime: 'PT15M',
       cookTime: 'PT30M',
+      totalTime: 'PT45M',
       recipeYield: '8 servings',
+      recipeCategory: 'Dessert',
       recipeCuisine: 'American',
+      keywords: 'cake, easy baking, dessert',
+      nutrition: {
+        '@type': 'NutritionInformation',
+        calories: '280 kcal',
+      },
+      video: {
+        '@type': 'VideoObject',
+        name: 'How to Make Easy Cake',
+        description: 'Step by step video tutorial',
+        thumbnailUrl: 'https://example.com/cake-video-thumb.jpg',
+        contentUrl: 'https://example.com/cake-video.mp4',
+        uploadDate: '2025-01-15T08:00:00+09:00',
+      },
+    },
+    exampleJa: {
+      recipeIngredient: [
+        '豚バラ肉 300g',
+        '大根 1/2本',
+        'こんにゃく 1枚',
+        '醤油 大さじ3',
+        'みりん 大さじ2',
+        '砂糖 大さじ1',
+        'だし汁 400ml',
+      ],
+      recipeInstructions: [
+        {
+          '@type': 'HowToStep',
+          text: '豚バラ肉は3cm幅に切り、大根は2cm厚さのいちょう切りにする。',
+        },
+        { '@type': 'HowToStep', text: 'こんにゃくは手でちぎり、下茹でする。' },
+        {
+          '@type': 'HowToStep',
+          text: '鍋に豚肉を入れて炒め、色が変わったら大根とこんにゃくを加える。',
+        },
+        {
+          '@type': 'HowToStep',
+          text: 'だし汁と調味料を加え、落し蓋をして弱火で40分煮込む。',
+        },
+      ],
+      prepTime: 'PT20M',
+      cookTime: 'PT40M',
+      totalTime: 'PT60M',
+      recipeYield: '4人分',
+      recipeCategory: '主菜',
+      recipeCuisine: '和食',
+      keywords: '豚の角煮, 和食, 煮物, 家庭料理',
+      nutrition: {
+        '@type': 'NutritionInformation',
+        calories: '450 kcal',
+      },
+      video: {
+        '@type': 'VideoObject',
+        name: '豚の角煮の作り方',
+        description: 'プロが教える本格豚の角煮レシピ',
+        thumbnailUrl: 'https://example.co.jp/recipes/kakuni-thumb.jpg',
+        contentUrl: 'https://example.co.jp/recipes/kakuni-video.mp4',
+        uploadDate: '2025-01-15T08:00:00+09:00',
+      },
     },
     googleDocsUrl:
       'https://developers.google.com/search/docs/appearance/structured-data/recipe',
@@ -882,7 +1301,21 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
         description: 'Total enrollments',
       },
     ],
-    placeholder: {},
+    placeholder: {
+      hasCourseInstance: [
+        {
+          '@type': 'CourseInstance',
+          courseMode: '',
+          startDate: '',
+          endDate: '',
+        },
+      ],
+      offers: {
+        '@type': 'Offer',
+        price: '',
+        priceCurrency: 'USD',
+      },
+    },
     example: {
       courseCode: 'CS101',
       educationalLevel: 'Beginner',
@@ -893,6 +1326,24 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
           startDate: '2025-04-01',
         },
       ],
+    },
+    exampleJa: {
+      courseCode: 'WEB-001',
+      educationalLevel: '初級',
+      hasCourseInstance: [
+        {
+          '@type': 'CourseInstance',
+          courseMode: 'オンライン',
+          startDate: '2025-04-01',
+          endDate: '2025-06-30',
+        },
+      ],
+      offers: {
+        '@type': 'Offer',
+        price: '29800',
+        priceCurrency: 'JPY',
+      },
+      totalHistoricalEnrollment: 1500,
     },
     googleDocsUrl:
       'https://developers.google.com/search/docs/appearance/structured-data/course',
@@ -966,19 +1417,58 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
           addressLocality: '',
           addressRegion: '',
           postalCode: '',
-          addressCountry: 'JP',
+          addressCountry: 'US',
         },
       },
+      employmentType: '',
+      validThrough: '',
+      baseSalary: {
+        '@type': 'MonetaryAmount',
+        currency: 'USD',
+        value: {
+          '@type': 'QuantitativeValue',
+          minValue: '',
+          maxValue: '',
+          unitText: 'YEAR',
+        },
+      },
+      jobLocationType: '',
+      directApply: true,
     },
     example: {
       jobLocation: {
         '@type': 'Place',
         address: {
           '@type': 'PostalAddress',
-          streetAddress: '1-1-1 Shibuya',
-          addressLocality: 'Shibuya-ku',
-          addressRegion: 'Tokyo',
-          postalCode: '150-0002',
+          streetAddress: '100 Main Street',
+          addressLocality: 'San Francisco',
+          addressRegion: 'CA',
+          postalCode: '94102',
+          addressCountry: 'US',
+        },
+      },
+      employmentType: 'FULL_TIME',
+      baseSalary: {
+        '@type': 'MonetaryAmount',
+        currency: 'USD',
+        value: {
+          '@type': 'QuantitativeValue',
+          minValue: 120000,
+          maxValue: 180000,
+          unitText: 'YEAR',
+        },
+      },
+      validThrough: '2025-06-30T23:59:59-08:00',
+    },
+    exampleJa: {
+      jobLocation: {
+        '@type': 'Place',
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: '渋谷2-21-1 渋谷ヒカリエ',
+          addressLocality: '渋谷区',
+          addressRegion: '東京都',
+          postalCode: '150-8510',
           addressCountry: 'JP',
         },
       },
@@ -988,12 +1478,17 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
         currency: 'JPY',
         value: {
           '@type': 'QuantitativeValue',
-          minValue: 5000000,
-          maxValue: 8000000,
+          minValue: 4500000,
+          maxValue: 7000000,
           unitText: 'YEAR',
         },
       },
-      validThrough: '2025-06-30T23:59:59+09:00',
+      validThrough: '2025-03-31T23:59:59+09:00',
+      jobLocationType: 'TELECOMMUTE',
+      applicantLocationRequirements: {
+        '@type': 'Country',
+        name: 'Japan',
+      },
     },
     googleDocsUrl:
       'https://developers.google.com/search/docs/appearance/structured-data/job-posting',

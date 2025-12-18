@@ -70,19 +70,30 @@ def seo_schema(context: dict[str, Any]) -> SafeString:
 
     schemas: list[dict[str, Any]] = []
 
-    # WebSite schema
-    website_schema = _build_website_schema(request)
-    if website_schema:
-        schemas.append(website_schema)
+    # Get enabled schema types from page's schema_data
+    schema_data = getattr(page, "schema_data", None) if page else None
+    enabled_types = (
+        schema_data.get("types", []) if isinstance(schema_data, dict) else []
+    )
 
-    # Organization schema (only if organization_name is set)
-    if seo_settings and seo_settings.organization_name:
+    # WebSite schema (only if enabled in schema_data)
+    if "WebSite" in enabled_types:
+        website_schema = _build_website_schema(request)
+        if website_schema:
+            schemas.append(website_schema)
+
+    # Organization schema (only if enabled and organization_name is set)
+    if (
+        "Organization" in enabled_types
+        and seo_settings
+        and seo_settings.organization_name
+    ):
         org_schema = _build_organization_schema(request, seo_settings)
         if org_schema:
             schemas.append(org_schema)
 
-    # BreadcrumbList schema (auto-generated from page hierarchy)
-    if page:
+    # BreadcrumbList schema (only if enabled)
+    if "BreadcrumbList" in enabled_types and page:
         breadcrumb_schema = _build_breadcrumb_schema(request, page)
         if breadcrumb_schema:
             schemas.append(breadcrumb_schema)
@@ -323,8 +334,10 @@ def _build_schema_for_type(
     elif schema_type in ("Event", "Course", "Recipe", "HowTo", "JobPosting"):
         _add_content_auto_fields(schema, request, page, settings)
 
-    # Merge custom properties (override auto)
-    _deep_merge(schema, custom_properties)
+    # Filter out empty values from custom properties before merging
+    filtered_props = _filter_empty_values(custom_properties)
+    if filtered_props and isinstance(filtered_props, dict):
+        _deep_merge(schema, filtered_props)
 
     return schema
 
@@ -429,6 +442,60 @@ def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any
         else:
             base[key] = value
     return base
+
+
+def _filter_empty_values(data: Any) -> Any:
+    """Recursively filter out empty values from data.
+
+    Removes:
+    - Empty strings ""
+    - Empty lists []
+    - Dicts with only empty values (after filtering)
+    - None values
+
+    Preserves:
+    - Numbers (including 0)
+    - Booleans (including False)
+    - Non-empty strings, lists, dicts
+
+    Args:
+        data: Data to filter (dict, list, or primitive).
+
+    Returns:
+        Filtered data, or None if entirely empty.
+    """
+    if data is None:
+        return None
+
+    if isinstance(data, str):
+        return data if data else None
+
+    if isinstance(data, bool):
+        return data
+
+    if isinstance(data, (int, float)):
+        return data
+
+    if isinstance(data, list):
+        filtered_list = [_filter_empty_values(item) for item in data]
+        filtered_list = [item for item in filtered_list if item is not None]
+        return filtered_list if filtered_list else None
+
+    if isinstance(data, dict):
+        filtered_dict: dict[str, Any] = {}
+        for key, value in data.items():
+            # Keep @type and @context even if technically "empty check" passes
+            if key in ("@type", "@context"):
+                filtered_dict[key] = value
+                continue
+            filtered_value = _filter_empty_values(value)
+            if filtered_value is not None:
+                filtered_dict[key] = filtered_value
+        # Return None if only @type/@context remain (no actual data)
+        meaningful_keys = [k for k in filtered_dict if k not in ("@type", "@context")]
+        return filtered_dict if meaningful_keys else None
+
+    return data
 
 
 def _get_logo_url(request: HttpRequest | None, logo: Any) -> str:

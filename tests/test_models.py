@@ -134,12 +134,17 @@ class TestSEOPageMixin:
         default = _get_schema_data_default()
         assert default == {"types": [], "properties": {}}
 
-    def test_get_schema_widget(self):
-        """Test _get_schema_widget returns SchemaWidget class."""
-        from wagtail_herald.widgets import SchemaWidget
+    def test_schema_data_uses_custom_field(self):
+        """Test that schema_data uses SchemaJSONField with validation."""
+        from wagtail_herald.widgets import SchemaFormField, SchemaJSONField
 
-        widget_class = SEOPageMixin._get_schema_widget()
-        assert widget_class is SchemaWidget
+        # Verify the model field is SchemaJSONField
+        field = SEOPageMixin._meta.get_field("schema_data")
+        assert isinstance(field, SchemaJSONField)
+
+        # Verify the formfield is SchemaFormField (which includes validation)
+        formfield = field.formfield()
+        assert isinstance(formfield, SchemaFormField)
 
     def test_field_help_texts(self):
         """Test that all fields have help_text defined."""

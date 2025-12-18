@@ -15,6 +15,7 @@ from wagtail_herald.templatetags.wagtail_herald import (
     _build_schema_for_type,
     _build_website_schema,
     _deep_merge,
+    _filter_empty_values,
     _get_canonical_url,
     _get_image_url,
     _get_logo_url,
@@ -477,22 +478,26 @@ class TestSeoSchemaTemplateTag:
         assert html.strip() == ""
 
     def test_tag_renders_without_context(self, rf, db, site):
-        """Test tag renders with minimal context."""
+        """Test tag renders empty when no page with schema_data."""
         request = rf.get("/")
         request.site = site
         template = Template("{% load wagtail_herald %}{% seo_schema %}")
         context = Context({"request": request})
         html = template.render(context)
 
-        assert 'type="application/ld+json"' in html
-        assert '"@type": "WebSite"' in html
+        # Without a page with schema_data, no schemas are rendered
+        assert html == ""
 
     def test_tag_renders_website_schema(self, rf, site):
-        """Test tag renders WebSite schema."""
+        """Test tag renders WebSite schema when enabled in schema_data."""
+
+        class MockPage:
+            schema_data = {"types": ["WebSite"], "properties": {}}
+
         request = rf.get("/")
         request.site = site
         template = Template("{% load wagtail_herald %}{% seo_schema %}")
-        context = Context({"request": request})
+        context = Context({"request": request, "page": MockPage()})
         html = template.render(context)
 
         assert '"@context": "https://schema.org"' in html
@@ -501,17 +506,20 @@ class TestSeoSchemaTemplateTag:
         assert '"url":' in html
 
     def test_tag_renders_organization_schema(self, rf, site, db):
-        """Test tag renders Organization schema when configured."""
+        """Test tag renders Organization schema when enabled and configured."""
         SEOSettings.objects.create(
             site=site,
             organization_name="Test Organization",
             organization_type="Corporation",
         )
 
+        class MockPage:
+            schema_data = {"types": ["Organization"], "properties": {}}
+
         request = rf.get("/")
         request.site = site
         template = Template("{% load wagtail_herald %}{% seo_schema %}")
-        context = Context({"request": request})
+        context = Context({"request": request, "page": MockPage()})
         html = template.render(context)
 
         assert '"@type": "Corporation"' in html
@@ -526,10 +534,13 @@ class TestSeoSchemaTemplateTag:
             facebook_url="https://facebook.com/testorg",
         )
 
+        class MockPage:
+            schema_data = {"types": ["Organization"], "properties": {}}
+
         request = rf.get("/")
         request.site = site
         template = Template("{% load wagtail_herald %}{% seo_schema %}")
-        context = Context({"request": request})
+        context = Context({"request": request, "page": MockPage()})
         html = template.render(context)
 
         assert '"sameAs"' in html
@@ -537,17 +548,20 @@ class TestSeoSchemaTemplateTag:
         assert "https://facebook.com/testorg" in html
 
     def test_tag_no_organization_without_name(self, rf, site, db):
-        """Test tag doesn't include Organization schema without name."""
+        """Test tag doesn't include Organization schema without name even if enabled."""
         SEOSettings.objects.create(
             site=site,
             organization_name="",
             twitter_handle="testhandle",
         )
 
+        class MockPage:
+            schema_data = {"types": ["WebSite", "Organization"], "properties": {}}
+
         request = rf.get("/")
         request.site = site
         template = Template("{% load wagtail_herald %}{% seo_schema %}")
-        context = Context({"request": request})
+        context = Context({"request": request, "page": MockPage()})
         html = template.render(context)
 
         assert '"@type": "WebSite"' in html
@@ -837,7 +851,7 @@ class TestBuildBreadcrumbSchema:
         assert "Published" in names
 
     def test_seo_schema_includes_breadcrumb(self, rf, site, db):
-        """Test seo_schema tag includes breadcrumb for nested pages."""
+        """Test seo_schema tag includes breadcrumb for nested pages when enabled."""
 
         class MockAncestor:
             title = "Parent"
@@ -847,6 +861,7 @@ class TestBuildBreadcrumbSchema:
         class MockPage:
             title = "Child"
             depth = 3
+            schema_data = {"types": ["BreadcrumbList"], "properties": {}}
 
             def get_ancestors(self):
                 class MockQuerySet:
@@ -1786,3 +1801,93 @@ class TestBuildSchemaForTypeContentTypes:
 
         assert result["@type"] == "HowTo"
         assert result["name"] == "How to Build a Birdhouse"
+
+
+class TestFilterEmptyValues:
+    """Tests for _filter_empty_values helper function."""
+
+    def test_none_returns_none(self):
+        """None should return None."""
+        assert _filter_empty_values(None) is None
+
+    def test_empty_string_returns_none(self):
+        """Empty string should return None."""
+        assert _filter_empty_values("") is None
+
+    def test_non_empty_string_returns_string(self):
+        """Non-empty string should return the string."""
+        assert _filter_empty_values("hello") == "hello"
+
+    def test_bool_returns_bool(self):
+        """Boolean values should be preserved."""
+        assert _filter_empty_values(True) is True
+        assert _filter_empty_values(False) is False
+
+    def test_int_returns_int(self):
+        """Integer values should be preserved."""
+        assert _filter_empty_values(0) == 0
+        assert _filter_empty_values(42) == 42
+
+    def test_float_returns_float(self):
+        """Float values should be preserved."""
+        assert _filter_empty_values(0.0) == 0.0
+        assert _filter_empty_values(3.14) == 3.14
+
+    def test_empty_list_returns_none(self):
+        """Empty list should return None."""
+        assert _filter_empty_values([]) is None
+
+    def test_list_with_none_items_returns_none(self):
+        """List with only None items should return None."""
+        assert _filter_empty_values([None, None]) is None
+
+    def test_list_with_valid_items(self):
+        """List with valid items should filter out None."""
+        assert _filter_empty_values(["a", None, "b"]) == ["a", "b"]
+
+    def test_nested_list_filtering(self):
+        """Nested lists should be filtered recursively."""
+        result = _filter_empty_values([{"name": "test"}, {"name": ""}])
+        assert result == [{"name": "test"}]
+
+    def test_empty_dict_returns_none(self):
+        """Empty dict should return None."""
+        assert _filter_empty_values({}) is None
+
+    def test_dict_with_only_type_returns_none(self):
+        """Dict with only @type should return None."""
+        assert _filter_empty_values({"@type": "Thing"}) is None
+
+    def test_dict_preserves_type_and_context(self):
+        """Dict should preserve @type and @context with other data."""
+        result = _filter_empty_values(
+            {"@type": "Thing", "@context": "https://schema.org", "name": "Test"}
+        )
+        assert result == {
+            "@type": "Thing",
+            "@context": "https://schema.org",
+            "name": "Test",
+        }
+
+    def test_dict_filters_empty_values(self):
+        """Dict should filter out empty values."""
+        result = _filter_empty_values(
+            {"name": "Test", "description": "", "value": None}
+        )
+        assert result == {"name": "Test"}
+
+    def test_dict_filters_recursively(self):
+        """Dict should filter nested objects recursively."""
+        result = _filter_empty_values(
+            {
+                "name": "Test",
+                "address": {"street": "123 Main", "city": ""},
+            }
+        )
+        assert result == {"name": "Test", "address": {"street": "123 Main"}}
+
+    def test_other_types_returned_as_is(self):
+        """Other types should be returned as-is."""
+        # Test with a tuple (not dict, list, str, bool, int, float, or None)
+        result = _filter_empty_values((1, 2, 3))
+        assert result == (1, 2, 3)

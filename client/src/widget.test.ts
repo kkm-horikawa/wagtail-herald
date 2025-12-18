@@ -9,13 +9,15 @@ describe('initSchemaWidget', () => {
     document.body.appendChild(container)
   })
 
-  it('should initialize widget with empty state', () => {
+  it('should initialize widget with default-on types when no initial state', () => {
     const widget = initSchemaWidget(container)
+    const state = widget.getState()
 
-    expect(widget.getState()).toEqual({
-      types: [],
-      properties: {},
-    })
+    // Default-on types should be automatically selected
+    expect(state.types).toContain('WebSite')
+    expect(state.types).toContain('Organization')
+    expect(state.types).toContain('BreadcrumbList')
+    expect(state.types.length).toBe(3)
     expect(container.querySelector('.schema-widget')).not.toBeNull()
   })
 
@@ -79,12 +81,25 @@ describe('initSchemaWidget', () => {
     expect(productCheckbox.checked).toBe(false)
   })
 
-  it('should show empty message when no types selected', () => {
-    initSchemaWidget(container)
+  it('should show empty message when explicitly initialized with empty types', () => {
+    // Explicitly pass empty types to override default-on behavior
+    initSchemaWidget(container, { types: [], properties: {} })
 
     const empty = container.querySelector('.schema-widget__empty')
     expect(empty).not.toBeNull()
     expect(empty?.textContent).toContain('Select schema types')
+  })
+
+  it('should show property editors by default (default-on types)', () => {
+    initSchemaWidget(container)
+
+    // Default-on types should be selected, so no empty message
+    const empty = container.querySelector('.schema-widget__empty')
+    expect(empty).toBeNull()
+
+    // Should have property editors for default-on types
+    const editors = container.querySelectorAll('.schema-widget__editor')
+    expect(editors.length).toBe(3) // WebSite, Organization, BreadcrumbList
   })
 
   it('should render property editors for selected types', () => {
@@ -164,11 +179,11 @@ describe('initSchemaWidget', () => {
 
   it('should show example section when example has content', () => {
     initSchemaWidget(container, {
-      types: ['WebSite'],
+      types: ['Article'],
       properties: {},
     })
 
-    // WebSite has non-empty example, so example section should be shown
+    // Article has non-empty example, so example section should be shown
     const example = container.querySelector('.schema-widget__example')
     expect(example).not.toBeNull()
     expect(example?.textContent).toContain('Example')
@@ -224,9 +239,10 @@ describe('SchemaWidgetInstance.getState', () => {
 describe('SchemaWidgetInstance.setState', () => {
   it('should update the widget state and re-render', () => {
     const container = document.createElement('div')
-    const widget = initSchemaWidget(container)
+    // Initialize with explicit empty state to test setState
+    const widget = initSchemaWidget(container, { types: [], properties: {} })
 
-    // Initially no types
+    // Initially no types (because we explicitly passed empty state)
     expect(widget.getState().types).toEqual([])
 
     // Update state
@@ -341,7 +357,7 @@ describe('Checkbox interactions', () => {
 })
 
 describe('JSON textarea interactions', () => {
-  it('should update properties on valid JSON blur', () => {
+  it('should update properties on valid JSON input', () => {
     const container = document.createElement('div')
     const widget = initSchemaWidget(container, {
       types: ['Product'],
@@ -352,7 +368,7 @@ describe('JSON textarea interactions', () => {
       '.schema-widget__json',
     ) as HTMLTextAreaElement
     textarea.value = '{"brand": "NewBrand", "sku": "SKU123"}'
-    textarea.dispatchEvent(new Event('blur'))
+    textarea.dispatchEvent(new Event('input'))
 
     const state = widget.getState()
     expect(state.properties.Product).toEqual({
@@ -372,7 +388,7 @@ describe('JSON textarea interactions', () => {
       '.schema-widget__json',
     ) as HTMLTextAreaElement
     textarea.value = '{ invalid json }'
-    textarea.dispatchEvent(new Event('blur'))
+    textarea.dispatchEvent(new Event('input'))
 
     expect(textarea.classList.contains('schema-widget__json--error')).toBe(true)
   })
@@ -390,12 +406,12 @@ describe('JSON textarea interactions', () => {
 
     // First make it invalid
     textarea.value = '{ invalid }'
-    textarea.dispatchEvent(new Event('blur'))
+    textarea.dispatchEvent(new Event('input'))
     expect(textarea.classList.contains('schema-widget__json--error')).toBe(true)
 
     // Then fix it
     textarea.value = '{"valid": "json"}'
-    textarea.dispatchEvent(new Event('blur'))
+    textarea.dispatchEvent(new Event('input'))
     expect(textarea.classList.contains('schema-widget__json--error')).toBe(
       false,
     )
@@ -426,9 +442,9 @@ describe('Japanese locale support', () => {
     )?.nextElementSibling
     expect(articleLabel?.textContent).toBe('記事')
 
-    // Check empty message
+    // Check empty message (when explicitly empty)
     container.innerHTML = ''
-    initSchemaWidget(container)
+    initSchemaWidget(container, { types: [], properties: {} })
     const empty = container.querySelector('.schema-widget__empty')
     expect(empty?.textContent).toContain('スキーマタイプを選択')
 
@@ -470,9 +486,10 @@ describe('escapeHtml', () => {
 })
 
 describe('JSON textarea after checkbox change', () => {
-  it('should handle blur event on re-attached textarea listeners', () => {
+  it('should handle input event on re-attached textarea listeners', () => {
     const container = document.createElement('div')
-    const widget = initSchemaWidget(container)
+    // Start with explicit empty state to simplify the test
+    const widget = initSchemaWidget(container, { types: [], properties: {} })
 
     // Select a type to create property editor
     const checkbox = container.querySelector(
@@ -482,14 +499,15 @@ describe('JSON textarea after checkbox change', () => {
     checkbox.dispatchEvent(new Event('change'))
 
     // Now the textarea has been created with new event listeners
+    // Use data attribute to find the specific textarea for Product
     const textarea = container.querySelector(
-      '.schema-widget__json',
+      '.schema-widget__json[data-schema-type="Product"]',
     ) as HTMLTextAreaElement
     expect(textarea).not.toBeNull()
 
-    // Modify and blur the textarea (tests the re-attached listener)
+    // Modify and trigger input event (tests the re-attached listener)
     textarea.value = '{"brand": "NewBrand"}'
-    textarea.dispatchEvent(new Event('blur'))
+    textarea.dispatchEvent(new Event('input'))
 
     const state = widget.getState()
     expect(state.properties.Product).toEqual({ brand: 'NewBrand' })

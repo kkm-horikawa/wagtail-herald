@@ -26,6 +26,7 @@ describe('SCHEMA_TEMPLATES', () => {
       expect(Array.isArray(template.optionalFields)).toBe(true)
       expect(typeof template.placeholder).toBe('object')
       expect(typeof template.example).toBe('object')
+      expect(typeof template.exampleJa).toBe('object')
       expect(template.googleDocsUrl).toBeTruthy()
     }
   })

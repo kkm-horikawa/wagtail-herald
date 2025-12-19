@@ -184,6 +184,17 @@ class SEOSettings(BaseSiteSetting):
         help_text=_("Google Tag Manager Container ID (e.g., GTM-XXXXXX)"),
     )
 
+    # robots.txt
+    robots_txt = models.TextField(
+        _("robots.txt content"),
+        blank=True,
+        help_text=_(
+            "Custom robots.txt content. Leave empty for default "
+            "(allow all crawlers, include sitemap). "
+            "Requires adding robots_txt view to your urls.py."
+        ),
+    )
+
     # Custom Code
     custom_head_html = models.TextField(
         _("Custom head HTML"),
@@ -239,6 +250,12 @@ class SEOSettings(BaseSiteSetting):
                 FieldPanel("gtm_container_id"),
             ],
             heading=_("Analytics"),
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("robots_txt"),
+            ],
+            heading=_("robots.txt"),
         ),
         MultiFieldPanel(
             [

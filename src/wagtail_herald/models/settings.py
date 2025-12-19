@@ -2,6 +2,7 @@
 Site-wide SEO settings model.
 """
 
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
@@ -169,6 +170,20 @@ class SEOSettings(BaseSiteSetting):
         help_text=_("Verification code from Bing Webmaster Tools (value only)"),
     )
 
+    # Analytics
+    gtm_container_id = models.CharField(
+        _("GTM Container ID"),
+        max_length=20,
+        blank=True,
+        validators=[
+            RegexValidator(
+                regex=r"^GTM-[A-Z0-9]+$",
+                message=_("Enter a valid GTM Container ID (e.g., GTM-XXXXXX)"),
+            ),
+        ],
+        help_text=_("Google Tag Manager Container ID (e.g., GTM-XXXXXX)"),
+    )
+
     # Custom Code
     custom_head_html = models.TextField(
         _("Custom head HTML"),
@@ -218,6 +233,12 @@ class SEOSettings(BaseSiteSetting):
                 FieldPanel("bing_site_verification"),
             ],
             heading=_("Site Verification"),
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("gtm_container_id"),
+            ],
+            heading=_("Analytics"),
         ),
         MultiFieldPanel(
             [

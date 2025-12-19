@@ -27,27 +27,6 @@ The goal is to help content editors achieve **best-practice SEO** without touchi
 - **Custom Code Injection** - Add custom HTML to head and body from admin
 - **Japanese UI** - Full Japanese localization for admin interface
 
-## Comparison with Existing Libraries
-
-| Feature | wagtail-seo | wagtail-metadata | wagtail-herald |
-|---------|-------------|------------------|---------------------|
-| Meta tags | Yes | Yes | Yes |
-| Open Graph | Yes | Yes | Yes |
-| Twitter Card | Yes | Yes | Yes |
-| Organization Schema | Yes | No | Yes |
-| Article Schema | Yes | No | Yes |
-| BreadcrumbList | No | No | **Auto-generated** |
-| FAQPage Schema | No | No | **Yes** |
-| Product Schema | No | No | **Yes** |
-| Event Schema | No | No | **Yes** |
-| LocalBusiness Schema | No | No | **Yes** |
-| 13+ Schema types | No | No | **Yes** |
-| Locale (og:locale) | No | No | **Yes** |
-| GTM/Analytics | No | No | **Yes** |
-| robots.txt | No | No | **Yes** |
-| Template tags | 3 includes | 1 tag | **2 tags** |
-| Japanese UI | No | No | **Yes** |
-
 ## Installation
 
 ```bash

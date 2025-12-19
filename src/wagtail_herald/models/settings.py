@@ -2,6 +2,7 @@
 Site-wide SEO settings model.
 """
 
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
@@ -174,6 +175,12 @@ class SEOSettings(BaseSiteSetting):
         _("GTM Container ID"),
         max_length=20,
         blank=True,
+        validators=[
+            RegexValidator(
+                regex=r"^GTM-[A-Z0-9]+$",
+                message=_("Enter a valid GTM Container ID (e.g., GTM-XXXXXX)"),
+            ),
+        ],
         help_text=_("Google Tag Manager Container ID (e.g., GTM-XXXXXX)"),
     )
 

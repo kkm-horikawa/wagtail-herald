@@ -114,6 +114,43 @@ def seo_schema(context: dict[str, Any]) -> SafeString:
 
 
 @register.simple_tag(takes_context=True)
+def seo_body(context: dict[str, Any]) -> SafeString:
+    """Output analytics noscript fallbacks and custom body HTML.
+
+    Should be placed immediately after the opening <body> tag.
+
+    Usage in templates:
+        {% load wagtail_herald %}
+        <body>
+            {% seo_body %}
+            <!-- Your content -->
+        </body>
+    """
+    request = context.get("request")
+
+    from wagtail_herald.models import SEOSettings
+
+    seo_settings = None
+    if request:
+        seo_settings = SEOSettings.for_request(request)
+
+    body_context = {
+        "gtm_container_id": seo_settings.gtm_container_id if seo_settings else "",
+        "custom_body_end_html": seo_settings.custom_body_end_html
+        if seo_settings
+        else "",
+    }
+
+    return mark_safe(
+        render_to_string(
+            "wagtail_herald/seo_body.html",
+            body_context,
+            request=request,
+        )
+    )
+
+
+@register.simple_tag(takes_context=True)
 def page_lang(context: dict[str, Any]) -> str:
     """Return the language code for the current page (e.g., 'ja', 'en', 'zh').
 
@@ -661,8 +698,7 @@ def build_seo_context(
         "favicon_svg": favicon_svg_url,
         "favicon_png": favicon_png_url,
         "apple_touch_icon": apple_touch_icon_url,
-        "google_verification": settings.google_site_verification if settings else "",
-        "bing_verification": settings.bing_site_verification if settings else "",
+        "gtm_container_id": settings.gtm_container_id if settings else "",
         "custom_head_html": settings.custom_head_html if settings else "",
     }
 

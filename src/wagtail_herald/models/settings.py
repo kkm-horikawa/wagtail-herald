@@ -2,6 +2,7 @@
 Site-wide SEO settings model.
 """
 
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
@@ -155,18 +156,29 @@ class SEOSettings(BaseSiteSetting):
         help_text=_("iOS home screen icon. Recommended: 180x180px, PNG format"),
     )
 
-    # Verification
-    google_site_verification = models.CharField(
-        _("Google site verification"),
-        max_length=255,
+    # Analytics
+    gtm_container_id = models.CharField(
+        _("GTM Container ID"),
+        max_length=20,
         blank=True,
-        help_text=_("Verification code from Google Search Console (value only)"),
+        validators=[
+            RegexValidator(
+                regex=r"^GTM-[A-Z0-9]+$",
+                message=_("Enter a valid GTM Container ID (e.g., GTM-XXXXXX)"),
+            ),
+        ],
+        help_text=_("Google Tag Manager Container ID (e.g., GTM-XXXXXX)"),
     )
-    bing_site_verification = models.CharField(
-        _("Bing site verification"),
-        max_length=255,
+
+    # robots.txt
+    robots_txt = models.TextField(
+        _("robots.txt content"),
         blank=True,
-        help_text=_("Verification code from Bing Webmaster Tools (value only)"),
+        help_text=_(
+            "Custom robots.txt content. Leave empty for default "
+            "(allow all crawlers, include sitemap). "
+            "Requires including wagtail_herald.urls in your urls.py."
+        ),
     )
 
     # Custom Code
@@ -176,6 +188,14 @@ class SEOSettings(BaseSiteSetting):
         help_text=_(
             "Custom HTML to insert in <head>. Use for additional verification tags, "
             "analytics code, preload links, etc. No validation - use with caution."
+        ),
+    )
+    custom_body_end_html = models.TextField(
+        _("Custom body end HTML"),
+        blank=True,
+        help_text=_(
+            "Custom HTML to insert before </body>. Use for chat widgets, "
+            "deferred scripts, etc. No validation - use with caution."
         ),
     )
 
@@ -214,14 +234,20 @@ class SEOSettings(BaseSiteSetting):
         ),
         MultiFieldPanel(
             [
-                FieldPanel("google_site_verification"),
-                FieldPanel("bing_site_verification"),
+                FieldPanel("gtm_container_id"),
             ],
-            heading=_("Site Verification"),
+            heading=_("Analytics"),
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("robots_txt"),
+            ],
+            heading=_("robots.txt"),
         ),
         MultiFieldPanel(
             [
                 FieldPanel("custom_head_html"),
+                FieldPanel("custom_body_end_html"),
             ],
             heading=_("Custom Code"),
         ),

@@ -25,9 +25,8 @@ class TestSEOSettings:
         assert settings.title_separator == "|"
         assert settings.default_locale == "en_US"
         assert settings.default_og_image_alt == ""
-        assert settings.google_site_verification == ""
-        assert settings.bing_site_verification == ""
         assert settings.custom_head_html == ""
+        assert settings.custom_body_end_html == ""
 
     def test_image_fields_are_nullable(self, site):
         """Test that image fields accept null values."""
@@ -90,14 +89,54 @@ class TestSEOSettings:
             "title_separator",
             "default_locale",
             "default_og_image_alt",
-            "google_site_verification",
-            "bing_site_verification",
             "custom_head_html",
         ]
 
         for field_name in fields_with_help_text:
             field = SEOSettings._meta.get_field(field_name)
             assert field.help_text, f"{field_name} should have help_text"
+
+    def test_gtm_container_id_valid(self, site):
+        """Test that valid GTM Container IDs pass validation."""
+        settings = SEOSettings(site=site, gtm_container_id="GTM-ABC123")
+        settings.full_clean()  # Should not raise
+
+    def test_gtm_container_id_valid_long(self, site):
+        """Test that longer GTM Container IDs are valid."""
+        settings = SEOSettings(site=site, gtm_container_id="GTM-ABCD1234")
+        settings.full_clean()  # Should not raise
+
+    def test_gtm_container_id_empty_allowed(self, site):
+        """Test that empty GTM Container ID is allowed."""
+        settings = SEOSettings(site=site, gtm_container_id="")
+        settings.full_clean()  # Should not raise
+
+    def test_gtm_container_id_invalid_format(self, site):
+        """Test that invalid GTM Container ID raises ValidationError."""
+        from django.core.exceptions import ValidationError
+
+        settings = SEOSettings(site=site, gtm_container_id="invalid")
+        with pytest.raises(ValidationError) as exc_info:
+            settings.full_clean()
+        assert "gtm_container_id" in exc_info.value.message_dict
+
+    def test_gtm_container_id_invalid_lowercase(self, site):
+        """Test that lowercase GTM Container ID raises ValidationError."""
+        from django.core.exceptions import ValidationError
+
+        settings = SEOSettings(site=site, gtm_container_id="GTM-abc123")
+        with pytest.raises(ValidationError) as exc_info:
+            settings.full_clean()
+        assert "gtm_container_id" in exc_info.value.message_dict
+
+    def test_gtm_container_id_missing_prefix(self, site):
+        """Test that GTM Container ID without GTM- prefix raises ValidationError."""
+        from django.core.exceptions import ValidationError
+
+        settings = SEOSettings(site=site, gtm_container_id="ABC123")
+        with pytest.raises(ValidationError) as exc_info:
+            settings.full_clean()
+        assert "gtm_container_id" in exc_info.value.message_dict
 
 
 class TestSEOPageMixin:

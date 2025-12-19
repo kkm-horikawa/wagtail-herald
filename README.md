@@ -16,14 +16,15 @@ The goal is to help content editors achieve **best-practice SEO** without touchi
 
 ## Key Features
 
-- **Simple Integration** - Just 2 template tags: `{% seo_head %}` and `{% seo_schema %}`
+- **Simple Integration** - Just 3 template tags: `{% seo_head %}`, `{% seo_body %}`, `{% seo_schema %}`
 - **Site-wide Settings** - Configure Organization, favicons, social profiles from admin
 - **Page-level SEO** - Uses Wagtail's built-in SEO fields + OG image override
 - **13+ Schema Types** - Article, Product, FAQ, Event, LocalBusiness, and more
 - **Automatic BreadcrumbList** - Generated from page hierarchy
 - **Locale Support** - Per-page language/region targeting with `{% page_lang %}` tag
-- **Analytics Integration** - GTM, GA4, Facebook Pixel, Microsoft Clarity from admin
+- **Google Tag Manager** - GTM integration with noscript fallback
 - **robots.txt Management** - Configure robots.txt from admin interface
+- **Custom Code Injection** - Add custom HTML to head and body from admin
 - **Japanese UI** - Full Japanese localization for admin interface
 
 ## Comparison with Existing Libraries
@@ -72,11 +73,13 @@ INSTALLED_APPS = [
 ```html
 {% load wagtail_herald %}
 <!DOCTYPE html>
-<html>
+<html lang="{% page_lang %}">
 <head>
     {% seo_head %}
 </head>
 <body>
+    {% seo_body %}
+
     <!-- Your content -->
 
     {% seo_schema %}
@@ -85,19 +88,22 @@ INSTALLED_APPS = [
 ```
 
 That's it! The template tags handle everything:
-- `{% seo_head %}` - Meta tags, OG, Twitter Card, favicon, hreflang, analytics scripts
+- `{% seo_head %}` - Meta tags, OG, Twitter Card, favicon, GTM script, custom head HTML
+- `{% seo_body %}` - GTM noscript fallback, custom body end HTML
 - `{% seo_schema %}` - All JSON-LD structured data
+- `{% page_lang %}` - Language code for html lang attribute
 
 ### 2. Configure Site Settings
 
 Go to **Settings > SEO Settings** in Wagtail admin to configure:
 
 - Organization name, logo, type
-- Social media profiles (Twitter, Facebook, etc.)
-- Default OG image
+- Social media profiles (Twitter, Facebook)
+- Default OG image and locale
 - Favicon and Apple Touch Icon
-- Google/Bing site verification
-- Analytics (GTM, GA4, Facebook Pixel, Clarity)
+- Google Tag Manager (GTM)
+- robots.txt content
+- Custom head/body HTML injection
 
 ### 3. Add SEO Mixin to Pages (Optional)
 
@@ -191,21 +197,22 @@ This adds an "SEO" panel in the page editor with:
 <meta name="twitter:description" content="Page description...">
 <meta name="twitter:image" content="https://example.com/media/og-image.jpg">
 
-<!-- Verification -->
-<meta name="google-site-verification" content="xxxxx">
-
 <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){...})(window,document,'script','dataLayer','GTM-XXXXXX');</script>
 
-<!-- Google Analytics 4 -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-XXXXXXXXXX');</script>
+<!-- Custom Head HTML -->
+<script src="https://example.com/custom.js"></script>
+```
 
-<!-- Facebook Pixel -->
-<script>!function(f,b,e,v,n,t,s){...}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','XXXXXXXXXXXXXXX');fbq('track','PageView');</script>
+### `{% seo_body %}` Output
 
-<!-- Microsoft Clarity -->
-<script type="text/javascript">(function(c,l,a,r,i,t,y){...})(window,document,"clarity","script","xxxxxxxxxx");</script>
+```html
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXX"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+<!-- Custom Body End HTML -->
+<script src="https://widget.example.com/chat.js"></script>
 ```
 
 ### `{% seo_schema %}` Output
@@ -265,16 +272,16 @@ All settings are optional and configured through Wagtail admin:
 | Organization logo | Logo image for Schema |
 | Twitter handle | @username (without @) |
 | Facebook URL | Facebook page URL |
+| Title separator | Character between page title and site name |
+| Default locale | Default og:locale (e.g., en_US, ja_JP) |
 | Default OG image | Fallback image for social sharing (1200x630) |
 | Favicon (SVG) | SVG favicon for modern browsers (recommended) |
 | Favicon (PNG) | PNG fallback, minimum 48x48 (Google requirement) |
 | Apple Touch Icon | iOS home screen icon (180x180) |
-| Google verification | google-site-verification code |
 | GTM Container ID | Google Tag Manager (GTM-XXXXXX) |
-| GA4 Measurement ID | Google Analytics 4 (G-XXXXXXXXXX) |
-| Facebook Pixel ID | Meta Pixel for ads tracking |
-| Clarity Project ID | Microsoft Clarity for heatmaps |
 | robots.txt content | Custom robots.txt content |
+| Custom head HTML | Custom HTML for `<head>` section |
+| Custom body end HTML | Custom HTML before `</body>` (chat widgets, etc.) |
 
 ### Django Settings (Optional)
 
@@ -337,13 +344,13 @@ Configure robots.txt from Wagtail admin without editing files.
 
 ### Setup
 
-Add the robots.txt view to your `urls.py`:
+Add wagtail-herald URLs to your `urls.py`:
 
 ```python
-from wagtail_herald.views import robots_txt
+from django.urls import include, path
 
 urlpatterns = [
-    path('robots.txt', robots_txt, name='robots_txt'),
+    path('', include('wagtail_herald.urls')),
     # ... other urls
 ]
 ```
@@ -361,7 +368,7 @@ Disallow: /search/
 Sitemap: https://example.com/sitemap.xml
 ```
 
-If no custom content is set, a sensible default is used.
+If left empty, a sensible default is generated (allow all crawlers, include sitemap URL).
 
 ## Requirements
 

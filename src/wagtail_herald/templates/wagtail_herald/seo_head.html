@@ -1,3 +1,12 @@
+{# Google Tag Manager - must be placed as high as possible in <head> #}
+{% if gtm_container_id %}
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','{{ gtm_container_id }}');</script>
+{% endif %}
+
 {# Basic Meta #}
 <title>{{ title }}</title>
 {% if description %}<meta name="description" content="{{ description }}">{% endif %}
@@ -28,10 +37,6 @@
 {% if favicon_svg %}<link rel="icon" type="image/svg+xml" href="{{ favicon_svg }}">{% endif %}
 {% if favicon_png %}<link rel="icon" type="image/png" sizes="48x48" href="{{ favicon_png }}">{% endif %}
 {% if apple_touch_icon %}<link rel="apple-touch-icon" sizes="180x180" href="{{ apple_touch_icon }}">{% endif %}
-
-{# Verification #}
-{% if google_verification %}<meta name="google-site-verification" content="{{ google_verification }}">{% endif %}
-{% if bing_verification %}<meta name="msvalidate.01" content="{{ bing_verification }}">{% endif %}
 
 {# Custom Head HTML - output raw, no escaping #}
 {% if custom_head_html %}{{ custom_head_html|safe }}{% endif %}

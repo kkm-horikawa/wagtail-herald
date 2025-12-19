@@ -1,0 +1,8 @@
+{# Google Tag Manager (noscript) - must be placed immediately after opening <body> tag #}
+{% if gtm_container_id %}
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ gtm_container_id }}"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+{% endif %}
+
+{# Custom Body End HTML - output raw, no escaping #}
+{% if custom_body_end_html %}{{ custom_body_end_html|safe }}{% endif %}

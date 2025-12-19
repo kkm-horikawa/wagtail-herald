@@ -194,24 +194,6 @@ class TestSeoHeadTemplateTag:
         assert 'rel="canonical"' in html
         assert "https://example.com/test/" in html
 
-    def test_tag_renders_verification_codes(self, rf, site, db):
-        """Test tag renders site verification meta tags."""
-        SEOSettings.objects.create(
-            site=site,
-            google_site_verification="google123",
-            bing_site_verification="bing456",
-        )
-
-        request = rf.get("/")
-        request.site = site
-
-        template = Template("{% load wagtail_herald %}{% seo_head %}")
-        context = Context({"request": request})
-        html = template.render(context)
-
-        assert 'name="google-site-verification" content="google123"' in html
-        assert 'name="msvalidate.01" content="bing456"' in html
-
     def test_tag_renders_custom_head_html(self, rf, site, db):
         """Test tag renders custom head HTML."""
         SEOSettings.objects.create(
@@ -2216,6 +2198,153 @@ class TestSchemaInLanguage:
         )
 
         assert result["inLanguage"] == "zh-Hant"
+
+
+class TestSeoBodyTemplateTag:
+    """Tests for the seo_body template tag."""
+
+    def test_tag_is_registered(self):
+        """Test that seo_body tag can be loaded."""
+        template = Template("{% load wagtail_herald %}{% seo_body %}")
+        assert template is not None
+
+    def test_tag_renders_without_request(self, db):
+        """Test seo_body renders without request in context."""
+        template = Template("{% load wagtail_herald %}{% seo_body %}")
+        context = Context({})  # No request
+        html = template.render(context)
+
+        # Should render empty (no GTM without settings)
+        assert "googletagmanager" not in html
+
+    def test_tag_renders_gtm_noscript(self, rf, site, db):
+        """Test seo_body renders GTM noscript when configured."""
+        SEOSettings.objects.create(site=site, gtm_container_id="GTM-TEST123")
+
+        request = rf.get("/")
+        request.site = site
+
+        template = Template("{% load wagtail_herald %}{% seo_body %}")
+        context = Context({"request": request})
+        html = template.render(context)
+
+        assert "<noscript>" in html
+        assert "googletagmanager.com/ns.html?id=GTM-TEST123" in html
+        assert 'style="display:none;visibility:hidden"' in html
+
+    def test_tag_empty_when_no_gtm(self, rf, site, db):
+        """Test seo_body returns empty when GTM not configured."""
+        SEOSettings.objects.create(site=site, gtm_container_id="")
+
+        request = rf.get("/")
+        request.site = site
+
+        template = Template("{% load wagtail_herald %}{% seo_body %}")
+        context = Context({"request": request})
+        html = template.render(context)
+
+        assert "googletagmanager" not in html
+
+    def test_tag_renders_custom_body_end_html(self, rf, site, db):
+        """Test seo_body renders custom body end HTML when configured."""
+        SEOSettings.objects.create(
+            site=site,
+            custom_body_end_html='<script src="https://widget.example.com/chat.js"></script>',
+        )
+
+        request = rf.get("/")
+        request.site = site
+
+        template = Template("{% load wagtail_herald %}{% seo_body %}")
+        context = Context({"request": request})
+        html = template.render(context)
+
+        assert '<script src="https://widget.example.com/chat.js"></script>' in html
+
+    def test_tag_empty_when_no_custom_body_end(self, rf, site, db):
+        """Test seo_body doesn't render custom HTML when not configured."""
+        SEOSettings.objects.create(site=site, custom_body_end_html="")
+
+        request = rf.get("/")
+        request.site = site
+
+        template = Template("{% load wagtail_herald %}{% seo_body %}")
+        context = Context({"request": request})
+        html = template.render(context)
+
+        assert html.strip() == ""
+
+    def test_tag_renders_both_gtm_and_custom_body(self, rf, site, db):
+        """Test seo_body renders both GTM noscript and custom body HTML."""
+        SEOSettings.objects.create(
+            site=site,
+            gtm_container_id="GTM-TEST123",
+            custom_body_end_html='<div id="chat-widget"></div>',
+        )
+
+        request = rf.get("/")
+        request.site = site
+
+        template = Template("{% load wagtail_herald %}{% seo_body %}")
+        context = Context({"request": request})
+        html = template.render(context)
+
+        assert "googletagmanager.com/ns.html?id=GTM-TEST123" in html
+        assert '<div id="chat-widget"></div>' in html
+
+
+class TestGtmInSeoHead:
+    """Tests for GTM script in seo_head template tag."""
+
+    def test_seo_head_renders_gtm_script(self, rf, site, db):
+        """Test seo_head renders GTM script when configured."""
+        SEOSettings.objects.create(site=site, gtm_container_id="GTM-ABC123")
+
+        request = rf.get("/")
+        request.site = site
+
+        template = Template("{% load wagtail_herald %}{% seo_head %}")
+        context = Context({"request": request})
+        html = template.render(context)
+
+        assert "googletagmanager.com/gtm.js?id=" in html
+        assert "GTM-ABC123" in html
+        assert "dataLayer" in html
+
+    def test_seo_head_no_gtm_when_empty(self, rf, site, db):
+        """Test seo_head doesn't render GTM when not configured."""
+        SEOSettings.objects.create(site=site, gtm_container_id="")
+
+        request = rf.get("/")
+        request.site = site
+
+        template = Template("{% load wagtail_herald %}{% seo_head %}")
+        context = Context({"request": request})
+        html = template.render(context)
+
+        assert "googletagmanager.com/gtm.js" not in html
+
+    def test_build_seo_context_includes_gtm(self, rf, site, db):
+        """Test build_seo_context includes gtm_container_id."""
+        settings = SEOSettings.objects.create(site=site, gtm_container_id="GTM-XYZ789")
+
+        request = rf.get("/")
+        request.site = site
+
+        result = build_seo_context(request, None, settings)
+
+        assert result["gtm_container_id"] == "GTM-XYZ789"
+
+    def test_build_seo_context_empty_gtm(self, rf, site, db):
+        """Test build_seo_context handles empty gtm_container_id."""
+        settings = SEOSettings.objects.create(site=site, gtm_container_id="")
+
+        request = rf.get("/")
+        request.site = site
+
+        result = build_seo_context(request, None, settings)
+
+        assert result["gtm_container_id"] == ""
 
 
 class TestGetSchemaLanguageHelper:

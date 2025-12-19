@@ -169,6 +169,14 @@ class SEOSettings(BaseSiteSetting):
         help_text=_("Verification code from Bing Webmaster Tools (value only)"),
     )
 
+    # Analytics
+    gtm_container_id = models.CharField(
+        _("GTM Container ID"),
+        max_length=20,
+        blank=True,
+        help_text=_("Google Tag Manager Container ID (e.g., GTM-XXXXXX)"),
+    )
+
     # Custom Code
     custom_head_html = models.TextField(
         _("Custom head HTML"),
@@ -218,6 +226,12 @@ class SEOSettings(BaseSiteSetting):
                 FieldPanel("bing_site_verification"),
             ],
             heading=_("Site Verification"),
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("gtm_container_id"),
+            ],
+            heading=_("Analytics"),
         ),
         MultiFieldPanel(
             [

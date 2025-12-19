@@ -46,6 +46,70 @@ def get_seo_settings(request: HttpRequest | None) -> SEOSettings | None:
     return result
 
 
+def _get_page_locale_cached(page: Any, settings: SEOSettings | None) -> str:
+    """Get page locale using cached settings.
+
+    Avoids database query by using pre-cached SEOSettings instead of
+    calling page.get_page_locale() which would query SEOSettings.for_site().
+
+    Args:
+        page: Wagtail page instance.
+        settings: Pre-cached SEOSettings instance.
+
+    Returns:
+        Locale string in og:locale format (e.g., 'ja_JP', 'en_US').
+    """
+    # Check page's seo_locale first (SEOPageMixin field)
+    if page and hasattr(page, "seo_locale") and page.seo_locale:
+        return str(page.seo_locale)
+
+    # Fall back to settings default_locale
+    if settings and settings.default_locale:
+        return str(settings.default_locale)
+
+    return "en_US"
+
+
+def _get_page_lang_cached(page: Any, settings: SEOSettings | None) -> str:
+    """Get page language code using cached settings.
+
+    Avoids database query by using pre-cached SEOSettings.
+
+    Args:
+        page: Wagtail page instance.
+        settings: Pre-cached SEOSettings instance.
+
+    Returns:
+        Language code string (e.g., 'ja', 'en', 'zh').
+    """
+    locale = _get_page_locale_cached(page, settings)
+    return locale.split("_")[0].lower()
+
+
+def _get_schema_language_cached(page: Any, settings: SEOSettings | None) -> str:
+    """Get BCP 47 language code for Schema.org using cached settings.
+
+    Avoids database query by using pre-cached SEOSettings.
+
+    Args:
+        page: Wagtail page instance.
+        settings: Pre-cached SEOSettings instance.
+
+    Returns:
+        BCP 47 language code string (e.g., 'ja', 'en', 'zh-Hans').
+    """
+    locale = _get_page_locale_cached(page, settings)
+
+    # Chinese requires script subtags (W3C recommendation)
+    if locale == "zh_CN":
+        return "zh-Hans"
+    elif locale == "zh_TW":
+        return "zh-Hant"
+
+    # Other locales: use simple language code
+    return locale.split("_")[0].lower()
+
+
 @register.simple_tag(takes_context=True)
 def seo_head(context: dict[str, Any]) -> SafeString:
     """Output all SEO meta tags, OG tags, Twitter Card, favicons, and custom HTML.
@@ -179,18 +243,11 @@ def page_lang(context: dict[str, Any]) -> str:
     3. 'en'
     """
     page = context.get("page") or context.get("self")
-
-    # Try to get from page's method
-    if page and hasattr(page, "get_page_lang"):
-        return str(page.get_page_lang())
-
-    # Fallback: try to get from SEOSettings
     request = context.get("request")
     settings = get_seo_settings(request)
-    if settings and settings.default_locale:
-        return str(settings.default_locale).split("_")[0].lower()
 
-    return "en"
+    # Use cached helper to avoid duplicate database queries
+    return _get_page_lang_cached(page, settings)
 
 
 @register.simple_tag(takes_context=True)
@@ -207,18 +264,11 @@ def page_locale(context: dict[str, Any]) -> str:
     3. 'en_US'
     """
     page = context.get("page") or context.get("self")
-
-    # Try to get from page's method
-    if page and hasattr(page, "get_page_locale"):
-        return str(page.get_page_locale())
-
-    # Fallback: try to get from SEOSettings
     request = context.get("request")
     settings = get_seo_settings(request)
-    if settings and settings.default_locale:
-        return str(settings.default_locale)
 
-    return "en_US"
+    # Use cached helper to avoid duplicate database queries
+    return _get_page_locale_cached(page, settings)
 
 
 def _build_website_schema(request: HttpRequest | None) -> dict[str, Any] | None:
@@ -670,11 +720,8 @@ def build_seo_context(
     og_image_data = _get_og_image_data(request, page, settings)
 
     # Locale (page-specific takes priority over settings default)
-    locale = "en_US"
-    if page and hasattr(page, "get_page_locale"):
-        locale = page.get_page_locale()
-    elif settings and settings.default_locale:
-        locale = settings.default_locale
+    # Use cached helper to avoid duplicate database queries
+    locale = _get_page_locale_cached(page, settings)
 
     # Favicon URLs
     favicon_svg_url = _get_image_url(request, settings.favicon_svg) if settings else ""
@@ -774,8 +821,8 @@ def _get_robots_meta(page: Any) -> str:
 def _get_schema_language(page: Any, settings: Any) -> str:
     """Get BCP 47 language code for Schema.org inLanguage property.
 
-    Uses page's get_schema_language method if available (SEOPageMixin),
-    otherwise falls back to settings.default_locale or 'en'.
+    Uses cached helper to avoid duplicate database queries from
+    page.get_schema_language() which would call SEOSettings.for_site().
 
     Args:
         page: Wagtail page instance.
@@ -784,21 +831,8 @@ def _get_schema_language(page: Any, settings: Any) -> str:
     Returns:
         BCP 47 language code string (e.g., 'ja', 'en', 'zh-Hans').
     """
-    # Try page's method first (SEOPageMixin)
-    if page and hasattr(page, "get_schema_language"):
-        return str(page.get_schema_language())
-
-    # Fall back to settings default_locale
-    if settings and hasattr(settings, "default_locale") and settings.default_locale:
-        locale = str(settings.default_locale)
-        # Chinese requires script subtags
-        if locale == "zh_CN":
-            return "zh-Hans"
-        elif locale == "zh_TW":
-            return "zh-Hant"
-        return locale.split("_")[0].lower()
-
-    return "en"
+    # Use cached helper to avoid duplicate database queries
+    return _get_schema_language_cached(page, settings)
 
 
 def _get_og_image_data(

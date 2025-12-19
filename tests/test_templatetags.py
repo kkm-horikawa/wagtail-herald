@@ -1879,11 +1879,10 @@ class TestPageLangTemplateTag:
     """Tests for page_lang template tag."""
 
     def test_page_lang_with_seo_mixin(self, rf, db):
-        """Test page_lang returns language from page with SEOPageMixin."""
+        """Test page_lang returns language from page with seo_locale field."""
 
         class MockPage:
-            def get_page_lang(self):
-                return "ja"
+            seo_locale = "ja_JP"
 
         request = rf.get("/")
         context = {"request": request, "page": MockPage()}
@@ -1921,11 +1920,10 @@ class TestPageLocaleTemplateTag:
     """Tests for page_locale template tag."""
 
     def test_page_locale_with_seo_mixin(self, rf, db):
-        """Test page_locale returns full locale from page with SEOPageMixin."""
+        """Test page_locale returns full locale from page with seo_locale field."""
 
         class MockPage:
-            def get_page_locale(self):
-                return "ja_JP"
+            seo_locale = "ja_JP"
 
         request = rf.get("/")
         context = {"request": request, "page": MockPage()}
@@ -1963,16 +1961,14 @@ class TestBuildSeoContextLocale:
     """Tests for build_seo_context locale handling."""
 
     def test_og_locale_from_page(self, rf, db):
-        """Test og_locale uses page locale when available."""
+        """Test og_locale uses page seo_locale field when available."""
         from wagtail_herald.templatetags.wagtail_herald import build_seo_context
 
         class MockPage:
             title = "Test Page"
             search_description = ""
             full_url = "https://example.com/test/"
-
-            def get_page_locale(self):
-                return "ko_KR"
+            seo_locale = "ko_KR"
 
             def get_canonical_url(self, request=None):
                 return self.full_url
@@ -2025,14 +2021,12 @@ class TestSchemaInLanguage:
     """Tests for inLanguage property in Schema.org output."""
 
     def test_inlanguage_with_page_locale(self, rf):
-        """Test inLanguage uses page's get_schema_language method."""
+        """Test inLanguage uses page's seo_locale field."""
 
         class MockPage:
             title = "Test Article"
             full_url = "https://example.com/article/"
-
-            def get_schema_language(self):
-                return "ja"
+            seo_locale = "ja_JP"
 
         result = _build_schema_for_type(rf.get("/"), MockPage(), None, "Article", {})
 
@@ -2044,9 +2038,7 @@ class TestSchemaInLanguage:
         class MockPage:
             title = "Test Article"
             full_url = "https://example.com/article/"
-
-            def get_schema_language(self):
-                return "zh-Hans"
+            seo_locale = "zh_CN"
 
         result = _build_schema_for_type(rf.get("/"), MockPage(), None, "Article", {})
 
@@ -2058,9 +2050,7 @@ class TestSchemaInLanguage:
         class MockPage:
             title = "Test Article"
             full_url = "https://example.com/article/"
-
-            def get_schema_language(self):
-                return "zh-Hant"
+            seo_locale = "zh_TW"
 
         result = _build_schema_for_type(rf.get("/"), MockPage(), None, "Article", {})
 
@@ -2099,9 +2089,7 @@ class TestSchemaInLanguage:
         class MockPage:
             title = "John Doe"
             full_url = "https://example.com/person/"
-
-            def get_schema_language(self):
-                return "ja"
+            seo_locale = "ja_JP"
 
         result = _build_schema_for_type(rf.get("/"), MockPage(), None, "Person", {})
 
@@ -2113,9 +2101,7 @@ class TestSchemaInLanguage:
         class MockPage:
             title = "My Blog Post"
             full_url = "https://example.com/blog/post/"
-
-            def get_schema_language(self):
-                return "de"
+            seo_locale = "de_DE"
 
         result = _build_schema_for_type(
             rf.get("/"), MockPage(), None, "BlogPosting", {}
@@ -2129,9 +2115,7 @@ class TestSchemaInLanguage:
         class MockPage:
             title = "News Article"
             full_url = "https://example.com/news/article/"
-
-            def get_schema_language(self):
-                return "ko"
+            seo_locale = "ko_KR"
 
         result = _build_schema_for_type(
             rf.get("/"), MockPage(), None, "NewsArticle", {}
@@ -2145,9 +2129,7 @@ class TestSchemaInLanguage:
         class MockPage:
             title = "Conference 2024"
             full_url = "https://example.com/events/conference/"
-
-            def get_schema_language(self):
-                return "es"
+            seo_locale = "es_ES"
 
         result = _build_schema_for_type(rf.get("/"), MockPage(), None, "Event", {})
 
@@ -2159,9 +2141,7 @@ class TestSchemaInLanguage:
         class MockPage:
             title = "Super Widget"
             full_url = "https://example.com/products/widget/"
-
-            def get_schema_language(self):
-                return "pt"
+            seo_locale = "pt_BR"
 
         result = _build_schema_for_type(rf.get("/"), MockPage(), None, "Product", {})
 
@@ -2350,13 +2330,12 @@ class TestGtmInSeoHead:
 class TestGetSchemaLanguageHelper:
     """Tests for _get_schema_language helper function."""
 
-    def test_uses_page_method(self, rf):
-        """Test helper uses page's get_schema_language method."""
+    def test_uses_page_seo_locale(self, rf):
+        """Test helper uses page's seo_locale field."""
         from wagtail_herald.templatetags.wagtail_herald import _get_schema_language
 
         class MockPage:
-            def get_schema_language(self):
-                return "ja"
+            seo_locale = "ja_JP"
 
         result = _get_schema_language(MockPage(), None)
         assert result == "ja"

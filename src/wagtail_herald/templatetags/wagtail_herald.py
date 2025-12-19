@@ -136,6 +136,9 @@ def seo_body(context: dict[str, Any]) -> SafeString:
 
     body_context = {
         "gtm_container_id": seo_settings.gtm_container_id if seo_settings else "",
+        "custom_body_end_html": seo_settings.custom_body_end_html
+        if seo_settings
+        else "",
     }
 
     return mark_safe(

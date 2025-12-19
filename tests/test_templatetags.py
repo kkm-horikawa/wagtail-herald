@@ -2245,6 +2245,53 @@ class TestSeoBodyTemplateTag:
 
         assert "googletagmanager" not in html
 
+    def test_tag_renders_custom_body_end_html(self, rf, site, db):
+        """Test seo_body renders custom body end HTML when configured."""
+        SEOSettings.objects.create(
+            site=site,
+            custom_body_end_html='<script src="https://widget.example.com/chat.js"></script>',
+        )
+
+        request = rf.get("/")
+        request.site = site
+
+        template = Template("{% load wagtail_herald %}{% seo_body %}")
+        context = Context({"request": request})
+        html = template.render(context)
+
+        assert '<script src="https://widget.example.com/chat.js"></script>' in html
+
+    def test_tag_empty_when_no_custom_body_end(self, rf, site, db):
+        """Test seo_body doesn't render custom HTML when not configured."""
+        SEOSettings.objects.create(site=site, custom_body_end_html="")
+
+        request = rf.get("/")
+        request.site = site
+
+        template = Template("{% load wagtail_herald %}{% seo_body %}")
+        context = Context({"request": request})
+        html = template.render(context)
+
+        assert html.strip() == ""
+
+    def test_tag_renders_both_gtm_and_custom_body(self, rf, site, db):
+        """Test seo_body renders both GTM noscript and custom body HTML."""
+        SEOSettings.objects.create(
+            site=site,
+            gtm_container_id="GTM-TEST123",
+            custom_body_end_html='<div id="chat-widget"></div>',
+        )
+
+        request = rf.get("/")
+        request.site = site
+
+        template = Template("{% load wagtail_herald %}{% seo_body %}")
+        context = Context({"request": request})
+        html = template.render(context)
+
+        assert "googletagmanager.com/ns.html?id=GTM-TEST123" in html
+        assert '<div id="chat-widget"></div>' in html
+
 
 class TestGtmInSeoHead:
     """Tests for GTM script in seo_head template tag."""

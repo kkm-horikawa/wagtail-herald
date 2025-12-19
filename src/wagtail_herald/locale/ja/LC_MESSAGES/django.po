@@ -200,11 +200,11 @@ msgstr "Bingサイト認証"
 msgid "Verification code from Bing Webmaster Tools (value only)"
 msgstr "Bing Webmaster Toolsからの認証コード（値のみ）"
 
-#: models/settings.py:165
+#: models/settings.py:185
 msgid "Custom head HTML"
 msgstr "カスタムhead HTML"
 
-#: models/settings.py:168
+#: models/settings.py:188
 msgid ""
 "Custom HTML to insert in <head>. Use for additional verification tags, "
 "analytics code, preload links, etc. No validation - use with caution."
@@ -212,7 +212,19 @@ msgstr ""
 "<head>に挿入するカスタムHTML。追加の認証タグ、アナリティクスコード、"
 "プリロードリンクなどに使用。バリデーションなし - 注意して使用してください。"
 
-#: models/settings.py:180
+#: models/settings.py:193
+msgid "Custom body end HTML"
+msgstr "カスタムbody末尾HTML"
+
+#: models/settings.py:196
+msgid ""
+"Custom HTML to insert before </body>. Use for chat widgets, "
+"deferred scripts, etc. No validation - use with caution."
+msgstr ""
+"</body>の前に挿入するカスタムHTML。チャットウィジェット、"
+"遅延スクリプトなどに使用。バリデーションなし - 注意して使用してください。"
+
+#: models/settings.py:202
 msgid "Organization"
 msgstr "組織"
 

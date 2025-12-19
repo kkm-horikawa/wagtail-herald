@@ -190,6 +190,14 @@ class SEOSettings(BaseSiteSetting):
             "analytics code, preload links, etc. No validation - use with caution."
         ),
     )
+    custom_body_end_html = models.TextField(
+        _("Custom body end HTML"),
+        blank=True,
+        help_text=_(
+            "Custom HTML to insert before </body>. Use for chat widgets, "
+            "deferred scripts, etc. No validation - use with caution."
+        ),
+    )
 
     panels = [
         MultiFieldPanel(
@@ -239,6 +247,7 @@ class SEOSettings(BaseSiteSetting):
         MultiFieldPanel(
             [
                 FieldPanel("custom_head_html"),
+                FieldPanel("custom_body_end_html"),
             ],
             heading=_("Custom Code"),
         ),

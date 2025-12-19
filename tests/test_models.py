@@ -26,6 +26,7 @@ class TestSEOSettings:
         assert settings.default_locale == "en_US"
         assert settings.default_og_image_alt == ""
         assert settings.custom_head_html == ""
+        assert settings.custom_body_end_html == ""
 
     def test_image_fields_are_nullable(self, site):
         """Test that image fields accept null values."""

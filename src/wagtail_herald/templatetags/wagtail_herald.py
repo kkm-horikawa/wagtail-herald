@@ -18,6 +18,33 @@ if TYPE_CHECKING:
 
 register = template.Library()
 
+# Request attribute name for cached SEOSettings
+_SEO_SETTINGS_CACHE_ATTR = "_wagtail_herald_seo_settings"
+
+
+def get_seo_settings(request: HttpRequest | None) -> SEOSettings | None:
+    """Get SEOSettings with request-level caching.
+
+    Caches the SEOSettings instance on the request object to avoid
+    duplicate database queries when multiple template tags are used.
+
+    Args:
+        request: The HTTP request object.
+
+    Returns:
+        SEOSettings instance or None if no request.
+    """
+    if request is None:
+        return None
+
+    if not hasattr(request, _SEO_SETTINGS_CACHE_ATTR):
+        from wagtail_herald.models import SEOSettings
+
+        setattr(request, _SEO_SETTINGS_CACHE_ATTR, SEOSettings.for_request(request))
+
+    result: SEOSettings | None = getattr(request, _SEO_SETTINGS_CACHE_ATTR)
+    return result
+
 
 @register.simple_tag(takes_context=True)
 def seo_head(context: dict[str, Any]) -> SafeString:
@@ -32,11 +59,7 @@ def seo_head(context: dict[str, Any]) -> SafeString:
     request = context.get("request")
     page = context.get("page") or context.get("self")
 
-    from wagtail_herald.models import SEOSettings
-
-    seo_settings = None
-    if request:
-        seo_settings = SEOSettings.for_request(request)
+    seo_settings = get_seo_settings(request)
 
     seo_context = build_seo_context(request, page, seo_settings)
 
@@ -62,11 +85,7 @@ def seo_schema(context: dict[str, Any]) -> SafeString:
     request = context.get("request")
     page = context.get("page") or context.get("self")
 
-    from wagtail_herald.models import SEOSettings
-
-    seo_settings = None
-    if request:
-        seo_settings = SEOSettings.for_request(request)
+    seo_settings = get_seo_settings(request)
 
     schemas: list[dict[str, Any]] = []
 
@@ -128,11 +147,7 @@ def seo_body(context: dict[str, Any]) -> SafeString:
     """
     request = context.get("request")
 
-    from wagtail_herald.models import SEOSettings
-
-    seo_settings = None
-    if request:
-        seo_settings = SEOSettings.for_request(request)
+    seo_settings = get_seo_settings(request)
 
     body_context = {
         "gtm_container_id": seo_settings.gtm_container_id if seo_settings else "",
@@ -171,12 +186,9 @@ def page_lang(context: dict[str, Any]) -> str:
 
     # Fallback: try to get from SEOSettings
     request = context.get("request")
-    if request:
-        from wagtail_herald.models import SEOSettings
-
-        settings = SEOSettings.for_request(request)
-        if settings and settings.default_locale:
-            return str(settings.default_locale).split("_")[0].lower()
+    settings = get_seo_settings(request)
+    if settings and settings.default_locale:
+        return str(settings.default_locale).split("_")[0].lower()
 
     return "en"
 
@@ -202,12 +214,9 @@ def page_locale(context: dict[str, Any]) -> str:
 
     # Fallback: try to get from SEOSettings
     request = context.get("request")
-    if request:
-        from wagtail_herald.models import SEOSettings
-
-        settings = SEOSettings.for_request(request)
-        if settings and settings.default_locale:
-            return str(settings.default_locale)
+    settings = get_seo_settings(request)
+    if settings and settings.default_locale:
+        return str(settings.default_locale)
 
     return "en_US"
 

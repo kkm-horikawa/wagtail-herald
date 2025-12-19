@@ -191,7 +191,7 @@ class SEOSettings(BaseSiteSetting):
         help_text=_(
             "Custom robots.txt content. Leave empty for default "
             "(allow all crawlers, include sitemap). "
-            "Requires adding robots_txt view to your urls.py."
+            "Requires including wagtail_herald.urls in your urls.py."
         ),
     )
 

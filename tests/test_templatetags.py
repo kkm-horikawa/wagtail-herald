@@ -2429,3 +2429,55 @@ class TestGetSchemaLanguageHelper:
 
         result = _get_schema_language(MockPage(), settings)
         assert result == "en"
+
+
+class TestGetSeoSettingsCaching:
+    """Tests for SEOSettings request-level caching."""
+
+    def test_returns_none_for_none_request(self):
+        """Test that None request returns None."""
+        from wagtail_herald.templatetags.wagtail_herald import get_seo_settings
+
+        result = get_seo_settings(None)
+        assert result is None
+
+    def test_caches_on_request(self, rf, site, db):
+        """Test that settings are cached on request object."""
+        from wagtail_herald.templatetags.wagtail_herald import (
+            _SEO_SETTINGS_CACHE_ATTR,
+            get_seo_settings,
+        )
+
+        SEOSettings.objects.create(site=site, organization_name="Test Org")
+
+        request = rf.get("/")
+        request.site = site
+
+        # First call should set cache
+        result1 = get_seo_settings(request)
+        assert result1 is not None
+        assert result1.organization_name == "Test Org"
+        assert hasattr(request, _SEO_SETTINGS_CACHE_ATTR)
+
+        # Second call should return cached value
+        result2 = get_seo_settings(request)
+        assert result2 is result1  # Same object
+
+    def test_multiple_tags_use_same_settings(self, rf, site, db):
+        """Test that multiple template tags use the same cached settings."""
+        SEOSettings.objects.create(site=site, gtm_container_id="GTM-TEST123")
+
+        request = rf.get("/")
+        request.site = site
+
+        # Render template with multiple tags
+        template = Template(
+            "{% load wagtail_herald %}{% seo_head %}{% seo_body %}{% seo_schema %}"
+        )
+        context = Context({"request": request})
+        template.render(context)
+
+        # Verify cache was set
+        from wagtail_herald.templatetags.wagtail_herald import _SEO_SETTINGS_CACHE_ATTR
+
+        assert hasattr(request, _SEO_SETTINGS_CACHE_ATTR)

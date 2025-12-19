@@ -695,8 +695,6 @@ def build_seo_context(
         "favicon_svg": favicon_svg_url,
         "favicon_png": favicon_png_url,
         "apple_touch_icon": apple_touch_icon_url,
-        "google_verification": settings.google_site_verification if settings else "",
-        "bing_verification": settings.bing_site_verification if settings else "",
         "gtm_container_id": settings.gtm_container_id if settings else "",
         "custom_head_html": settings.custom_head_html if settings else "",
     }

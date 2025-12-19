@@ -38,9 +38,5 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 {% if favicon_png %}<link rel="icon" type="image/png" sizes="48x48" href="{{ favicon_png }}">{% endif %}
 {% if apple_touch_icon %}<link rel="apple-touch-icon" sizes="180x180" href="{{ apple_touch_icon }}">{% endif %}
 
-{# Verification #}
-{% if google_verification %}<meta name="google-site-verification" content="{{ google_verification }}">{% endif %}
-{% if bing_verification %}<meta name="msvalidate.01" content="{{ bing_verification }}">{% endif %}
-
 {# Custom Head HTML - output raw, no escaping #}
 {% if custom_head_html %}{{ custom_head_html|safe }}{% endif %}

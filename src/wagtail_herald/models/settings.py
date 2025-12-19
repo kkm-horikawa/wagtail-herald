@@ -156,20 +156,6 @@ class SEOSettings(BaseSiteSetting):
         help_text=_("iOS home screen icon. Recommended: 180x180px, PNG format"),
     )
 
-    # Verification
-    google_site_verification = models.CharField(
-        _("Google site verification"),
-        max_length=255,
-        blank=True,
-        help_text=_("Verification code from Google Search Console (value only)"),
-    )
-    bing_site_verification = models.CharField(
-        _("Bing site verification"),
-        max_length=255,
-        blank=True,
-        help_text=_("Verification code from Bing Webmaster Tools (value only)"),
-    )
-
     # Analytics
     gtm_container_id = models.CharField(
         _("GTM Container ID"),
@@ -237,13 +223,6 @@ class SEOSettings(BaseSiteSetting):
                 FieldPanel("apple_touch_icon"),
             ],
             heading=_("Images"),
-        ),
-        MultiFieldPanel(
-            [
-                FieldPanel("google_site_verification"),
-                FieldPanel("bing_site_verification"),
-            ],
-            heading=_("Site Verification"),
         ),
         MultiFieldPanel(
             [

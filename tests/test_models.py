@@ -25,8 +25,6 @@ class TestSEOSettings:
         assert settings.title_separator == "|"
         assert settings.default_locale == "en_US"
         assert settings.default_og_image_alt == ""
-        assert settings.google_site_verification == ""
-        assert settings.bing_site_verification == ""
         assert settings.custom_head_html == ""
 
     def test_image_fields_are_nullable(self, site):
@@ -90,8 +88,6 @@ class TestSEOSettings:
             "title_separator",
             "default_locale",
             "default_og_image_alt",
-            "google_site_verification",
-            "bing_site_verification",
             "custom_head_html",
         ]
 

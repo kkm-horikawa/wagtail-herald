@@ -194,24 +194,6 @@ class TestSeoHeadTemplateTag:
         assert 'rel="canonical"' in html
         assert "https://example.com/test/" in html
 
-    def test_tag_renders_verification_codes(self, rf, site, db):
-        """Test tag renders site verification meta tags."""
-        SEOSettings.objects.create(
-            site=site,
-            google_site_verification="google123",
-            bing_site_verification="bing456",
-        )
-
-        request = rf.get("/")
-        request.site = site
-
-        template = Template("{% load wagtail_herald %}{% seo_head %}")
-        context = Context({"request": request})
-        html = template.render(context)
-
-        assert 'name="google-site-verification" content="google123"' in html
-        assert 'name="msvalidate.01" content="bing456"' in html
-
     def test_tag_renders_custom_head_html(self, rf, site, db):
         """Test tag renders custom head HTML."""
         SEOSettings.objects.create(

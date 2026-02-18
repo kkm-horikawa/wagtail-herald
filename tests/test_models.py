@@ -27,6 +27,8 @@ class TestSEOSettings:
         assert settings.default_og_image_alt == ""
         assert settings.custom_head_html == ""
         assert settings.custom_body_end_html == ""
+        assert settings.ads_txt == ""
+        assert settings.security_txt == ""
 
     def test_image_fields_are_nullable(self, site):
         """Test that image fields accept null values."""

@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: wagtail-herald\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-19 12:00+0000\n"
-"PO-Revision-Date: 2025-12-19 12:00+0900\n"
+"POT-Creation-Date: 2026-02-18 14:50+0000\n"
+"PO-Revision-Date: 2026-02-18 12:00+0900\n"
 "Last-Translator: \n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -16,51 +16,51 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: apps.py:14
+#: src/wagtail_herald/apps.py:14
 msgid "Wagtail Herald"
 msgstr "Wagtail Herald"
 
-#: models/mixins.py
+#: src/wagtail_herald/models/mixins.py:37
 msgid "OG image override"
 msgstr "OG画像オーバーライド"
 
-#: models/mixins.py
+#: src/wagtail_herald/models/mixins.py:38
 msgid "Override the default Open Graph image. Recommended: 1200x630px"
 msgstr "デフォルトのOpen Graph画像を上書きします。推奨: 1200x630px"
 
-#: models/mixins.py
+#: src/wagtail_herald/models/mixins.py:42
 msgid "OG image alt text"
 msgstr "OG画像代替テキスト"
 
-#: models/mixins.py
+#: src/wagtail_herald/models/mixins.py:45
 msgid "Alt text for OG image. Describe the image for accessibility"
 msgstr "OG画像の代替テキスト。アクセシビリティのために画像を説明してください"
 
-#: models/mixins.py
+#: src/wagtail_herald/models/mixins.py:49
 msgid "noindex"
 msgstr "noindex"
 
-#: models/mixins.py
+#: src/wagtail_herald/models/mixins.py:52
 msgid ""
 "Prevent search engines from indexing this page. Use for private or duplicate "
 "content"
 msgstr ""
-"検索エンジンによるこのページのインデックスを防止します。"
-"プライベートコンテンツや重複コンテンツに使用してください"
+"検索エンジンによるこのページのインデックスを防止します。プライベートコンテン"
+"ツや重複コンテンツに使用してください"
 
-#: models/mixins.py
+#: src/wagtail_herald/models/mixins.py:58
 msgid "nofollow"
 msgstr "nofollow"
 
-#: models/mixins.py
+#: src/wagtail_herald/models/mixins.py:60
 msgid "Prevent search engines from following links on this page"
 msgstr "検索エンジンがこのページのリンクをたどることを防止します"
 
-#: models/mixins.py
+#: src/wagtail_herald/models/mixins.py:64
 msgid "Canonical URL"
 msgstr "カノニカルURL"
 
-#: models/mixins.py
+#: src/wagtail_herald/models/mixins.py:67
 msgid ""
 "Override the canonical URL. Must be absolute URL with protocol (e.g., "
 "'https://example.com/page/')"
@@ -68,254 +68,288 @@ msgstr ""
 "カノニカルURLを上書きします。プロトコルを含む絶対URLである必要があります"
 "（例: 'https://example.com/page/'）"
 
-#: models/mixins.py
+#: src/wagtail_herald/models/mixins.py:73
 msgid "SEO locale"
 msgstr "SEOロケール"
 
-#: models/mixins.py
+#: src/wagtail_herald/models/mixins.py:77
 msgid "Override locale for this page (og:locale, html lang attribute)"
 msgstr "このページのロケールを上書き（og:locale、html lang属性）"
 
-#: models/mixins.py
+#: src/wagtail_herald/models/mixins.py:81
 msgid "Structured data"
 msgstr "構造化データ"
 
-#: models/mixins.py
+#: src/wagtail_herald/models/mixins.py:84
 msgid "Schema.org structured data configuration for this page"
 msgstr "このページのSchema.org構造化データ設定"
 
-#: models/mixins.py
+#: src/wagtail_herald/models/mixins.py:100
 msgid "SEO"
 msgstr "SEO"
 
-#: models/mixins.py
+#: src/wagtail_herald/models/mixins.py:106
 msgid "Structured Data"
 msgstr "構造化データ"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:50
 msgid "SEO Settings"
 msgstr "SEO設定"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:54
 msgid "Organization name"
 msgstr "組織名"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:57
 msgid "Organization name for Schema.org structured data"
 msgstr "Schema.org構造化データ用の組織名"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:60
 msgid "Organization type"
 msgstr "組織タイプ"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:65
 msgid "Organization type for Schema.org (e.g., Corporation, LocalBusiness)"
 msgstr "Schema.org用の組織タイプ（例: Corporation, LocalBusiness）"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:74
 msgid "Organization logo"
 msgstr "組織ロゴ"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:75
 msgid "Logo for Schema.org. Recommended: 112x112px minimum, PNG/JPEG"
 msgstr "Schema.org用のロゴ。推奨: 最小112x112px、PNG/JPEG"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:80
 msgid "Twitter handle"
 msgstr "Twitterハンドル"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:83
 msgid "Twitter username without @ (e.g., 'example' not '@example')"
 msgstr "@なしのTwitterユーザー名（例: '@example'ではなく'example'）"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:86
 msgid "Facebook URL"
 msgstr "Facebook URL"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:88
 msgid "Full Facebook page URL (e.g., 'https://facebook.com/example')"
 msgstr "FacebookページのフルURL（例: 'https://facebook.com/example'）"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:93
 msgid "Title separator"
 msgstr "タイトル区切り文字"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:97
 msgid "Character(s) between page title and site name (e.g., '|', '-', '·')"
 msgstr "ページタイトルとサイト名の間の文字（例: '|', '-', '·'）"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:101
 msgid "Default locale"
 msgstr "デフォルトロケール"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:105
 msgid "Default locale for og:locale meta tag (e.g., en_US, ja_JP)"
 msgstr "og:localeメタタグのデフォルトロケール（例: en_US, ja_JP）"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:115
 msgid "Default OG image"
 msgstr "デフォルトOG画像"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:117
 msgid "Default image for social sharing. Recommended: 1200x630px, JPEG/PNG"
 msgstr "ソーシャルシェア用のデフォルト画像。推奨: 1200x630px、JPEG/PNG"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:121
 msgid "Default OG image alt text"
 msgstr "デフォルトOG画像代替テキスト"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:125
 msgid "Alt text for default OG image. Describe the image for accessibility"
-msgstr "デフォルトOG画像の代替テキスト。アクセシビリティのために画像を説明してください"
+msgstr ""
+"デフォルトOG画像の代替テキスト。アクセシビリティのために画像を説明してくださ"
+"い"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:134
 msgid "Favicon (SVG)"
 msgstr "ファビコン（SVG）"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:136
 msgid ""
 "SVG favicon for modern browsers. Requires WAGTAILIMAGES_EXTENSIONS to "
 "include 'svg' in settings"
 msgstr ""
-"モダンブラウザ用のSVGファビコン。"
-"設定でWAGTAILIMAGES_EXTENSIONSに'svg'を含める必要があります"
+"モダンブラウザ用のSVGファビコン。設定でWAGTAILIMAGES_EXTENSIONSに'svg'を含め"
+"る必要があります"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:146
 msgid "Favicon (PNG)"
 msgstr "ファビコン（PNG）"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:147
 msgid "PNG favicon fallback. Minimum: 48x48px (Google requirement)"
 msgstr "PNGファビコンフォールバック。最小: 48x48px（Google要件）"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:155
 msgid "Apple Touch Icon"
 msgstr "Apple Touchアイコン"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:156
 msgid "iOS home screen icon. Recommended: 180x180px, PNG format"
 msgstr "iOSホーム画面アイコン。推奨: 180x180px、PNG形式"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:161
 msgid "GTM Container ID"
 msgstr "GTMコンテナID"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:167
 msgid "Enter a valid GTM Container ID (e.g., GTM-XXXXXX)"
 msgstr "有効なGTMコンテナIDを入力してください（例: GTM-XXXXXX）"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:170
 msgid "Google Tag Manager Container ID (e.g., GTM-XXXXXX)"
 msgstr "Google Tag ManagerのコンテナID（例: GTM-XXXXXX）"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:175
 msgid "robots.txt content"
 msgstr "robots.txt内容"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:178
 msgid ""
-"Custom robots.txt content. Leave empty for default "
-"(allow all crawlers, include sitemap). "
+"Custom robots.txt content. Leave empty for default (allow all crawlers, "
+"include sitemap). Requires including wagtail_herald.urls in your urls.py."
+msgstr ""
+"カスタムrobots.txt内容。空の場合はデフォルト（すべてのクローラーを許可、サイ"
+"トマップを含む）を使用します。urls.pyにwagtail_herald.urlsを含める必要があり"
+"ます。"
+
+#: src/wagtail_herald/models/settings.py:186
+msgid "ads.txt content"
+msgstr "ads.txt内容"
+
+#: src/wagtail_herald/models/settings.py:189
+msgid ""
+"Content for ads.txt (Authorized Digital Sellers). Leave empty to return 404. "
 "Requires including wagtail_herald.urls in your urls.py."
 msgstr ""
-"カスタムrobots.txt内容。空の場合はデフォルト"
-"（すべてのクローラーを許可、サイトマップを含む）を使用します。"
-"urls.pyにwagtail_herald.urlsを含める必要があります。"
+"ads.txt（認定デジタル販売者）のコンテンツ。空の場合は404を返します。"
+"wagtail_herald.urlsをurls.pyに含める必要があります。"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:197
 msgid "Custom head HTML"
 msgstr "カスタムhead HTML"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:200
 msgid ""
 "Custom HTML to insert in <head>. Use for additional verification tags, "
 "analytics code, preload links, etc. No validation - use with caution."
 msgstr ""
-"<head>に挿入するカスタムHTML。追加の認証タグ、アナリティクスコード、"
-"プリロードリンクなどに使用。バリデーションなし - 注意して使用してください。"
+"<head>に挿入するカスタムHTML。追加の認証タグ、アナリティクスコード、プリロー"
+"ドリンクなどに使用。バリデーションなし - 注意して使用してください。"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:205
 msgid "Custom body end HTML"
 msgstr "カスタムbody末尾HTML"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:208
 msgid ""
-"Custom HTML to insert before </body>. Use for chat widgets, "
-"deferred scripts, etc. No validation - use with caution."
+"Custom HTML to insert before </body>. Use for chat widgets, deferred "
+"scripts, etc. No validation - use with caution."
 msgstr ""
-"</body>の前に挿入するカスタムHTML。チャットウィジェット、"
-"遅延スクリプトなどに使用。バリデーションなし - 注意して使用してください。"
+"</body>の前に挿入するカスタムHTML。チャットウィジェット、遅延スクリプトなどに"
+"使用。バリデーションなし - 注意して使用してください。"
 
-#: models/settings.py (panel headings)
+#: src/wagtail_herald/models/settings.py:220
 msgid "Organization"
 msgstr "組織"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:227
 msgid "Social Profiles"
 msgstr "ソーシャルプロフィール"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:234
 msgid "Default SEO Settings"
 msgstr "デフォルトSEO設定"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:244
 msgid "Images"
 msgstr "画像"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:250
 msgid "Analytics"
 msgstr "アナリティクス"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:256
 msgid "robots.txt"
 msgstr "robots.txt"
 
-#: models/settings.py
+#: src/wagtail_herald/models/settings.py:262
+msgid "ads.txt"
+msgstr "ads.txt"
+
+#: src/wagtail_herald/models/settings.py:268
+msgid "security.txt content"
+msgstr "security.txt内容"
+
+#: src/wagtail_herald/models/settings.py:271
+msgid ""
+"Content for security.txt (RFC 9116). Required fields: Contact, Expires. "
+"Leave empty to return 404. Requires including wagtail_herald.urls in your "
+"urls.py."
+msgstr ""
+"security.txt（RFC 9116）のコンテンツ。必須フィールド: Contact、Expires。空の場"
+"合は404を返します。wagtail_herald.urlsをurls.pyに含める必要があります。"
+
+#: src/wagtail_herald/models/settings.py:281
+msgid "security.txt"
+msgstr "security.txt"
+
+#: src/wagtail_herald/models/settings.py:269
 msgid "Custom Code"
 msgstr "カスタムコード"
 
-#: widgets.py
+#: src/wagtail_herald/widgets.py:20
 msgid "Address"
 msgstr "住所"
 
-#: widgets.py
+#: src/wagtail_herald/widgets.py:23
 msgid "Questions"
 msgstr "質問"
 
-#: widgets.py
+#: src/wagtail_herald/widgets.py:26
 msgid "Steps"
 msgstr "ステップ"
 
-#: widgets.py
+#: src/wagtail_herald/widgets.py:29
 msgid "Start Date"
 msgstr "開始日"
 
-#: widgets.py
+#: src/wagtail_herald/widgets.py:30
 msgid "Location"
 msgstr "場所"
 
-#: widgets.py
+#: src/wagtail_herald/widgets.py:33
 msgid "Ingredients"
 msgstr "材料"
 
-#: widgets.py
+#: src/wagtail_herald/widgets.py:34
 msgid "Instructions"
 msgstr "手順"
 
-#: widgets.py
+#: src/wagtail_herald/widgets.py:37
 msgid "Job Location"
 msgstr "勤務地"
 
-#: widgets.py
+#: src/wagtail_herald/widgets.py:185
 #, python-format
 msgid "Invalid JSON: %(error)s"
 msgstr "無効なJSON: %(error)s"
 
-#: widgets.py
+#: src/wagtail_herald/widgets.py:192
 msgid "Invalid schema data format"
 msgstr "無効なスキーマデータ形式です"
 
-#: widgets.py
+#: src/wagtail_herald/widgets.py:207
 #, python-format
 msgid "%(schema_type)s: %(field_name)s is required"
 msgstr "%(schema_type)s: %(field_name)sは必須です"

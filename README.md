@@ -1,6 +1,7 @@
 # wagtail-herald
 
 [![PyPI version](https://badge.fury.io/py/wagtail-herald.svg)](https://badge.fury.io/py/wagtail-herald)
+[![Downloads](https://static.pepy.tech/badge/wagtail-herald)](https://pepy.tech/project/wagtail-herald)
 [![CI](https://github.com/kkm-horikawa/wagtail-herald/actions/workflows/ci.yml/badge.svg)](https://github.com/kkm-horikawa/wagtail-herald/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/kkm-horikawa/wagtail-herald/graph/badge.svg)](https://codecov.io/gh/kkm-horikawa/wagtail-herald)
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
@@ -24,29 +25,10 @@ The goal is to help content editors achieve **best-practice SEO** without touchi
 - **Locale Support** - Per-page language/region targeting with `{% page_lang %}` tag
 - **Google Tag Manager** - GTM integration with noscript fallback
 - **robots.txt Management** - Configure robots.txt from admin interface
+- **ads.txt Management** - Configure ads.txt (Authorized Digital Sellers) from admin interface
+- **security.txt Management** - Configure security.txt (RFC 9116) from admin interface
 - **Custom Code Injection** - Add custom HTML to head and body from admin
 - **Japanese UI** - Full Japanese localization for admin interface
-
-## Comparison with Existing Libraries
-
-| Feature | wagtail-seo | wagtail-metadata | wagtail-herald |
-|---------|-------------|------------------|---------------------|
-| Meta tags | Yes | Yes | Yes |
-| Open Graph | Yes | Yes | Yes |
-| Twitter Card | Yes | Yes | Yes |
-| Organization Schema | Yes | No | Yes |
-| Article Schema | Yes | No | Yes |
-| BreadcrumbList | No | No | **Auto-generated** |
-| FAQPage Schema | No | No | **Yes** |
-| Product Schema | No | No | **Yes** |
-| Event Schema | No | No | **Yes** |
-| LocalBusiness Schema | No | No | **Yes** |
-| 13+ Schema types | No | No | **Yes** |
-| Locale (og:locale) | No | No | **Yes** |
-| GTM/Analytics | No | No | **Yes** |
-| robots.txt | No | No | **Yes** |
-| Template tags | 3 includes | 1 tag | **2 tags** |
-| Japanese UI | No | No | **Yes** |
 
 ## Installation
 
@@ -280,6 +262,8 @@ All settings are optional and configured through Wagtail admin:
 | Apple Touch Icon | iOS home screen icon (180x180) |
 | GTM Container ID | Google Tag Manager (GTM-XXXXXX) |
 | robots.txt content | Custom robots.txt content |
+| ads.txt content | Authorized Digital Sellers declaration (returns 404 if empty) |
+| security.txt content | Security vulnerability reporting info per RFC 9116 (returns 404 if empty) |
 | Custom head HTML | Custom HTML for `<head>` section |
 | Custom body end HTML | Custom HTML before `</body>` (chat widgets, etc.) |
 
@@ -369,6 +353,63 @@ Sitemap: https://example.com/sitemap.xml
 ```
 
 If left empty, a sensible default is generated (allow all crawlers, include sitemap URL).
+
+## ads.txt Management
+
+Configure ads.txt (Authorized Digital Sellers) from Wagtail admin without editing files.
+
+### Setup
+
+Include wagtail-herald URLs in your `urls.py` (same as robots.txt):
+
+```python
+from django.urls import include, path
+
+urlpatterns = [
+    path('', include('wagtail_herald.urls')),
+    # ... other urls
+]
+```
+
+### Configuration
+
+Go to **Settings > SEO Settings** and edit the ads.txt content:
+
+```
+google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0
+```
+
+Unlike robots.txt, if the ads.txt field is left empty, the `/ads.txt` endpoint returns a **404** response rather than generating default content.
+
+## security.txt Management
+
+Configure security.txt ([RFC 9116](https://www.rfc-editor.org/rfc/rfc9116)) from Wagtail admin without editing files. This file helps security researchers report vulnerabilities through the standardized `/.well-known/security.txt` path.
+
+### Setup
+
+Include wagtail-herald URLs in your `urls.py` (same as robots.txt and ads.txt):
+
+```python
+from django.urls import include, path
+
+urlpatterns = [
+    path('', include('wagtail_herald.urls')),
+    # ... other urls
+]
+```
+
+### Configuration
+
+Go to **Settings > SEO Settings** and edit the security.txt content. Per RFC 9116, the **Contact** and **Expires** fields are required:
+
+```
+Contact: mailto:security@example.com
+Expires: 2026-12-31T23:59:59z
+Preferred-Languages: en, ja
+Canonical: https://example.com/.well-known/security.txt
+```
+
+If the security.txt field is left empty, the `/.well-known/security.txt` endpoint returns a **404** response.
 
 ## Requirements
 

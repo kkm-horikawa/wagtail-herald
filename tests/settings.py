@@ -15,7 +15,7 @@ SECRET_KEY = "test-secret-key-not-for-production"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS: list[str] = []
+ALLOWED_HOSTS = ["*"]
 
 # Application definition
 INSTALLED_APPS = [

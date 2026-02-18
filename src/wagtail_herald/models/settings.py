@@ -192,6 +192,18 @@ class SEOSettings(BaseSiteSetting):
         ),
     )
 
+    # security.txt
+    security_txt = models.TextField(
+        _("security.txt content"),
+        blank=True,
+        help_text=_(
+            "Content for security.txt (RFC 9116). "
+            "Required fields: Contact, Expires. "
+            "Leave empty to return 404. "
+            "Requires including wagtail_herald.urls in your urls.py."
+        ),
+    )
+
     # Custom Code
     custom_head_html = models.TextField(
         _("Custom head HTML"),
@@ -260,6 +272,12 @@ class SEOSettings(BaseSiteSetting):
                 FieldPanel("ads_txt"),
             ],
             heading=_("ads.txt"),
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("security_txt"),
+            ],
+            heading=_("security.txt"),
         ),
         MultiFieldPanel(
             [

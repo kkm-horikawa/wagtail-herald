@@ -181,6 +181,17 @@ class SEOSettings(BaseSiteSetting):
         ),
     )
 
+    # ads.txt
+    ads_txt = models.TextField(
+        _("ads.txt content"),
+        blank=True,
+        help_text=_(
+            "Content for ads.txt (Authorized Digital Sellers). "
+            "Leave empty to return 404. "
+            "Requires including wagtail_herald.urls in your urls.py."
+        ),
+    )
+
     # Custom Code
     custom_head_html = models.TextField(
         _("Custom head HTML"),
@@ -243,6 +254,12 @@ class SEOSettings(BaseSiteSetting):
                 FieldPanel("robots_txt"),
             ],
             heading=_("robots.txt"),
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("ads_txt"),
+            ],
+            heading=_("ads.txt"),
         ),
         MultiFieldPanel(
             [

@@ -12,9 +12,10 @@ Usage in your project's urls.py:
 
 from django.urls import path
 
-from wagtail_herald.views import ads_txt, robots_txt
+from wagtail_herald.views import ads_txt, robots_txt, security_txt
 
 urlpatterns = [
     path("robots.txt", robots_txt, name="robots_txt"),
     path("ads.txt", ads_txt, name="ads_txt"),
+    path(".well-known/security.txt", security_txt, name="security_txt"),
 ]

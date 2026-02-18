@@ -101,3 +101,37 @@ def ads_txt(request: HttpRequest) -> HttpResponse:
             return HttpResponse(seo_settings.ads_txt, content_type="text/plain")
 
     raise Http404
+
+
+def security_txt(request: HttpRequest) -> HttpResponse:
+    """Serve security.txt for the current site.
+
+    Serves ``/.well-known/security.txt`` as defined in RFC 9116.
+    Returns content from SEOSettings if configured, otherwise raises Http404
+    (no sensible default exists because Contact is a required field).
+
+    Usage in urls.py:
+        from wagtail_herald.views import security_txt
+
+        urlpatterns = [
+            path('.well-known/security.txt', security_txt, name='security_txt'),
+            # ...
+        ]
+
+    Args:
+        request: The HTTP request object.
+
+    Returns:
+        HttpResponse with text/plain content type.
+
+    Raises:
+        Http404: If no security.txt content is configured.
+    """
+    site = Site.find_for_request(request)
+
+    if site:
+        seo_settings = SEOSettings.for_request(request)
+        if seo_settings and seo_settings.security_txt:
+            return HttpResponse(seo_settings.security_txt, content_type="text/plain")
+
+    raise Http404

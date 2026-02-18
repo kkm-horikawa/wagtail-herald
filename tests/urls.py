@@ -2,4 +2,8 @@
 URL configuration for tests.
 """
 
-urlpatterns: list[str] = []
+from django.urls import include, path
+
+urlpatterns = [
+    path("", include("wagtail_herald.urls")),
+]

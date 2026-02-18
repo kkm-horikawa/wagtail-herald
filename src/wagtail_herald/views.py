@@ -96,11 +96,8 @@ def ads_txt(request: HttpRequest) -> HttpResponse:
     site = Site.find_for_request(request)
 
     if site:
-        try:
-            seo_settings = SEOSettings.for_request(request)
-            if seo_settings and seo_settings.ads_txt:
-                return HttpResponse(seo_settings.ads_txt, content_type="text/plain")
-        except Exception:
-            pass
+        seo_settings = SEOSettings.for_request(request)
+        if seo_settings and seo_settings.ads_txt:
+            return HttpResponse(seo_settings.ads_txt, content_type="text/plain")
 
     raise Http404

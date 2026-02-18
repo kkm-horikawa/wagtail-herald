@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: wagtail-herald\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-18 01:56+0000\n"
+"POT-Creation-Date: 2026-02-18 14:50+0000\n"
 "PO-Revision-Date: 2025-12-18 10:00+0900\n"
 "Last-Translator: \n"
 "Language-Team: English\n"
@@ -16,206 +16,306 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: apps.py:14
+#: src/wagtail_herald/apps.py:14
 msgid "Wagtail Herald"
 msgstr ""
 
-#: models/mixins.py:25
+#: src/wagtail_herald/models/mixins.py:37
 msgid "OG image override"
 msgstr ""
 
-#: models/mixins.py:26
+#: src/wagtail_herald/models/mixins.py:38
 msgid "Override the default Open Graph image. Recommended: 1200x630px"
 msgstr ""
 
-#: models/mixins.py:30
+#: src/wagtail_herald/models/mixins.py:42
 msgid "OG image alt text"
 msgstr ""
 
-#: models/mixins.py:33
+#: src/wagtail_herald/models/mixins.py:45
 msgid "Alt text for OG image. Describe the image for accessibility"
 msgstr ""
 
-#: models/mixins.py:37
+#: src/wagtail_herald/models/mixins.py:49
 msgid "noindex"
 msgstr ""
 
-#: models/mixins.py:40
+#: src/wagtail_herald/models/mixins.py:52
 msgid ""
 "Prevent search engines from indexing this page. Use for private or duplicate "
 "content"
 msgstr ""
 
-#: models/mixins.py:46
+#: src/wagtail_herald/models/mixins.py:58
 msgid "nofollow"
 msgstr ""
 
-#: models/mixins.py:48
+#: src/wagtail_herald/models/mixins.py:60
 msgid "Prevent search engines from following links on this page"
 msgstr ""
 
-#: models/mixins.py:52
+#: src/wagtail_herald/models/mixins.py:64
 msgid "Canonical URL"
 msgstr ""
 
-#: models/mixins.py:55
+#: src/wagtail_herald/models/mixins.py:67
 msgid ""
 "Override the canonical URL. Must be absolute URL with protocol (e.g., "
 "'https://example.com/page/')"
 msgstr ""
 
-#: models/mixins.py:69
+#: src/wagtail_herald/models/mixins.py:73
+msgid "SEO locale"
+msgstr ""
+
+#: src/wagtail_herald/models/mixins.py:77
+msgid "Override locale for this page (og:locale, html lang attribute)"
+msgstr ""
+
+#: src/wagtail_herald/models/mixins.py:81
+msgid "Structured data"
+msgstr ""
+
+#: src/wagtail_herald/models/mixins.py:84
+msgid "Schema.org structured data configuration for this page"
+msgstr ""
+
+#: src/wagtail_herald/models/mixins.py:100
 msgid "SEO"
 msgstr ""
 
-#: models/settings.py:40
+#: src/wagtail_herald/models/mixins.py:106
+msgid "Structured Data"
+msgstr ""
+
+#: src/wagtail_herald/models/settings.py:50
 msgid "SEO Settings"
 msgstr ""
 
-#: models/settings.py:44
+#: src/wagtail_herald/models/settings.py:54
 msgid "Organization name"
 msgstr ""
 
-#: models/settings.py:47
+#: src/wagtail_herald/models/settings.py:57
 msgid "Organization name for Schema.org structured data"
 msgstr ""
 
-#: models/settings.py:50
+#: src/wagtail_herald/models/settings.py:60
 msgid "Organization type"
 msgstr ""
 
-#: models/settings.py:55
+#: src/wagtail_herald/models/settings.py:65
 msgid "Organization type for Schema.org (e.g., Corporation, LocalBusiness)"
 msgstr ""
 
-#: models/settings.py:64
+#: src/wagtail_herald/models/settings.py:74
 msgid "Organization logo"
 msgstr ""
 
-#: models/settings.py:65
+#: src/wagtail_herald/models/settings.py:75
 msgid "Logo for Schema.org. Recommended: 112x112px minimum, PNG/JPEG"
 msgstr ""
 
-#: models/settings.py:70
+#: src/wagtail_herald/models/settings.py:80
 msgid "Twitter handle"
 msgstr ""
 
-#: models/settings.py:73
+#: src/wagtail_herald/models/settings.py:83
 msgid "Twitter username without @ (e.g., 'example' not '@example')"
 msgstr ""
 
-#: models/settings.py:76
+#: src/wagtail_herald/models/settings.py:86
 msgid "Facebook URL"
 msgstr ""
 
-#: models/settings.py:78
+#: src/wagtail_herald/models/settings.py:88
 msgid "Full Facebook page URL (e.g., 'https://facebook.com/example')"
 msgstr ""
 
-#: models/settings.py:83
+#: src/wagtail_herald/models/settings.py:93
 msgid "Title separator"
 msgstr ""
 
-#: models/settings.py:87
+#: src/wagtail_herald/models/settings.py:97
 msgid "Character(s) between page title and site name (e.g., '|', '-', '·')"
 msgstr ""
 
-#: models/settings.py:91
+#: src/wagtail_herald/models/settings.py:101
 msgid "Default locale"
 msgstr ""
 
-#: models/settings.py:95
+#: src/wagtail_herald/models/settings.py:105
 msgid "Default locale for og:locale meta tag (e.g., en_US, ja_JP)"
 msgstr ""
 
-#: models/settings.py:105
+#: src/wagtail_herald/models/settings.py:115
 msgid "Default OG image"
 msgstr ""
 
-#: models/settings.py:107
+#: src/wagtail_herald/models/settings.py:117
 msgid "Default image for social sharing. Recommended: 1200x630px, JPEG/PNG"
 msgstr ""
 
-#: models/settings.py:111
+#: src/wagtail_herald/models/settings.py:121
 msgid "Default OG image alt text"
 msgstr ""
 
-#: models/settings.py:115
+#: src/wagtail_herald/models/settings.py:125
 msgid "Alt text for default OG image. Describe the image for accessibility"
 msgstr ""
 
-#: models/settings.py:124
+#: src/wagtail_herald/models/settings.py:134
 msgid "Favicon (SVG)"
 msgstr ""
 
-#: models/settings.py:126
+#: src/wagtail_herald/models/settings.py:136
 msgid ""
 "SVG favicon for modern browsers. Requires WAGTAILIMAGES_EXTENSIONS to "
 "include 'svg' in settings"
 msgstr ""
 
-#: models/settings.py:136
+#: src/wagtail_herald/models/settings.py:146
 msgid "Favicon (PNG)"
 msgstr ""
 
-#: models/settings.py:137
+#: src/wagtail_herald/models/settings.py:147
 msgid "PNG favicon fallback. Minimum: 48x48px (Google requirement)"
 msgstr ""
 
-#: models/settings.py:145
+#: src/wagtail_herald/models/settings.py:155
 msgid "Apple Touch Icon"
 msgstr ""
 
-#: models/settings.py:146
+#: src/wagtail_herald/models/settings.py:156
 msgid "iOS home screen icon. Recommended: 180x180px, PNG format"
 msgstr ""
 
-#: models/settings.py:151
-msgid "Google site verification"
+#: src/wagtail_herald/models/settings.py:161
+msgid "GTM Container ID"
 msgstr ""
 
-#: models/settings.py:154
-msgid "Verification code from Google Search Console (value only)"
+#: src/wagtail_herald/models/settings.py:167
+msgid "Enter a valid GTM Container ID (e.g., GTM-XXXXXX)"
 msgstr ""
 
-#: models/settings.py:157
-msgid "Bing site verification"
+#: src/wagtail_herald/models/settings.py:170
+msgid "Google Tag Manager Container ID (e.g., GTM-XXXXXX)"
 msgstr ""
 
-#: models/settings.py:160
-msgid "Verification code from Bing Webmaster Tools (value only)"
+#: src/wagtail_herald/models/settings.py:175
+msgid "robots.txt content"
 msgstr ""
 
-#: models/settings.py:165
+#: src/wagtail_herald/models/settings.py:178
+msgid ""
+"Custom robots.txt content. Leave empty for default (allow all crawlers, "
+"include sitemap). Requires including wagtail_herald.urls in your urls.py."
+msgstr ""
+
+#: src/wagtail_herald/models/settings.py:186
+msgid "ads.txt content"
+msgstr ""
+
+#: src/wagtail_herald/models/settings.py:189
+msgid ""
+"Content for ads.txt (Authorized Digital Sellers). Leave empty to return 404. "
+"Requires including wagtail_herald.urls in your urls.py."
+msgstr ""
+
+#: src/wagtail_herald/models/settings.py:197
 msgid "Custom head HTML"
 msgstr ""
 
-#: models/settings.py:168
+#: src/wagtail_herald/models/settings.py:200
 msgid ""
 "Custom HTML to insert in <head>. Use for additional verification tags, "
 "analytics code, preload links, etc. No validation - use with caution."
 msgstr ""
 
-#: models/settings.py:180
+#: src/wagtail_herald/models/settings.py:205
+msgid "Custom body end HTML"
+msgstr ""
+
+#: src/wagtail_herald/models/settings.py:208
+msgid ""
+"Custom HTML to insert before </body>. Use for chat widgets, deferred "
+"scripts, etc. No validation - use with caution."
+msgstr ""
+
+#: src/wagtail_herald/models/settings.py:220
 msgid "Organization"
 msgstr ""
 
-#: models/settings.py:187
+#: src/wagtail_herald/models/settings.py:227
 msgid "Social Profiles"
 msgstr ""
 
-#: models/settings.py:194
+#: src/wagtail_herald/models/settings.py:234
 msgid "Default SEO Settings"
 msgstr ""
 
-#: models/settings.py:204
+#: src/wagtail_herald/models/settings.py:244
 msgid "Images"
 msgstr ""
 
-#: models/settings.py:211
-msgid "Site Verification"
+#: src/wagtail_herald/models/settings.py:250
+msgid "Analytics"
 msgstr ""
 
-#: models/settings.py:217
+#: src/wagtail_herald/models/settings.py:256
+msgid "robots.txt"
+msgstr ""
+
+#: src/wagtail_herald/models/settings.py:262
+msgid "ads.txt"
+msgstr ""
+
+#: src/wagtail_herald/models/settings.py:269
 msgid "Custom Code"
+msgstr ""
+
+#: src/wagtail_herald/widgets.py:20
+msgid "Address"
+msgstr ""
+
+#: src/wagtail_herald/widgets.py:23
+msgid "Questions"
+msgstr ""
+
+#: src/wagtail_herald/widgets.py:26
+msgid "Steps"
+msgstr ""
+
+#: src/wagtail_herald/widgets.py:29
+msgid "Start Date"
+msgstr ""
+
+#: src/wagtail_herald/widgets.py:30
+msgid "Location"
+msgstr ""
+
+#: src/wagtail_herald/widgets.py:33
+msgid "Ingredients"
+msgstr ""
+
+#: src/wagtail_herald/widgets.py:34
+msgid "Instructions"
+msgstr ""
+
+#: src/wagtail_herald/widgets.py:37
+msgid "Job Location"
+msgstr ""
+
+#: src/wagtail_herald/widgets.py:185
+#, python-format
+msgid "Invalid JSON: %(error)s"
+msgstr ""
+
+#: src/wagtail_herald/widgets.py:192
+msgid "Invalid schema data format"
+msgstr ""
+
+#: src/wagtail_herald/widgets.py:207
+#, python-format
+msgid "%(schema_type)s: %(field_name)s is required"
 msgstr ""

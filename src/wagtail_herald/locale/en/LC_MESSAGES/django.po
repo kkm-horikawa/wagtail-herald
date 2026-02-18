@@ -270,6 +270,21 @@ msgstr ""
 msgid "ads.txt"
 msgstr ""
 
+#: src/wagtail_herald/models/settings.py:268
+msgid "security.txt content"
+msgstr ""
+
+#: src/wagtail_herald/models/settings.py:271
+msgid ""
+"Content for security.txt (RFC 9116). Required fields: Contact, Expires. "
+"Leave empty to return 404. Requires including wagtail_herald.urls in your "
+"urls.py."
+msgstr ""
+
+#: src/wagtail_herald/models/settings.py:281
+msgid "security.txt"
+msgstr ""
+
 #: src/wagtail_herald/models/settings.py:269
 msgid "Custom Code"
 msgstr ""

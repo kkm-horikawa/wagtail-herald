@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: wagtail-herald\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-18 14:50+0000\n"
-"PO-Revision-Date: 2025-12-19 12:00+0900\n"
+"PO-Revision-Date: 2026-02-18 12:00+0900\n"
 "Last-Translator: \n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -286,6 +286,23 @@ msgstr "robots.txt"
 #: src/wagtail_herald/models/settings.py:262
 msgid "ads.txt"
 msgstr "ads.txt"
+
+#: src/wagtail_herald/models/settings.py:268
+msgid "security.txt content"
+msgstr "security.txt内容"
+
+#: src/wagtail_herald/models/settings.py:271
+msgid ""
+"Content for security.txt (RFC 9116). Required fields: Contact, Expires. "
+"Leave empty to return 404. Requires including wagtail_herald.urls in your "
+"urls.py."
+msgstr ""
+"security.txt（RFC 9116）のコンテンツ。必須フィールド: Contact、Expires。空の場"
+"合は404を返します。wagtail_herald.urlsをurls.pyに含める必要があります。"
+
+#: src/wagtail_herald/models/settings.py:281
+msgid "security.txt"
+msgstr "security.txt"
 
 #: src/wagtail_herald/models/settings.py:269
 msgid "Custom Code"

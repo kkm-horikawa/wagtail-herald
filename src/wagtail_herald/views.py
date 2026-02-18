@@ -2,7 +2,7 @@
 Views for wagtail-herald.
 """
 
-from django.http import HttpRequest, HttpResponse
+from django.http import Http404, HttpRequest, HttpResponse
 from wagtail.models import Site
 
 from wagtail_herald.models import SEOSettings
@@ -68,3 +68,39 @@ def robots_txt(request: HttpRequest) -> HttpResponse:
         content = get_default_robots_txt(request)
 
     return HttpResponse(content, content_type="text/plain")
+
+
+def ads_txt(request: HttpRequest) -> HttpResponse:
+    """Serve ads.txt for the current site.
+
+    Returns ads.txt content from SEOSettings if configured,
+    otherwise raises Http404.
+
+    Usage in urls.py:
+        from wagtail_herald.views import ads_txt
+
+        urlpatterns = [
+            path('ads.txt', ads_txt, name='ads_txt'),
+            # ...
+        ]
+
+    Args:
+        request: The HTTP request object.
+
+    Returns:
+        HttpResponse with text/plain content type.
+
+    Raises:
+        Http404: If no ads.txt content is configured.
+    """
+    site = Site.find_for_request(request)
+
+    if site:
+        try:
+            seo_settings = SEOSettings.for_request(request)
+            if seo_settings and seo_settings.ads_txt:
+                return HttpResponse(seo_settings.ads_txt, content_type="text/plain")
+        except Exception:
+            pass
+
+    raise Http404

@@ -681,3 +681,286 @@ class TestSeoHeadContextOverrideRoutablePagePattern:
 
         assert "<title>Category: Tech | Test Site</title>" in html
         assert 'name="description" content="Blog homepage description"' in html
+
+
+class TestSeoHeadContextOverrideOgImage:
+    """Tests that seo_og_image context key overrides OG image in rendered HTML."""
+
+    @pytest.mark.django_db
+    def test_og_image_tag_contains_override_image_url(
+        self, request_with_site, mock_page
+    ):
+        """seo_head renders the overridden OG image URL in og:image meta tag.
+
+        Purpose: Verify that placing a Wagtail Image object as seo_og_image in
+                 the template context causes the rendered og:image, og:image:width,
+                 og:image:height, and twitter:image meta tags to use the override
+                 image's rendition URL, bypassing the page's own og_image and the
+                 site-wide default_og_image fallback.
+        Category: Normal
+        Technique: API endpoint (Django template rendering pipeline)
+        Integration: Context(seo_og_image=Image) -> seo_head tag
+                     -> _SEO_CONTEXT_KEYS extraction
+                     -> build_seo_context(overrides={"og_image": Image})
+                     -> _get_og_image_data(og_image_override=Image)
+                     -> seo_head.html og:image / twitter:image
+        Test data:
+        - Mock page with default attributes (no og_image)
+        - Mock Wagtail Image with get_rendition returning a mock rendition
+          (url="/media/override-og.jpg", width=1200, height=630)
+        Verification:
+        1. Render {% seo_head %} with seo_og_image in context
+        2. Confirm og:image contains the override rendition URL
+        3. Confirm og:image:width and og:image:height are present
+        4. Confirm twitter:image contains the override rendition URL
+        """
+
+        class MockRendition:
+            url = "/media/override-og.jpg"
+            width = 1200
+            height = 630
+
+        class MockImage:
+            title = "Override OG Image"
+            width = 2400
+            height = 1260
+
+            def get_rendition(self, spec):
+                return MockRendition()
+
+        template = Template(TEMPLATE_STRING)
+        context = Context(
+            {
+                "request": request_with_site,
+                "page": mock_page,
+                "seo_og_image": MockImage(),
+            }
+        )
+
+        html = template.render(context)
+
+        assert (
+            'property="og:image" content="http://testserver/media/override-og.jpg"'
+            in html
+        )
+        assert 'property="og:image:width" content="1200"' in html
+        assert 'property="og:image:height" content="630"' in html
+        assert (
+            'name="twitter:image" content="http://testserver/media/override-og.jpg"'
+            in html
+        )
+
+    @pytest.mark.django_db
+    def test_og_image_alt_uses_override_image_title(self, request_with_site, mock_page):
+        """seo_head uses the override image's title as og:image:alt.
+
+        Purpose: Verify that when seo_og_image is provided, the og:image:alt
+                 and twitter:image:alt meta tags are populated from the override
+                 image's title attribute, not from the page's og_image_alt.
+        Category: Normal
+        Technique: API endpoint (Django template rendering pipeline)
+        Integration: Context(seo_og_image=Image) -> _get_og_image_data
+                     -> alt_text = og_image_override.title
+                     -> seo_head.html og:image:alt / twitter:image:alt
+        Test data:
+        - Mock Image with title "Event Banner 2026"
+        Verification:
+        1. Render {% seo_head %} with seo_og_image in context
+        2. Confirm og:image:alt contains the override image title
+        """
+
+        class MockRendition:
+            url = "/media/event-banner.jpg"
+            width = 1200
+            height = 630
+
+        class MockImage:
+            title = "Event Banner 2026"
+            width = 2400
+            height = 1260
+
+            def get_rendition(self, spec):
+                return MockRendition()
+
+        template = Template(TEMPLATE_STRING)
+        context = Context(
+            {
+                "request": request_with_site,
+                "page": mock_page,
+                "seo_og_image": MockImage(),
+            }
+        )
+
+        html = template.render(context)
+
+        assert 'property="og:image:alt" content="Event Banner 2026"' in html
+        assert 'name="twitter:image:alt" content="Event Banner 2026"' in html
+
+    @pytest.mark.django_db
+    def test_none_seo_og_image_not_treated_as_override(
+        self, request_with_site, mock_page
+    ):
+        """seo_head ignores seo_og_image=None and falls back to page/default.
+
+        Purpose: Verify that if seo_og_image is explicitly set to None in the
+                 template context, it is not treated as an override and the
+                 normal fallback chain (page.og_image -> settings.default_og_image)
+                 is used. Since mock_page has no og_image and no SEOSettings
+                 default is configured, no og:image tag should appear.
+        Category: Boundary
+        Technique: API endpoint (Django template rendering pipeline)
+        Integration: Context(seo_og_image=None) -> seo_head tag
+                     -> _SEO_CONTEXT_KEYS check (value is not None)
+                     -> overrides dict does NOT include og_image
+                     -> _get_og_image_data(og_image_override=None) -> fallback chain
+        Test data:
+        - Mock page with no og_image attribute
+        - Context with seo_og_image=None
+        Verification:
+        1. Render {% seo_head %} with seo_og_image=None in context
+        2. Confirm og:image meta tag is NOT present (no image source available)
+        """
+        template = Template(TEMPLATE_STRING)
+        context = Context(
+            {
+                "request": request_with_site,
+                "page": mock_page,
+                "seo_og_image": None,
+            }
+        )
+
+        html = template.render(context)
+
+        assert 'property="og:image"' not in html
+        assert 'name="twitter:image"' not in html
+
+    @pytest.mark.django_db
+    def test_og_image_override_takes_priority_over_page_og_image(
+        self, request_with_site
+    ):
+        """seo_head uses seo_og_image override even when page has its own og_image.
+
+        Purpose: Verify that when both the page object has an og_image and
+                 seo_og_image is provided in context, the context override wins.
+                 This ensures sub-route specific images can replace the parent
+                 page's default OG image.
+        Category: Normal
+        Technique: API endpoint (Django template rendering pipeline)
+        Integration: Context(seo_og_image=OverrideImage) + page.og_image=PageImage
+                     -> _get_og_image_data(og_image_override=OverrideImage)
+                     -> override takes priority -> seo_head.html
+        Test data:
+        - Page with og_image returning "/media/page-og.jpg"
+        - Context seo_og_image returning "/media/override-og.jpg"
+        Verification:
+        1. Render {% seo_head %} with both page og_image and context override
+        2. Confirm og:image contains the override URL, not the page URL
+        """
+
+        class PageRendition:
+            url = "/media/page-og.jpg"
+            width = 1200
+            height = 630
+
+        class PageImage:
+            title = "Page Image"
+            width = 1200
+            height = 630
+
+            def get_rendition(self, spec):
+                return PageRendition()
+
+        class OverrideRendition:
+            url = "/media/override-og.jpg"
+            width = 1200
+            height = 630
+
+        class OverrideImage:
+            title = "Override Image"
+            width = 2400
+            height = 1260
+
+            def get_rendition(self, spec):
+                return OverrideRendition()
+
+        class PageWithOgImage:
+            title = "Page With Image"
+            seo_title = ""
+            search_description = "A page with its own OG image"
+            full_url = "https://example.com/page-with-image/"
+            og_image = PageImage()
+            og_image_alt = "Page alt text"
+
+            def get_og_image_alt(self):
+                return "Page alt text"
+
+        template = Template(TEMPLATE_STRING)
+        context = Context(
+            {
+                "request": request_with_site,
+                "page": PageWithOgImage(),
+                "seo_og_image": OverrideImage(),
+            }
+        )
+
+        html = template.render(context)
+
+        assert "override-og.jpg" in html
+        assert "page-og.jpg" not in html
+
+    @pytest.mark.django_db
+    def test_og_image_override_combined_with_other_overrides(
+        self, request_with_site, mock_page
+    ):
+        """seo_head applies og_image override together with title and description overrides.
+
+        Purpose: Verify that seo_og_image works correctly alongside seo_title,
+                 seo_description, and seo_canonical_url, simulating a full
+                 RoutablePageMixin sub-route scenario where all SEO fields
+                 including the OG image are overridden.
+        Category: Normal
+        Technique: API endpoint (Django template rendering pipeline)
+        Integration: Context(seo_title, seo_description, seo_canonical_url, seo_og_image)
+                     -> seo_head tag -> _SEO_CONTEXT_KEYS extraction
+                     -> build_seo_context(overrides={title, description, canonical_url, og_image})
+                     -> seo_head.html (all elements)
+        Test data:
+        - Mock page with default attributes
+        - All four context override keys provided
+        Verification:
+        1. Render {% seo_head %} with all overrides in context
+        2. Confirm title, description, canonical URL, and og:image all use overrides
+        """
+
+        class MockRendition:
+            url = "/media/march-events-banner.jpg"
+            width = 1200
+            height = 630
+
+        class MockImage:
+            title = "March Events Banner"
+            width = 2400
+            height = 1260
+
+            def get_rendition(self, spec):
+                return MockRendition()
+
+        template = Template(TEMPLATE_STRING)
+        context = Context(
+            {
+                "request": request_with_site,
+                "page": mock_page,
+                "seo_title": "March 2026 Events",
+                "seo_description": "All events in March 2026",
+                "seo_canonical_url": "https://example.com/events/2026/march/",
+                "seo_og_image": MockImage(),
+            }
+        )
+
+        html = template.render(context)
+
+        assert "<title>March 2026 Events | Test Site</title>" in html
+        assert 'name="description" content="All events in March 2026"' in html
+        assert 'rel="canonical" href="https://example.com/events/2026/march/"' in html
+        assert "march-events-banner.jpg" in html
+        assert 'property="og:image:alt" content="March Events Banner"' in html

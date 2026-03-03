@@ -120,6 +120,28 @@ _SEO_CONTEXT_KEYS: dict[str, str] = {
 }
 
 
+def _collect_overrides_from_context(context: dict[str, Any]) -> dict[str, Any]:
+    """Collect SEO overrides from template context using well-known keys.
+
+    Reads keys defined in ``_SEO_CONTEXT_KEYS`` from the template context
+    and returns a dict suitable for passing as the ``overrides`` parameter
+    to ``build_seo_context`` or schema-building functions.
+
+    Args:
+        context: Django template context dict.
+
+    Returns:
+        Dict mapping override keys to their values. Only keys with
+        non-None values are included.
+    """
+    overrides: dict[str, Any] = {}
+    for ctx_key, override_key in _SEO_CONTEXT_KEYS.items():
+        value = context.get(ctx_key)
+        if value is not None:
+            overrides[override_key] = value
+    return overrides
+
+
 @register.simple_tag(takes_context=True)
 def seo_head(context: dict[str, Any]) -> SafeString:
     """Output all SEO meta tags, OG tags, Twitter Card, favicons, and custom HTML.
@@ -138,11 +160,7 @@ def seo_head(context: dict[str, Any]) -> SafeString:
 
     seo_settings = get_seo_settings(request)
 
-    overrides: dict[str, Any] = {}
-    for ctx_key, override_key in _SEO_CONTEXT_KEYS.items():
-        value = context.get(ctx_key)
-        if value is not None:
-            overrides[override_key] = value
+    overrides = _collect_overrides_from_context(context)
 
     seo_context = build_seo_context(request, page, seo_settings, overrides=overrides)
 
@@ -170,11 +188,7 @@ def seo_schema(context: dict[str, Any]) -> SafeString:
 
     seo_settings = get_seo_settings(request)
 
-    overrides: dict[str, Any] = {}
-    for ctx_key, override_key in _SEO_CONTEXT_KEYS.items():
-        value = context.get(ctx_key)
-        if value is not None:
-            overrides[override_key] = value
+    overrides = _collect_overrides_from_context(context)
 
     schemas: list[dict[str, Any]] = []
 
@@ -382,6 +396,8 @@ def _build_breadcrumb_schema(
     Args:
         request: HTTP request object.
         page: Wagtail page instance.
+        overrides: Optional dict of SEO override values. Keys may include
+            ``title``, ``description``, ``canonical_url``, and ``og_image``.
 
     Returns:
         BreadcrumbList schema dict or None if not applicable.
@@ -455,6 +471,8 @@ def _build_page_schemas(
         request: HTTP request object.
         page: Wagtail page instance.
         settings: SEOSettings instance.
+        overrides: Optional dict of SEO override values. Keys may include
+            ``title``, ``description``, ``canonical_url``, and ``og_image``.
 
     Returns:
         List of schema dicts for selected types.
@@ -499,6 +517,8 @@ def _build_schema_for_type(
         settings: SEOSettings instance.
         schema_type: Schema.org type name.
         custom_properties: Custom properties from user input.
+        overrides: Optional dict of SEO override values. Keys may include
+            ``title``, ``description``, ``canonical_url``, and ``og_image``.
 
     Returns:
         Schema dict or None.
@@ -553,7 +573,16 @@ def _add_article_auto_fields(
     settings: Any,
     overrides: dict[str, Any] | None = None,
 ) -> None:
-    """Add auto-populated fields for Article types."""
+    """Add auto-populated fields for Article types.
+
+    Args:
+        schema: Schema dict to add fields to.
+        request: HTTP request object.
+        page: Wagtail page instance.
+        settings: SEOSettings instance.
+        overrides: Optional dict of SEO override values. Keys may include
+            ``title``, ``description``, ``canonical_url``, and ``og_image``.
+    """
     _overrides = {k: v for k, v in (overrides or {}).items() if v is not None}
 
     # headline
@@ -608,7 +637,16 @@ def _add_product_auto_fields(
     settings: Any,
     overrides: dict[str, Any] | None = None,
 ) -> None:
-    """Add auto-populated fields for Product type."""
+    """Add auto-populated fields for Product type.
+
+    Args:
+        schema: Schema dict to add fields to.
+        request: HTTP request object.
+        page: Wagtail page instance.
+        settings: SEOSettings instance.
+        overrides: Optional dict of SEO override values. Keys may include
+            ``title``, ``description``, ``canonical_url``, and ``og_image``.
+    """
     _overrides = {k: v for k, v in (overrides or {}).items() if v is not None}
 
     # image
@@ -627,7 +665,16 @@ def _add_content_auto_fields(
     settings: Any,
     overrides: dict[str, Any] | None = None,
 ) -> None:
-    """Add auto-populated fields for content types (Event, Course, etc.)."""
+    """Add auto-populated fields for content types (Event, Course, etc.).
+
+    Args:
+        schema: Schema dict to add fields to.
+        request: HTTP request object.
+        page: Wagtail page instance.
+        settings: SEOSettings instance.
+        overrides: Optional dict of SEO override values. Keys may include
+            ``title``, ``description``, ``canonical_url``, and ``og_image``.
+    """
     _overrides = {k: v for k, v in (overrides or {}).items() if v is not None}
 
     # image

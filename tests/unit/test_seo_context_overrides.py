@@ -1,8 +1,10 @@
-"""Tests for SEO context overrides in build_seo_context and _get_og_image_data.
+"""Tests for SEO context overrides in build_seo_context, schema builders, and _get_og_image_data.
 
 Verifies that per-route override values (title, description, canonical_url,
 og_image) take priority over page-level values when passed to
-build_seo_context(), and that _get_og_image_data() respects og_image_override.
+build_seo_context(), _build_schema_for_type(), _add_article_auto_fields(),
+_build_breadcrumb_schema(), and that _get_og_image_data() respects
+og_image_override.
 
 ## Decision Table: DT-OVERRIDE-FILTERING
 
@@ -16,6 +18,18 @@ build_seo_context(), and that _get_og_image_data() respects og_image_override.
 | DT6 | description | None           | falls back to page value |
 | DT7 | canonical   | "https://..."  | uses override value      |
 | DT8 | canonical   | None           | falls back to page value |
+
+## Decision Table: DT-SCHEMA-TYPE-OVERRIDES
+
+| ID   | function                 | override key  | field checked   |
+|------|--------------------------|---------------|-----------------|
+| ST1  | _build_schema_for_type   | title         | name            |
+| ST2  | _build_schema_for_type   | canonical_url | url             |
+| ST3  | _build_schema_for_type   | description   | description     |
+| ST4  | _build_schema_for_type   | (all None)    | fallback        |
+| ST5  | _add_article_auto_fields | title         | headline        |
+| ST6  | _add_article_auto_fields | og_image      | image           |
+| ST7  | _build_breadcrumb_schema | title         | last item name  |
 """
 
 from __future__ import annotations
@@ -25,6 +39,9 @@ from unittest import mock
 import pytest
 
 from wagtail_herald.templatetags.wagtail_herald import (
+    _add_article_auto_fields,
+    _build_breadcrumb_schema,
+    _build_schema_for_type,
     _get_og_image_data,
     build_seo_context,
 )
@@ -644,3 +661,507 @@ class TestOgImageDataOverride:
         assert result["alt"] == ""
         assert result["width"] == ""
         assert result["height"] == ""
+
+
+class TestBuildSchemaForTypeOverrides:
+    """Tests for the overrides parameter of _build_schema_for_type.
+
+    Ref DT-SCHEMA-TYPE-OVERRIDES: ST1-ST4.
+    """
+
+    def test_name_uses_title_override(self):
+        """Verify schema["name"] uses the title override instead of page title.
+
+        Purpose: Confirm that _build_schema_for_type populates the "name" field
+        from overrides["title"] when present, so that RoutablePageMixin sub-routes
+        emit the correct schema name for each route.
+        Category: normal case
+        Target: _build_schema_for_type(request, page, settings, schema_type, custom_properties, overrides)
+        Technique: equivalence partitioning
+        Test data: overrides={"title": "Custom Schema Name"}, page.title="Page Title"
+        """
+        page = _MockPage()
+        request = mock.Mock()
+
+        result = _build_schema_for_type(
+            request,
+            page,
+            None,
+            "WebPage",
+            {},
+            overrides={"title": "Custom Schema Name"},
+        )
+
+        assert result["name"] == "Custom Schema Name"
+
+    def test_url_uses_canonical_url_override(self):
+        """Verify schema["url"] uses the canonical_url override instead of page URL.
+
+        Purpose: Confirm that _build_schema_for_type populates the "url" field
+        from overrides["canonical_url"] when present, so that sub-route schemas
+        reference the correct URL rather than the parent page's URL.
+        Category: normal case
+        Target: _build_schema_for_type(request, page, settings, schema_type, custom_properties, overrides)
+        Technique: equivalence partitioning
+        Test data: overrides={"canonical_url": "https://example.com/sub-route/"},
+            page.full_url="https://example.com/page/"
+        """
+        page = _MockPage()
+        request = mock.Mock()
+
+        result = _build_schema_for_type(
+            request,
+            page,
+            None,
+            "WebPage",
+            {},
+            overrides={"canonical_url": "https://example.com/sub-route/"},
+        )
+
+        assert result["url"] == "https://example.com/sub-route/"
+
+    def test_description_uses_description_override(self):
+        """Verify schema["description"] uses the description override.
+
+        Purpose: Confirm that _build_schema_for_type populates the "description"
+        field from overrides["description"] when present, instead of using
+        page.search_description.
+        Category: normal case
+        Target: _build_schema_for_type(request, page, settings, schema_type, custom_properties, overrides)
+        Technique: equivalence partitioning
+        Test data: overrides={"description": "Custom schema description"},
+            page.search_description="Page description"
+        """
+        page = _MockPage()
+        request = mock.Mock()
+
+        result = _build_schema_for_type(
+            request,
+            page,
+            None,
+            "WebPage",
+            {},
+            overrides={"description": "Custom schema description"},
+        )
+
+        assert result["description"] == "Custom schema description"
+
+    def test_none_overrides_fall_back_to_page(self):
+        """Verify None override values are filtered and page values are used.
+
+        Purpose: Confirm that when all override values are None, the function
+        filters them out via dict comprehension and falls back to the page's
+        own title, URL, and description. Ref ST4.
+        Category: edge case
+        Target: _build_schema_for_type(request, page, settings, schema_type, custom_properties, overrides)
+        Technique: equivalence partitioning (None as invalid override)
+        Test data: overrides with all keys set to None
+        """
+        page = _MockPage()
+        request = mock.Mock()
+
+        result = _build_schema_for_type(
+            request,
+            page,
+            None,
+            "WebPage",
+            {},
+            overrides={
+                "title": None,
+                "canonical_url": None,
+                "description": None,
+            },
+        )
+
+        assert result["name"] == "Page Title"
+        assert result["url"] == "https://example.com/page/"
+        assert result["description"] == "Page description"
+
+    def test_empty_string_title_override_uses_empty_string(self):
+        """Verify empty string title override is preserved, not treated as missing.
+
+        Purpose: Confirm that an intentional empty string override for title
+        is kept in the schema name field. The implementation filters None but
+        keeps empty strings.
+        Category: edge case
+        Target: _build_schema_for_type(request, page, settings, schema_type, custom_properties, overrides)
+        Technique: boundary value analysis (empty string as boundary)
+        Test data: overrides={"title": ""}, page.title="Page Title"
+        """
+        page = _MockPage()
+        request = mock.Mock()
+
+        result = _build_schema_for_type(
+            request, page, None, "WebPage", {}, overrides={"title": ""}
+        )
+
+        assert result["name"] == ""
+
+    def test_empty_string_description_override_omits_description(self):
+        """Verify empty string description override omits the description field.
+
+        Purpose: Confirm that when description override is an empty string,
+        the description field is not included in the schema (the implementation
+        checks truthiness before adding description).
+        Category: edge case
+        Target: _build_schema_for_type(request, page, settings, schema_type, custom_properties, overrides)
+        Technique: boundary value analysis (empty string)
+        Test data: overrides={"description": ""}, page.search_description="Page description"
+        """
+        page = _MockPage()
+        request = mock.Mock()
+
+        result = _build_schema_for_type(
+            request, page, None, "WebPage", {}, overrides={"description": ""}
+        )
+
+        assert "description" not in result
+
+    def test_partial_overrides_only_affect_specified_keys(self):
+        """Verify only the specified override key is changed; others use page values.
+
+        Purpose: Confirm that providing only a title override does not affect
+        url or description, which should still come from the page.
+        Category: normal case
+        Target: _build_schema_for_type(request, page, settings, schema_type, custom_properties, overrides)
+        Technique: decision table (partial conditions)
+        Test data: only title override provided
+        """
+        page = _MockPage()
+        request = mock.Mock()
+
+        result = _build_schema_for_type(
+            request,
+            page,
+            None,
+            "WebPage",
+            {},
+            overrides={"title": "Only Title Override"},
+        )
+
+        assert result["name"] == "Only Title Override"
+        assert result["url"] == "https://example.com/page/"
+        assert result["description"] == "Page description"
+
+
+class TestArticleAutoFieldsOverrides:
+    """Tests for the overrides parameter of _add_article_auto_fields.
+
+    Ref DT-SCHEMA-TYPE-OVERRIDES: ST5-ST6.
+    """
+
+    def test_headline_uses_title_override(self):
+        """Verify schema["headline"] uses the title override instead of page title.
+
+        Purpose: Confirm that _add_article_auto_fields sets the "headline" field
+        from overrides["title"] when present, so that Article schemas for
+        RoutablePageMixin sub-routes display the correct headline.
+        Category: normal case
+        Target: _add_article_auto_fields(schema, request, page, settings, overrides)
+        Technique: equivalence partitioning
+        Test data: overrides={"title": "Custom Headline"}, page.title="Page Title"
+        """
+        schema = {"@type": "Article"}
+        page = _MockPage()
+        request = mock.Mock()
+
+        _add_article_auto_fields(
+            schema, request, page, None, overrides={"title": "Custom Headline"}
+        )
+
+        assert schema["headline"] == "Custom Headline"
+
+    def test_headline_falls_back_to_page_title_without_override(self):
+        """Verify schema["headline"] uses page title when no title override is given.
+
+        Purpose: Confirm that when overrides do not include "title", the headline
+        falls back to the page's own title via _get_page_title().
+        Category: normal case
+        Target: _add_article_auto_fields(schema, request, page, settings, overrides)
+        Technique: equivalence partitioning
+        Test data: overrides={}, page.title="Page Title"
+        """
+        schema = {"@type": "Article"}
+        page = _MockPage()
+        request = mock.Mock()
+
+        _add_article_auto_fields(schema, request, page, None, overrides={})
+
+        assert schema["headline"] == "Page Title"
+
+    def test_headline_falls_back_to_seo_title_without_override(self):
+        """Verify schema["headline"] uses seo_title when no title override is given.
+
+        Purpose: Confirm that when overrides do not include "title" but the page
+        has seo_title set, the headline uses seo_title (via _get_page_title()).
+        Category: normal case
+        Target: _add_article_auto_fields(schema, request, page, settings, overrides)
+        Technique: equivalence partitioning
+        Test data: overrides={}, page.seo_title="SEO Title"
+        """
+        schema = {"@type": "Article"}
+        page = _MockPageWithSeoTitle()
+        request = mock.Mock()
+
+        _add_article_auto_fields(schema, request, page, None, overrides={})
+
+        assert schema["headline"] == "SEO Title"
+
+    def test_headline_override_takes_priority_over_seo_title(self):
+        """Verify title override beats page.seo_title for headline.
+
+        Purpose: Confirm that even when a page has seo_title set, the
+        overrides["title"] value takes priority for the headline field.
+        Category: normal case
+        Target: _add_article_auto_fields(schema, request, page, settings, overrides)
+        Technique: equivalence partitioning
+        Test data: overrides={"title": "Override Headline"},
+            page.seo_title="SEO Title"
+        """
+        schema = {"@type": "Article"}
+        page = _MockPageWithSeoTitle()
+        request = mock.Mock()
+
+        _add_article_auto_fields(
+            schema, request, page, None, overrides={"title": "Override Headline"}
+        )
+
+        assert schema["headline"] == "Override Headline"
+
+    def test_headline_none_override_falls_back_to_page(self):
+        """Verify None title override is filtered and page title is used for headline.
+
+        Purpose: Confirm that passing None for title in overrides does not
+        suppress the page title for the headline field.
+        Category: edge case
+        Target: _add_article_auto_fields(schema, request, page, settings, overrides)
+        Technique: equivalence partitioning (None as invalid override)
+        Test data: overrides={"title": None}, page.title="Page Title"
+        """
+        schema = {"@type": "Article"}
+        page = _MockPage()
+        request = mock.Mock()
+
+        _add_article_auto_fields(schema, request, page, None, overrides={"title": None})
+
+        assert schema["headline"] == "Page Title"
+
+    def test_image_uses_og_image_override(self):
+        """Verify schema["image"] uses the og_image override.
+
+        Purpose: Confirm that _add_article_auto_fields passes the og_image
+        override to _get_og_image_data, so the Article schema uses the
+        sub-route's image rather than the page's own og_image. Ref ST6.
+        Category: normal case
+        Target: _add_article_auto_fields(schema, request, page, settings, overrides)
+        Technique: equivalence partitioning
+        Test data: overrides={"og_image": _MockImage()}, page without og_image
+        """
+        schema = {"@type": "Article"}
+        page = _MockPage()
+        request = mock.Mock()
+        override_image = _MockImage()
+
+        _add_article_auto_fields(
+            schema, request, page, None, overrides={"og_image": override_image}
+        )
+
+        assert "image" in schema
+        assert schema["image"] != ""
+
+    def test_image_override_takes_priority_over_page_og_image(self):
+        """Verify og_image override beats page.og_image for Article image.
+
+        Purpose: Confirm that when both page.og_image and overrides["og_image"]
+        are present, the override image is used.
+        Category: normal case
+        Target: _add_article_auto_fields(schema, request, page, settings, overrides)
+        Technique: equivalence partitioning
+        Test data: page with og_image, overrides with different og_image
+        """
+        schema = {"@type": "Article"}
+        page = _MockPageWithOgImage()
+        request = mock.Mock()
+        override_image = _MockImage()
+
+        _add_article_auto_fields(
+            schema, request, page, None, overrides={"og_image": override_image}
+        )
+
+        assert "image" in schema
+
+    def test_no_og_image_override_falls_back_to_page(self):
+        """Verify no og_image override falls back to page.og_image for Article.
+
+        Purpose: Confirm that when overrides do not include "og_image", the
+        Article image falls back to the page's own og_image.
+        Category: normal case
+        Target: _add_article_auto_fields(schema, request, page, settings, overrides)
+        Technique: equivalence partitioning
+        Test data: overrides={}, page with og_image
+        """
+        schema = {"@type": "Article"}
+        page = _MockPageWithOgImage()
+        request = mock.Mock()
+
+        _add_article_auto_fields(schema, request, page, None, overrides={})
+
+        assert "image" in schema
+        assert schema["image"] != ""
+
+
+class TestBreadcrumbSchemaOverrides:
+    """Tests for the overrides parameter of _build_breadcrumb_schema.
+
+    Ref DT-SCHEMA-TYPE-OVERRIDES: ST7.
+    """
+
+    def _make_page_with_ancestors(self, page_title="Current Page"):
+        """Create a mock page with one ancestor for breadcrumb tests."""
+
+        class MockAncestor:
+            title = "Parent"
+            url = "/parent/"
+            live = True
+
+        class MockPage:
+            title = page_title
+            seo_title = ""
+            depth = 3
+
+            def get_ancestors(self):
+                class MockQuerySet:
+                    def filter(self, **kwargs):
+                        return [MockAncestor()]
+
+                return MockQuerySet()
+
+        return MockPage()
+
+    def test_current_page_name_uses_title_override(self):
+        """Verify the last breadcrumb item name uses the title override.
+
+        Purpose: Confirm that _build_breadcrumb_schema uses overrides["title"]
+        for the current page's breadcrumb name, so that RoutablePageMixin
+        sub-routes display the correct breadcrumb trail. Ref ST7.
+        Category: normal case
+        Target: _build_breadcrumb_schema(request, page, overrides)
+        Technique: equivalence partitioning
+        Test data: overrides={"title": "Sub-Route Name"}, page.title="Current Page"
+        """
+        page = self._make_page_with_ancestors()
+        request = mock.Mock()
+
+        result = _build_breadcrumb_schema(
+            request, page, overrides={"title": "Sub-Route Name"}
+        )
+
+        assert result is not None
+        last_item = result["itemListElement"][-1]
+        assert last_item["name"] == "Sub-Route Name"
+
+    def test_ancestor_names_not_affected_by_override(self):
+        """Verify ancestor breadcrumb names are not changed by title override.
+
+        Purpose: Confirm that only the current page's (last item's) name is
+        overridden; ancestor names remain from the page hierarchy.
+        Category: normal case
+        Target: _build_breadcrumb_schema(request, page, overrides)
+        Technique: equivalence partitioning
+        Test data: overrides={"title": "Sub-Route Name"}, ancestor.title="Parent"
+        """
+        page = self._make_page_with_ancestors()
+        request = mock.Mock()
+
+        result = _build_breadcrumb_schema(
+            request, page, overrides={"title": "Sub-Route Name"}
+        )
+
+        assert result is not None
+        first_item = result["itemListElement"][0]
+        assert first_item["name"] == "Parent"
+
+    def test_none_title_override_falls_back_to_page_title(self):
+        """Verify None title override is filtered and page title is used.
+
+        Purpose: Confirm that passing None for title in overrides does not
+        suppress the page title in the breadcrumb. The implementation filters
+        None via dict comprehension.
+        Category: edge case
+        Target: _build_breadcrumb_schema(request, page, overrides)
+        Technique: equivalence partitioning (None as invalid override)
+        Test data: overrides={"title": None}, page.title="Current Page"
+        """
+        page = self._make_page_with_ancestors()
+        request = mock.Mock()
+
+        result = _build_breadcrumb_schema(request, page, overrides={"title": None})
+
+        assert result is not None
+        last_item = result["itemListElement"][-1]
+        assert last_item["name"] == "Current Page"
+
+    def test_empty_overrides_uses_page_title(self):
+        """Verify empty overrides dict uses page title for breadcrumb name.
+
+        Purpose: Confirm that when no overrides are provided, the breadcrumb
+        uses the page's own title as the current page name.
+        Category: edge case
+        Target: _build_breadcrumb_schema(request, page, overrides)
+        Technique: boundary value analysis (empty collection)
+        Test data: overrides={}, page.title="Current Page"
+        """
+        page = self._make_page_with_ancestors()
+        request = mock.Mock()
+
+        result = _build_breadcrumb_schema(request, page, overrides={})
+
+        assert result is not None
+        last_item = result["itemListElement"][-1]
+        assert last_item["name"] == "Current Page"
+
+    def test_no_overrides_parameter_uses_page_title(self):
+        """Verify omitting overrides parameter uses page title.
+
+        Purpose: Confirm backward compatibility: when overrides parameter is
+        not passed (defaults to None), the breadcrumb uses the page title.
+        Category: edge case
+        Target: _build_breadcrumb_schema(request, page)
+        Technique: boundary value analysis (default parameter)
+        Test data: no overrides argument, page.title="Current Page"
+        """
+        page = self._make_page_with_ancestors()
+        request = mock.Mock()
+
+        result = _build_breadcrumb_schema(request, page)
+
+        assert result is not None
+        last_item = result["itemListElement"][-1]
+        assert last_item["name"] == "Current Page"
+
+    def test_non_title_overrides_do_not_affect_breadcrumb(self):
+        """Verify non-title overrides (description, canonical_url) are ignored.
+
+        Purpose: Confirm that only the "title" key from overrides is used in
+        the breadcrumb schema; other keys like description and canonical_url
+        have no effect on breadcrumb names.
+        Category: normal case
+        Target: _build_breadcrumb_schema(request, page, overrides)
+        Technique: equivalence partitioning (irrelevant keys)
+        Test data: overrides with description and canonical_url but no title
+        """
+        page = self._make_page_with_ancestors()
+        request = mock.Mock()
+
+        result = _build_breadcrumb_schema(
+            request,
+            page,
+            overrides={
+                "description": "Custom desc",
+                "canonical_url": "https://example.com/other/",
+            },
+        )
+
+        assert result is not None
+        last_item = result["itemListElement"][-1]
+        assert last_item["name"] == "Current Page"

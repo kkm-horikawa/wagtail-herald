@@ -1,11 +1,14 @@
-"""Integration tests for SEO context overrides in the seo_head template tag.
+"""Integration tests for SEO context overrides in seo_head and seo_schema template tags.
 
 Tests the full template rendering pipeline: Django Template engine loads the
-wagtail_herald template tags, the seo_head tag reads well-known context keys
-(seo_title, seo_description, seo_canonical_url, seo_og_image), passes them
-as overrides to build_seo_context(), and the resulting HTML contains the
-overridden values in the correct meta/link/title elements.
+wagtail_herald template tags, the seo_head / seo_schema tags read well-known
+context keys (seo_title, seo_description, seo_canonical_url, seo_og_image),
+pass them as overrides to build_seo_context() / schema building functions,
+and the resulting HTML contains the overridden values in the correct
+meta/link/title elements and JSON-LD output.
 """
+
+import json
 
 import pytest
 from django.template import Context, Template
@@ -964,3 +967,255 @@ class TestSeoHeadContextOverrideOgImage:
         assert 'rel="canonical" href="https://example.com/events/2026/march/"' in html
         assert "march-events-banner.jpg" in html
         assert 'property="og:image:alt" content="March Events Banner"' in html
+
+
+# ---------------------------------------------------------------------------
+# Helpers for seo_schema integration tests
+# ---------------------------------------------------------------------------
+
+SCHEMA_TEMPLATE_STRING = "{% load wagtail_herald %}{% seo_schema %}"
+
+
+def _parse_schema_json(html: str) -> list[dict]:
+    """Extract and parse the JSON-LD array from rendered seo_schema output."""
+    start = html.index("[")
+    end = html.rindex("]") + 1
+    return json.loads(html[start:end])
+
+
+def _find_schema_by_type(schemas: list[dict], schema_type: str) -> dict | None:
+    """Return the first schema dict matching the given @type."""
+    for s in schemas:
+        if s.get("@type") == schema_type:
+            return s
+    return None
+
+
+# ---------------------------------------------------------------------------
+# seo_schema context override tests
+# ---------------------------------------------------------------------------
+
+
+class TestSeoSchemaContextOverrideTitle:
+    """Tests that seo_title context key overrides title-related fields in JSON-LD."""
+
+    @pytest.mark.django_db
+    def test_schema_name_contains_override_title(self, request_with_site, mock_page):
+        """seo_schema renders the overridden title in the schema ``name`` field.
+
+        Purpose: Verify that placing seo_title in the template context causes
+                 the JSON-LD ``name`` field of a page-specific schema to use
+                 the override value instead of the page's own title, confirming
+                 the full pipeline from context key extraction through
+                 _build_schema_for_type to JSON-LD output.
+        Category: Normal
+        Technique: API endpoint (Django template rendering pipeline)
+        Integration: Context(seo_title=...) -> seo_schema tag
+                     -> _SEO_CONTEXT_KEYS extraction
+                     -> _build_page_schemas(overrides={"title": ...})
+                     -> _build_schema_for_type -> JSON-LD script
+        Test data:
+        - Mock page with title "Original Page Title" and Article schema enabled
+        - Context with seo_title="Events Archive"
+        Verification:
+        1. Render {% seo_schema %} with seo_title in context
+        2. Parse JSON-LD output
+        3. Confirm Article schema ``name`` equals "Events Archive"
+        """
+        mock_page.schema_data = {"types": ["Article"], "properties": {}}
+        template = Template(SCHEMA_TEMPLATE_STRING)
+        context = Context(
+            {
+                "request": request_with_site,
+                "page": mock_page,
+                "seo_title": "Events Archive",
+            }
+        )
+
+        html = template.render(context)
+
+        schemas = _parse_schema_json(html)
+        article = _find_schema_by_type(schemas, "Article")
+        assert article is not None
+        assert article["name"] == "Events Archive"
+
+    @pytest.mark.django_db
+    def test_article_headline_contains_override_title(
+        self, request_with_site, mock_page
+    ):
+        """seo_schema renders the overridden title in the Article ``headline`` field.
+
+        Purpose: Verify that when seo_title is in the template context, the
+                 Article schema's ``headline`` field (auto-populated by
+                 _add_article_auto_fields) also uses the override value.
+                 Google requires headline for Article rich results.
+        Category: Normal
+        Technique: API endpoint (Django template rendering pipeline)
+        Integration: Context(seo_title=...) -> seo_schema tag
+                     -> _build_schema_for_type -> _add_article_auto_fields
+                     -> headline = overrides["title"] -> JSON-LD script
+        Test data:
+        - Mock page with title "Original Page Title" and Article schema enabled
+        - Context with seo_title="Events Archive"
+        Verification:
+        1. Render {% seo_schema %} with seo_title in context
+        2. Parse JSON-LD output
+        3. Confirm Article schema ``headline`` equals "Events Archive"
+        """
+        mock_page.schema_data = {"types": ["Article"], "properties": {}}
+        template = Template(SCHEMA_TEMPLATE_STRING)
+        context = Context(
+            {
+                "request": request_with_site,
+                "page": mock_page,
+                "seo_title": "Events Archive",
+            }
+        )
+
+        html = template.render(context)
+
+        schemas = _parse_schema_json(html)
+        article = _find_schema_by_type(schemas, "Article")
+        assert article is not None
+        assert article["headline"] == "Events Archive"
+
+
+class TestSeoSchemaContextOverrideCanonicalUrl:
+    """Tests that seo_canonical_url context key overrides the url field in JSON-LD."""
+
+    @pytest.mark.django_db
+    def test_schema_url_contains_override_url(self, request_with_site, mock_page):
+        """seo_schema renders the overridden canonical URL in the schema ``url`` field.
+
+        Purpose: Verify that placing seo_canonical_url in the template context
+                 causes the JSON-LD ``url`` field to use the override value
+                 instead of the page's full_url / get_canonical_url(), ensuring
+                 structured data for sub-routes points to the correct URL.
+        Category: Normal
+        Technique: API endpoint (Django template rendering pipeline)
+        Integration: Context(seo_canonical_url=...) -> seo_schema tag
+                     -> _SEO_CONTEXT_KEYS extraction
+                     -> _build_schema_for_type(overrides={"canonical_url": ...})
+                     -> schema["url"] = overrides["canonical_url"]
+                     -> JSON-LD script
+        Test data:
+        - Mock page with full_url "https://example.com/original/" and Article enabled
+        - Context with seo_canonical_url="https://example.com/events/2026/march/"
+        Verification:
+        1. Render {% seo_schema %} with seo_canonical_url in context
+        2. Parse JSON-LD output
+        3. Confirm Article schema ``url`` equals the override URL
+        """
+        mock_page.schema_data = {"types": ["Article"], "properties": {}}
+        override_url = "https://example.com/events/2026/march/"
+        template = Template(SCHEMA_TEMPLATE_STRING)
+        context = Context(
+            {
+                "request": request_with_site,
+                "page": mock_page,
+                "seo_canonical_url": override_url,
+            }
+        )
+
+        html = template.render(context)
+
+        schemas = _parse_schema_json(html)
+        article = _find_schema_by_type(schemas, "Article")
+        assert article is not None
+        assert article["url"] == override_url
+
+
+class TestSeoSchemaContextOverrideDescription:
+    """Tests that seo_description context key overrides description in JSON-LD."""
+
+    @pytest.mark.django_db
+    def test_schema_description_contains_override(self, request_with_site, mock_page):
+        """seo_schema renders the overridden description in the schema ``description`` field.
+
+        Purpose: Verify that placing seo_description in the template context
+                 causes the JSON-LD ``description`` field to use the override
+                 value instead of the page's search_description, ensuring
+                 structured data shows sub-route-specific descriptions.
+        Category: Normal
+        Technique: API endpoint (Django template rendering pipeline)
+        Integration: Context(seo_description=...) -> seo_schema tag
+                     -> _SEO_CONTEXT_KEYS extraction
+                     -> _build_schema_for_type(overrides={"description": ...})
+                     -> schema["description"] = overrides["description"]
+                     -> JSON-LD script
+        Test data:
+        - Mock page with search_description "Original page description"
+          and Article schema enabled
+        - Context with seo_description="Browse our upcoming events"
+        Verification:
+        1. Render {% seo_schema %} with seo_description in context
+        2. Parse JSON-LD output
+        3. Confirm Article schema ``description`` equals the override text
+        """
+        mock_page.schema_data = {"types": ["Article"], "properties": {}}
+        template = Template(SCHEMA_TEMPLATE_STRING)
+        context = Context(
+            {
+                "request": request_with_site,
+                "page": mock_page,
+                "seo_description": "Browse our upcoming events",
+            }
+        )
+
+        html = template.render(context)
+
+        schemas = _parse_schema_json(html)
+        article = _find_schema_by_type(schemas, "Article")
+        assert article is not None
+        assert article["description"] == "Browse our upcoming events"
+
+
+class TestSeoSchemaContextOverrideBackwardCompatibility:
+    """Tests that JSON-LD uses page values when no overrides are present."""
+
+    @pytest.mark.django_db
+    def test_no_overrides_uses_page_values(self, request_with_site, mock_page):
+        """seo_schema renders page's own values in JSON-LD when no context overrides exist.
+
+        Purpose: Verify backward compatibility: when no seo_title,
+                 seo_description, or seo_canonical_url keys are in the template
+                 context, the JSON-LD output uses the page object's attributes
+                 as before the override feature was introduced.
+        Category: Normal (regression)
+        Technique: API endpoint (Django template rendering pipeline)
+        Integration: Context(page=...) without overrides -> seo_schema tag
+                     -> _build_page_schemas(overrides={})
+                     -> _build_schema_for_type uses page.title, page.full_url,
+                        page.search_description -> JSON-LD script
+        Test data:
+        - Mock page with title "Original Page Title",
+          search_description "Original page description",
+          full_url "https://example.com/original/"
+          and Article schema enabled
+        - Context WITHOUT any seo_* override keys
+        Verification:
+        1. Render {% seo_schema %} without any override keys in context
+        2. Parse JSON-LD output
+        3. Confirm Article ``name`` equals page title
+        4. Confirm Article ``description`` equals page search_description
+        5. Confirm Article ``url`` equals page full_url
+        6. Confirm Article ``headline`` equals page title
+        """
+        mock_page.schema_data = {"types": ["Article"], "properties": {}}
+        template = Template(SCHEMA_TEMPLATE_STRING)
+        context = Context(
+            {
+                "request": request_with_site,
+                "page": mock_page,
+            }
+        )
+
+        html = template.render(context)
+
+        schemas = _parse_schema_json(html)
+        article = _find_schema_by_type(schemas, "Article")
+        assert article is not None
+        assert article["name"] == "Original Page Title"
+        assert article["description"] == "Original page description"
+        assert article["url"] == "https://example.com/original/"
+        assert article["headline"] == "Original Page Title"

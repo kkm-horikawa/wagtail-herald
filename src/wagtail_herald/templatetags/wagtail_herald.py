@@ -144,9 +144,7 @@ def seo_head(context: dict[str, Any]) -> SafeString:
         if value is not None:
             overrides[override_key] = value
 
-    seo_context = build_seo_context(
-        request, page, seo_settings, overrides=overrides or None
-    )
+    seo_context = build_seo_context(request, page, seo_settings, overrides=overrides)
 
     return mark_safe(
         render_to_string(
@@ -725,7 +723,7 @@ def build_seo_context(
     Returns:
         Dictionary with all SEO template variables.
     """
-    _overrides = overrides or {}
+    _overrides = {k: v for k, v in (overrides or {}).items() if v is not None}
 
     site = Site.find_for_request(request) if request else None
 
@@ -878,7 +876,7 @@ def _get_og_image_data(
     request: HttpRequest | None,
     page: Any,
     settings: SEOSettings | None,
-    og_image_override: Any | None = None,
+    og_image_override: Any = None,
 ) -> dict[str, Any]:
     """Get OG image data with fallback chain.
 

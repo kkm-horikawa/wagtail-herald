@@ -114,6 +114,37 @@ This adds an "SEO" panel in the page editor with:
 
 > **Note**: For SEO title and meta description, use Wagtail's built-in `seo_title` and `search_description` fields in the Promote tab. The template tags automatically use these fields.
 
+### 4. Override SEO per Sub-route (RoutablePageMixin)
+
+When using `RoutablePageMixin`, individual sub-routes often represent different content items that need their own SEO metadata. Pass well-known keys through `context_overrides` and `{% seo_head %}` will use them instead of the page object's fields.
+
+**Supported context keys:**
+
+| Key | Overrides |
+|-----|-----------|
+| `seo_title` | Page title and OG/Twitter title |
+| `seo_description` | Meta description and OG/Twitter description |
+| `seo_canonical_url` | Canonical URL and `og:url` |
+| `seo_og_image` | OG image and Twitter image (Wagtail Image instance) |
+
+```python
+from wagtail.contrib.routable_page.models import RoutablePageMixin, path
+from wagtail.models import Page
+
+class BlogIndexPage(RoutablePageMixin, Page):
+
+    @path("<slug:slug>/")
+    def detail(self, request, slug):
+        item = get_object_or_404(BlogPost, slug=slug)
+        return self.render(request, context_overrides={
+            "seo_title": item.name,
+            "seo_description": item.summary,
+            "seo_canonical_url": request.build_absolute_uri(),
+        })
+```
+
+Any key not provided falls back to the page object's own fields, so you only need to specify what differs per sub-route.
+
 ## Supported Schema Types
 
 ### Site-wide (Automatic)

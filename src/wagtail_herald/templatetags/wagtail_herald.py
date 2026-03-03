@@ -110,9 +110,22 @@ def _get_schema_language_cached(page: Any, settings: SEOSettings | None) -> str:
     return locale.split("_")[0].lower()
 
 
+# Well-known context keys that can override SEO values per route.
+# The ``seo_`` prefix is stripped to form the overrides dict key.
+_SEO_CONTEXT_KEYS: dict[str, str] = {
+    "seo_title": "title",
+    "seo_description": "description",
+    "seo_canonical_url": "canonical_url",
+    "seo_og_image": "og_image",
+}
+
+
 @register.simple_tag(takes_context=True)
 def seo_head(context: dict[str, Any]) -> SafeString:
     """Output all SEO meta tags, OG tags, Twitter Card, favicons, and custom HTML.
+
+    Supports per-route overrides via well-known template context keys:
+    ``seo_title``, ``seo_description``, ``seo_canonical_url``, ``seo_og_image``.
 
     Usage in templates:
         {% load wagtail_herald %}
@@ -125,7 +138,15 @@ def seo_head(context: dict[str, Any]) -> SafeString:
 
     seo_settings = get_seo_settings(request)
 
-    seo_context = build_seo_context(request, page, seo_settings)
+    overrides: dict[str, Any] = {}
+    for ctx_key, override_key in _SEO_CONTEXT_KEYS.items():
+        value = context.get(ctx_key)
+        if value is not None:
+            overrides[override_key] = value
+
+    seo_context = build_seo_context(
+        request, page, seo_settings, overrides=overrides or None
+    )
 
     return mark_safe(
         render_to_string(
@@ -638,7 +659,7 @@ def _filter_empty_values(data: Any) -> Any:
     if isinstance(data, bool):
         return data
 
-    if isinstance(data, (int, float)):
+    if isinstance(data, int | float):
         return data
 
     if isinstance(data, list):
@@ -688,6 +709,7 @@ def build_seo_context(
     request: HttpRequest | None,
     page: Any,
     settings: SEOSettings | None,
+    overrides: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build context dict for SEO template.
 
@@ -695,29 +717,46 @@ def build_seo_context(
         request: HTTP request object.
         page: Wagtail page instance.
         settings: SEOSettings instance.
+        overrides: Per-route override values. Supported keys:
+            ``title``, ``description``, ``canonical_url``, ``og_image``.
+            When a key is present its value takes priority over the page
+            object, even if the value is an empty string.
 
     Returns:
         Dictionary with all SEO template variables.
     """
+    _overrides = overrides or {}
+
     site = Site.find_for_request(request) if request else None
 
     # Title with separator
-    page_title = _get_page_title(page)
+    page_title = _overrides["title"] if "title" in _overrides else _get_page_title(page)
     site_name = site.site_name if site else ""
     separator = settings.title_separator if settings else "|"
     full_title = f"{page_title} {separator} {site_name}" if site_name else page_title
 
     # Description
-    description = getattr(page, "search_description", "") or ""
+    description = (
+        _overrides["description"]
+        if "description" in _overrides
+        else getattr(page, "search_description", "") or ""
+    )
 
     # Canonical URL
-    canonical_url = _get_canonical_url(request, page)
+    canonical_url = (
+        _overrides["canonical_url"]
+        if "canonical_url" in _overrides
+        else _get_canonical_url(request, page)
+    )
 
     # Robots
     robots = _get_robots_meta(page)
 
     # OG Image with dimensions
-    og_image_data = _get_og_image_data(request, page, settings)
+    og_image_override = _overrides.get("og_image")
+    og_image_data = _get_og_image_data(
+        request, page, settings, og_image_override=og_image_override
+    )
 
     # Locale (page-specific takes priority over settings default)
     # Use cached helper to avoid duplicate database queries
@@ -839,15 +878,18 @@ def _get_og_image_data(
     request: HttpRequest | None,
     page: Any,
     settings: SEOSettings | None,
+    og_image_override: Any | None = None,
 ) -> dict[str, Any]:
     """Get OG image data with fallback chain.
 
-    Priority: page.og_image → settings.default_og_image → None
+    Priority: og_image_override → page.og_image → settings.default_og_image → None
 
     Args:
         request: HTTP request object.
         page: Wagtail page instance.
         settings: SEOSettings instance.
+        og_image_override: Wagtail Image instance to use instead of
+            page/settings lookup. Skips the normal fallback chain when provided.
 
     Returns:
         Dict with url, alt, width, height keys.
@@ -855,8 +897,12 @@ def _get_og_image_data(
     image = None
     alt_text = ""
 
+    if og_image_override is not None:
+        image = og_image_override
+        alt_text = getattr(og_image_override, "title", "") or ""
+
     # Try page-level og_image first
-    if page and hasattr(page, "og_image") and page.og_image:
+    elif page and hasattr(page, "og_image") and page.og_image:
         image = page.og_image
         if hasattr(page, "get_og_image_alt"):
             alt_text = page.get_og_image_alt()

@@ -170,6 +170,12 @@ def seo_schema(context: dict[str, Any]) -> SafeString:
 
     seo_settings = get_seo_settings(request)
 
+    overrides: dict[str, Any] = {}
+    for ctx_key, override_key in _SEO_CONTEXT_KEYS.items():
+        value = context.get(ctx_key)
+        if value is not None:
+            overrides[override_key] = value
+
     schemas: list[dict[str, Any]] = []
 
     # Get enabled schema types from page's schema_data
@@ -196,13 +202,15 @@ def seo_schema(context: dict[str, Any]) -> SafeString:
 
     # BreadcrumbList schema (only if enabled)
     if "BreadcrumbList" in enabled_types and page:
-        breadcrumb_schema = _build_breadcrumb_schema(request, page)
+        breadcrumb_schema = _build_breadcrumb_schema(request, page, overrides=overrides)
         if breadcrumb_schema:
             schemas.append(breadcrumb_schema)
 
     # Page-specific schemas (from schema_data field)
     if page:
-        page_schemas = _build_page_schemas(request, page, seo_settings)
+        page_schemas = _build_page_schemas(
+            request, page, seo_settings, overrides=overrides
+        )
         schemas.extend(page_schemas)
 
     if not schemas:
@@ -367,6 +375,7 @@ def _build_organization_schema(
 def _build_breadcrumb_schema(
     request: HttpRequest | None,
     page: Any,
+    overrides: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     """Build BreadcrumbList schema from page hierarchy.
 
@@ -414,11 +423,12 @@ def _build_breadcrumb_schema(
         position += 1
 
     # Add current page (without "item" URL per Google guidelines)
+    _overrides = {k: v for k, v in (overrides or {}).items() if v is not None}
     items.append(
         {
             "@type": "ListItem",
             "position": position,
-            "name": page.title,
+            "name": _overrides["title"] if "title" in _overrides else page.title,
         }
     )
 
@@ -437,6 +447,7 @@ def _build_page_schemas(
     request: HttpRequest | None,
     page: Any,
     settings: Any,
+    overrides: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """Build schemas from page's schema_data field.
 
@@ -464,7 +475,7 @@ def _build_page_schemas(
 
         custom_props = schema_properties.get(schema_type, {})
         schema = _build_schema_for_type(
-            request, page, settings, schema_type, custom_props
+            request, page, settings, schema_type, custom_props, overrides=overrides
         )
         if schema:
             schemas.append(schema)
@@ -478,6 +489,7 @@ def _build_schema_for_type(
     settings: Any,
     schema_type: str,
     custom_properties: dict[str, Any],
+    overrides: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     """Build a single schema with auto-populated and custom fields.
 
@@ -491,11 +503,15 @@ def _build_schema_for_type(
     Returns:
         Schema dict or None.
     """
+    _overrides = {k: v for k, v in (overrides or {}).items() if v is not None}
+
     schema: dict[str, Any] = {
         "@context": "https://schema.org",
         "@type": schema_type,
-        "name": _get_page_title(page),
-        "url": _get_canonical_url(request, page),
+        "name": _overrides["title"] if "title" in _overrides else _get_page_title(page),
+        "url": _overrides["canonical_url"]
+        if "canonical_url" in _overrides
+        else _get_canonical_url(request, page),
     }
 
     # Add inLanguage for applicable schema types
@@ -506,17 +522,21 @@ def _build_schema_for_type(
             schema["inLanguage"] = lang
 
     # Add description if available
-    description = getattr(page, "search_description", "")
+    description = (
+        _overrides["description"]
+        if "description" in _overrides
+        else (getattr(page, "search_description", "") or "")
+    )
     if description:
         schema["description"] = description
 
     # Type-specific auto fields
     if schema_type in ("Article", "NewsArticle", "BlogPosting"):
-        _add_article_auto_fields(schema, request, page, settings)
+        _add_article_auto_fields(schema, request, page, settings, overrides=overrides)
     elif schema_type == "Product":
-        _add_product_auto_fields(schema, request, page, settings)
+        _add_product_auto_fields(schema, request, page, settings, overrides=overrides)
     elif schema_type in ("Event", "Course", "Recipe", "HowTo", "JobPosting"):
-        _add_content_auto_fields(schema, request, page, settings)
+        _add_content_auto_fields(schema, request, page, settings, overrides=overrides)
 
     # Filter out empty values from custom properties before merging
     filtered_props = _filter_empty_values(custom_properties)
@@ -531,10 +551,15 @@ def _add_article_auto_fields(
     request: HttpRequest | None,
     page: Any,
     settings: Any,
+    overrides: dict[str, Any] | None = None,
 ) -> None:
     """Add auto-populated fields for Article types."""
+    _overrides = {k: v for k, v in (overrides or {}).items() if v is not None}
+
     # headline
-    schema["headline"] = _get_page_title(page)
+    schema["headline"] = (
+        _overrides["title"] if "title" in _overrides else _get_page_title(page)
+    )
 
     # author
     owner = getattr(page, "owner", None)
@@ -568,7 +593,10 @@ def _add_article_auto_fields(
         schema["publisher"] = publisher
 
     # image
-    og_data = _get_og_image_data(request, page, settings)
+    og_image_override = _overrides.get("og_image")
+    og_data = _get_og_image_data(
+        request, page, settings, og_image_override=og_image_override
+    )
     if og_data.get("url"):
         schema["image"] = og_data["url"]
 
@@ -578,10 +606,16 @@ def _add_product_auto_fields(
     request: HttpRequest | None,
     page: Any,
     settings: Any,
+    overrides: dict[str, Any] | None = None,
 ) -> None:
     """Add auto-populated fields for Product type."""
+    _overrides = {k: v for k, v in (overrides or {}).items() if v is not None}
+
     # image
-    og_data = _get_og_image_data(request, page, settings)
+    og_image_override = _overrides.get("og_image")
+    og_data = _get_og_image_data(
+        request, page, settings, og_image_override=og_image_override
+    )
     if og_data.get("url"):
         schema["image"] = og_data["url"]
 
@@ -591,10 +625,16 @@ def _add_content_auto_fields(
     request: HttpRequest | None,
     page: Any,
     settings: Any,
+    overrides: dict[str, Any] | None = None,
 ) -> None:
     """Add auto-populated fields for content types (Event, Course, etc.)."""
+    _overrides = {k: v for k, v in (overrides or {}).items() if v is not None}
+
     # image
-    og_data = _get_og_image_data(request, page, settings)
+    og_image_override = _overrides.get("og_image")
+    og_data = _get_og_image_data(
+        request, page, settings, og_image_override=og_image_override
+    )
     if og_data.get("url"):
         schema["image"] = og_data["url"]
 

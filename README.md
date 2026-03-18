@@ -281,7 +281,7 @@ All settings are optional and configured through Wagtail admin:
 | Setting | Description |
 |---------|-------------|
 | Organization name | Company/site name for Schema |
-| Organization type | Corporation, LocalBusiness, etc. |
+| Organization type | Corporation, LocalBusiness, Person, etc. (use Person for individual/personal sites) |
 | Organization logo | Logo image for Schema |
 | Twitter handle | @username (without @) |
 | Facebook URL | Facebook page URL |

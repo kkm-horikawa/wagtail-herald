@@ -368,11 +368,12 @@ def _build_organization_schema(
     if request:
         schema["url"] = request.build_absolute_uri("/")
 
-    # Add logo
+    # Person uses "image" instead of "logo" per schema.org specification
     if settings.organization_logo:
         logo_url = _get_logo_url(request, settings.organization_logo)
         if logo_url:
-            schema["logo"] = logo_url
+            image_field = "image" if settings.organization_type == "Person" else "logo"
+            schema[image_field] = logo_url
 
     # Add sameAs (social profiles)
     same_as: list[str] = []

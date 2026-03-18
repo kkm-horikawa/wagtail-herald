@@ -242,6 +242,11 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
       { name: 'wordCount', type: 'number', description: 'Word count' },
     ],
     placeholder: {
+      author: {
+        '@type': 'Person',
+        name: '',
+        url: '',
+      },
       articleSection: '',
     },
     example: { articleSection: 'Technology' },
@@ -298,6 +303,11 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
       },
     ],
     placeholder: {
+      author: {
+        '@type': 'Person',
+        name: '',
+        url: '',
+      },
       dateline: '',
     },
     example: { dateline: 'TOKYO' },
@@ -355,6 +365,11 @@ export const SCHEMA_TEMPLATES: Record<string, SchemaTemplate> = {
       },
     ],
     placeholder: {
+      author: {
+        '@type': 'Person',
+        name: '',
+        url: '',
+      },
       articleSection: '',
       keywords: '',
     },

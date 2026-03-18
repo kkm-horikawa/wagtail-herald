@@ -1425,7 +1425,8 @@ class TestArticleAutoFields:
         _add_article_auto_fields(schema, request, MockPage(), None)
 
         assert "image" in schema
-        assert "article-image.jpg" in schema["image"]
+        assert isinstance(schema["image"], list)
+        assert "article-image.jpg" in schema["image"][0]
 
 
 class TestProductAutoFields:
@@ -1454,7 +1455,8 @@ class TestProductAutoFields:
         _add_product_auto_fields(schema, request, MockPage(), None)
 
         assert "image" in schema
-        assert "product-image.jpg" in schema["image"]
+        assert isinstance(schema["image"], list)
+        assert "product-image.jpg" in schema["image"][0]
 
 
 class TestContentAutoFields:
@@ -1483,7 +1485,8 @@ class TestContentAutoFields:
         _add_content_auto_fields(schema, request, MockPage(), None)
 
         assert "image" in schema
-        assert "event-image.jpg" in schema["image"]
+        assert isinstance(schema["image"], list)
+        assert "event-image.jpg" in schema["image"][0]
 
     def test_adds_provider_for_course(self, rf, site, db):
         """Test adds provider for Course schema."""

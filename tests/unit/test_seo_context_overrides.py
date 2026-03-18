@@ -967,7 +967,8 @@ class TestArticleAutoFieldsOverrides:
         )
 
         assert "image" in schema
-        assert schema["image"] != ""
+        assert isinstance(schema["image"], list)
+        assert len(schema["image"]) > 0
 
     def test_image_override_takes_priority_over_page_og_image(self):
         """Verify og_image override beats page.og_image for Article image.
@@ -1007,7 +1008,8 @@ class TestArticleAutoFieldsOverrides:
         _add_article_auto_fields(schema, request, page, None, overrides={})
 
         assert "image" in schema
-        assert schema["image"] != ""
+        assert isinstance(schema["image"], list)
+        assert len(schema["image"]) > 0
 
 
 class TestBreadcrumbSchemaOverrides:

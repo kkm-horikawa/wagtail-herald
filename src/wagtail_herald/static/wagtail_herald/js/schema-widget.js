@@ -200,6 +200,11 @@ const SCHEMA_TEMPLATES = {
       { name: "wordCount", type: "number", description: "Word count" }
     ],
     placeholder: {
+      author: {
+        "@type": "Person",
+        name: "",
+        url: ""
+      },
       articleSection: ""
     },
     example: { articleSection: "Technology" },
@@ -254,6 +259,11 @@ const SCHEMA_TEMPLATES = {
       }
     ],
     placeholder: {
+      author: {
+        "@type": "Person",
+        name: "",
+        url: ""
+      },
       dateline: ""
     },
     example: { dateline: "TOKYO" },
@@ -309,11 +319,19 @@ const SCHEMA_TEMPLATES = {
       }
     ],
     placeholder: {
+      author: {
+        "@type": "Person",
+        name: "",
+        url: ""
+      },
       articleSection: "",
       keywords: ""
     },
     example: { articleSection: "Tech Blog", keywords: "wagtail, cms, python" },
-    exampleJa: { articleSection: "技術ブログ", keywords: "Wagtail, CMS, Python, Web開発" },
+    exampleJa: {
+      articleSection: "技術ブログ",
+      keywords: "Wagtail, CMS, Python, Web開発"
+    },
     googleDocsUrl: "https://developers.google.com/search/docs/appearance/structured-data/article"
   },
   // ===================
@@ -994,7 +1012,10 @@ const SCHEMA_TEMPLATES = {
         "https://github.com/janesmith",
         "https://linkedin.com/in/janesmith"
       ],
-      alumniOf: { "@type": "EducationalOrganization", name: "Stanford University" },
+      alumniOf: {
+        "@type": "EducationalOrganization",
+        name: "Stanford University"
+      },
       knowsAbout: ["Python", "Django", "Wagtail CMS", "Cloud Architecture"],
       award: ["Best Developer 2024", "Google Developer Expert"]
     },
@@ -1151,10 +1172,19 @@ const SCHEMA_TEMPLATES = {
         "だし汁 400ml"
       ],
       recipeInstructions: [
-        { "@type": "HowToStep", text: "豚バラ肉は3cm幅に切り、大根は2cm厚さのいちょう切りにする。" },
+        {
+          "@type": "HowToStep",
+          text: "豚バラ肉は3cm幅に切り、大根は2cm厚さのいちょう切りにする。"
+        },
         { "@type": "HowToStep", text: "こんにゃくは手でちぎり、下茹でする。" },
-        { "@type": "HowToStep", text: "鍋に豚肉を入れて炒め、色が変わったら大根とこんにゃくを加える。" },
-        { "@type": "HowToStep", text: "だし汁と調味料を加え、落し蓋をして弱火で40分煮込む。" }
+        {
+          "@type": "HowToStep",
+          text: "鍋に豚肉を入れて炒め、色が変わったら大根とこんにゃくを加える。"
+        },
+        {
+          "@type": "HowToStep",
+          text: "だし汁と調味料を加え、落し蓋をして弱火で40分煮込む。"
+        }
       ],
       prepTime: "PT20M",
       cookTime: "PT40M",
@@ -1464,7 +1494,10 @@ function createDefaultState() {
   return state;
 }
 function initSchemaWidget(container, initialState) {
-  const state = initialState ? { types: [...initialState.types], properties: { ...initialState.properties } } : createDefaultState();
+  const state = initialState ? {
+    types: [...initialState.types],
+    properties: { ...initialState.properties }
+  } : createDefaultState();
   const isJa = isJapaneseLocale();
   render(container, state, isJa);
   return {
@@ -1526,7 +1559,12 @@ function renderTypeCheckboxes(selectedTypes, isJa) {
     `;
   }).join("");
 }
-const AUTO_GENERATED_TYPES = ["WebSite", "Organization", "BreadcrumbList", "WebPage"];
+const AUTO_GENERATED_TYPES = [
+  "WebSite",
+  "Organization",
+  "BreadcrumbList",
+  "WebPage"
+];
 function renderPropertyEditors(state, isJa) {
   if (state.types.length === 0) {
     const emptyMessage = isJa ? "スキーマタイプを選択してプロパティを設定してください" : "Select schema types above to configure properties";
@@ -1850,7 +1888,7 @@ function autoInit() {
     }
     const widget = initSchemaWidget(el, initialState);
     const containerId = el.id;
-    if (containerId && containerId.endsWith("-container")) {
+    if (containerId == null ? void 0 : containerId.endsWith("-container")) {
       const hiddenInputId = containerId.replace(/-container$/, "");
       const hiddenInput = document.getElementById(
         hiddenInputId

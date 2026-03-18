@@ -263,7 +263,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     "@context": "https://schema.org",
     "@type": "Article",
     "headline": "Article Title",
-    "image": "https://example.com/media/article-image.jpg",
+    "image": ["https://example.com/media/article-image.jpg"],
     "author": {"@type": "Person", "name": "Author Name"},
     "datePublished": "2025-01-15T10:00:00+09:00",
     "dateModified": "2025-01-16T15:30:00+09:00"
@@ -281,7 +281,7 @@ All settings are optional and configured through Wagtail admin:
 | Setting | Description |
 |---------|-------------|
 | Organization name | Company/site name for Schema |
-| Organization type | Corporation, LocalBusiness, etc. |
+| Organization type | Corporation, LocalBusiness, Person, etc. (use Person for individual/personal sites) |
 | Organization logo | Logo image for Schema |
 | Twitter handle | @username (without @) |
 | Facebook URL | Facebook page URL |

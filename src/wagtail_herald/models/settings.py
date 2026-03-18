@@ -24,6 +24,7 @@ LOCALE_CHOICES = [
 
 ORGANIZATION_TYPE_CHOICES = [
     ("Organization", "Organization"),
+    ("Person", "Person"),
     ("Corporation", "Corporation"),
     ("LocalBusiness", "Local Business"),
     ("OnlineStore", "Online Store"),
@@ -61,9 +62,7 @@ class SEOSettings(BaseSiteSetting):
         max_length=50,
         choices=ORGANIZATION_TYPE_CHOICES,
         default="Organization",
-        help_text=_(
-            "Organization type for Schema.org (e.g., Corporation, LocalBusiness)"
-        ),
+        help_text=_("Type for Schema.org (e.g., Corporation, LocalBusiness, Person)"),
     )
     organization_logo = models.ForeignKey(
         get_image_model_string(),
@@ -72,7 +71,10 @@ class SEOSettings(BaseSiteSetting):
         blank=True,
         related_name="+",
         verbose_name=_("Organization logo"),
-        help_text=_("Logo for Schema.org. Recommended: 112x112px minimum, PNG/JPEG"),
+        help_text=_(
+            "Logo for Schema.org structured data. "
+            "Used as 'image' when Person type is selected."
+        ),
     )
 
     # Social
@@ -229,7 +231,7 @@ class SEOSettings(BaseSiteSetting):
                 FieldPanel("organization_type"),
                 FieldPanel("organization_logo"),
             ],
-            heading=_("Organization"),
+            heading=_("Organization / Person"),
         ),
         MultiFieldPanel(
             [

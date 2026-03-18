@@ -368,11 +368,12 @@ def _build_organization_schema(
     if request:
         schema["url"] = request.build_absolute_uri("/")
 
-    # Add logo
+    # Person uses "image" instead of "logo" per schema.org specification
     if settings.organization_logo:
         logo_url = _get_logo_url(request, settings.organization_logo)
         if logo_url:
-            schema["logo"] = logo_url
+            image_field = "image" if settings.organization_type == "Person" else "logo"
+            schema[image_field] = logo_url
 
     # Add sameAs (social profiles)
     same_as: list[str] = []
@@ -627,7 +628,7 @@ def _add_article_auto_fields(
         request, page, settings, og_image_override=og_image_override
     )
     if og_data.get("url"):
-        schema["image"] = og_data["url"]
+        schema["image"] = [og_data["url"]]
 
 
 def _add_product_auto_fields(
@@ -655,7 +656,7 @@ def _add_product_auto_fields(
         request, page, settings, og_image_override=og_image_override
     )
     if og_data.get("url"):
-        schema["image"] = og_data["url"]
+        schema["image"] = [og_data["url"]]
 
 
 def _add_content_auto_fields(
@@ -683,7 +684,7 @@ def _add_content_auto_fields(
         request, page, settings, og_image_override=og_image_override
     )
     if og_data.get("url"):
-        schema["image"] = og_data["url"]
+        schema["image"] = [og_data["url"]]
 
     # provider/organizer for Course, Event, JobPosting
     if settings and getattr(settings, "organization_name", None):

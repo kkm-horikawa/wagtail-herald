@@ -2,6 +2,8 @@
 Tests for wagtail-herald template tags.
 """
 
+from unittest.mock import PropertyMock, patch
+
 from django.template import Context, Template
 
 from wagtail_herald.models import SEOSettings
@@ -678,15 +680,91 @@ class TestBuildOrganizationSchema:
             site=site,
             organization_name="Test Org",
         )
-        settings._organization_logo = MockLogo()
-        type(settings).organization_logo = property(
-            lambda self: getattr(self, "_organization_logo", None)
-        )
-
-        result = _build_organization_schema(request, settings)
+        mock_logo = MockLogo()
+        with patch.object(
+            type(settings), "organization_logo", new_callable=PropertyMock, return_value=mock_logo
+        ):
+            result = _build_organization_schema(request, settings)
 
         # Logo should not be in schema because URL is empty
         assert "logo" not in result
+
+    def test_person_type_uses_image_field(self, rf, site, db):
+        """Test Person type uses 'image' instead of 'logo' per schema.org spec."""
+        request = rf.get("/")
+        request.site = site
+
+        class MockLogo:
+            file = None
+            url = "/media/photo.jpg"
+
+            def get_rendition(self, spec):
+                raise Exception("Rendition error")
+
+        settings = SEOSettings(
+            site=site,
+            organization_name="John Doe",
+            organization_type="Person",
+        )
+        mock_logo = MockLogo()
+        with patch.object(
+            type(settings), "organization_logo", new_callable=PropertyMock, return_value=mock_logo
+        ):
+            result = _build_organization_schema(request, settings)
+
+        assert result["@type"] == "Person"
+        assert result["name"] == "John Doe"
+        assert "image" in result
+        assert "logo" not in result
+
+    def test_person_type_with_social_profiles(self, rf, site, db):
+        """Test Person schema includes sameAs for social profiles."""
+        request = rf.get("/")
+        request.site = site
+        settings = SEOSettings(
+            site=site,
+            organization_name="John Doe",
+            organization_type="Person",
+            twitter_handle="johndoe",
+            facebook_url="https://facebook.com/johndoe",
+        )
+        result = _build_organization_schema(request, settings)
+
+        assert result["@type"] == "Person"
+        assert "sameAs" in result
+        assert "https://twitter.com/johndoe" in result["sameAs"]
+        assert "https://facebook.com/johndoe" in result["sameAs"]
+
+    def test_organization_type_still_uses_logo_field(self, rf, site, db):
+        """Test non-Person types continue using 'logo' field unchanged."""
+        request = rf.get("/")
+        request.site = site
+
+        class MockLogo:
+            file = None
+            url = "/media/logo.jpg"
+
+            def get_rendition(self, spec):
+                raise Exception("Rendition error")
+
+        for org_type in ("Organization", "Corporation", "LocalBusiness"):
+            settings = SEOSettings(
+                site=site,
+                organization_name="Test Corp",
+                organization_type=org_type,
+            )
+            mock_logo = MockLogo()
+            with patch.object(
+                type(settings),
+                "organization_logo",
+                new_callable=PropertyMock,
+                return_value=mock_logo,
+            ):
+                result = _build_organization_schema(request, settings)
+
+            assert result["@type"] == org_type
+            assert "logo" in result
+            assert "image" not in result
 
 
 class TestBuildBreadcrumbSchema:
@@ -1116,13 +1194,11 @@ class TestBuildOrganizationSchemaWithLogo:
             site=site,
             organization_name="Test Org",
         )
-        # Manually set the logo
-        settings._organization_logo = MockLogo()
-        type(settings).organization_logo = property(
-            lambda self: getattr(self, "_organization_logo", None)
-        )
-
-        result = _build_organization_schema(request, settings)
+        mock_logo = MockLogo()
+        with patch.object(
+            type(settings), "organization_logo", new_callable=PropertyMock, return_value=mock_logo
+        ):
+            result = _build_organization_schema(request, settings)
 
         assert "logo" in result
         assert "logo.jpg" in result["logo"]
@@ -1338,12 +1414,11 @@ class TestArticleAutoFields:
             site=site,
             organization_name="Test Publisher",
         )
-        settings._organization_logo = MockLogo()
-        type(settings).organization_logo = property(
-            lambda self: getattr(self, "_organization_logo", None)
-        )
-
-        _add_article_auto_fields(schema, request, MockPage(), settings)
+        mock_logo = MockLogo()
+        with patch.object(
+            type(settings), "organization_logo", new_callable=PropertyMock, return_value=mock_logo
+        ):
+            _add_article_auto_fields(schema, request, MockPage(), settings)
 
         assert schema["publisher"]["@type"] == "Organization"
         assert schema["publisher"]["name"] == "Test Publisher"
@@ -1390,12 +1465,11 @@ class TestArticleAutoFields:
             site=site,
             organization_name="Test Publisher",
         )
-        settings._organization_logo = MockLogo()
-        type(settings).organization_logo = property(
-            lambda self: getattr(self, "_organization_logo", None)
-        )
-
-        _add_article_auto_fields(schema, request, MockPage(), settings)
+        mock_logo = MockLogo()
+        with patch.object(
+            type(settings), "organization_logo", new_callable=PropertyMock, return_value=mock_logo
+        ):
+            _add_article_auto_fields(schema, request, MockPage(), settings)
 
         assert schema["publisher"]["@type"] == "Organization"
         assert "logo" not in schema["publisher"]

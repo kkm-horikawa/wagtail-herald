@@ -627,7 +627,7 @@ def _add_article_auto_fields(
         request, page, settings, og_image_override=og_image_override
     )
     if og_data.get("url"):
-        schema["image"] = og_data["url"]
+        schema["image"] = [og_data["url"]]
 
 
 def _add_product_auto_fields(
@@ -655,7 +655,7 @@ def _add_product_auto_fields(
         request, page, settings, og_image_override=og_image_override
     )
     if og_data.get("url"):
-        schema["image"] = og_data["url"]
+        schema["image"] = [og_data["url"]]
 
 
 def _add_content_auto_fields(
@@ -683,7 +683,7 @@ def _add_content_auto_fields(
         request, page, settings, og_image_override=og_image_override
     )
     if og_data.get("url"):
-        schema["image"] = og_data["url"]
+        schema["image"] = [og_data["url"]]
 
     # provider/organizer for Course, Event, JobPosting
     if settings and getattr(settings, "organization_name", None):

@@ -62,9 +62,7 @@ class SEOSettings(BaseSiteSetting):
         max_length=50,
         choices=ORGANIZATION_TYPE_CHOICES,
         default="Organization",
-        help_text=_(
-            "Type for Schema.org (e.g., Corporation, LocalBusiness, Person)"
-        ),
+        help_text=_("Type for Schema.org (e.g., Corporation, LocalBusiness, Person)"),
     )
     organization_logo = models.ForeignKey(
         get_image_model_string(),

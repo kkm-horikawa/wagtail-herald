@@ -682,7 +682,10 @@ class TestBuildOrganizationSchema:
         )
         mock_logo = MockLogo()
         with patch.object(
-            type(settings), "organization_logo", new_callable=PropertyMock, return_value=mock_logo
+            type(settings),
+            "organization_logo",
+            new_callable=PropertyMock,
+            return_value=mock_logo,
         ):
             result = _build_organization_schema(request, settings)
 
@@ -708,7 +711,10 @@ class TestBuildOrganizationSchema:
         )
         mock_logo = MockLogo()
         with patch.object(
-            type(settings), "organization_logo", new_callable=PropertyMock, return_value=mock_logo
+            type(settings),
+            "organization_logo",
+            new_callable=PropertyMock,
+            return_value=mock_logo,
         ):
             result = _build_organization_schema(request, settings)
 
@@ -1196,7 +1202,10 @@ class TestBuildOrganizationSchemaWithLogo:
         )
         mock_logo = MockLogo()
         with patch.object(
-            type(settings), "organization_logo", new_callable=PropertyMock, return_value=mock_logo
+            type(settings),
+            "organization_logo",
+            new_callable=PropertyMock,
+            return_value=mock_logo,
         ):
             result = _build_organization_schema(request, settings)
 
@@ -1416,7 +1425,10 @@ class TestArticleAutoFields:
         )
         mock_logo = MockLogo()
         with patch.object(
-            type(settings), "organization_logo", new_callable=PropertyMock, return_value=mock_logo
+            type(settings),
+            "organization_logo",
+            new_callable=PropertyMock,
+            return_value=mock_logo,
         ):
             _add_article_auto_fields(schema, request, MockPage(), settings)
 
@@ -1467,7 +1479,10 @@ class TestArticleAutoFields:
         )
         mock_logo = MockLogo()
         with patch.object(
-            type(settings), "organization_logo", new_callable=PropertyMock, return_value=mock_logo
+            type(settings),
+            "organization_logo",
+            new_callable=PropertyMock,
+            return_value=mock_logo,
         ):
             _add_article_auto_fields(schema, request, MockPage(), settings)
 

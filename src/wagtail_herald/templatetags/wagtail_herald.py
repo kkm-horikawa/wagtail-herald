@@ -22,6 +22,20 @@ register = template.Library()
 _SEO_SETTINGS_CACHE_ATTR = "_wagtail_herald_seo_settings"
 
 
+def _should_exclude_gtm(request: HttpRequest | None) -> bool:
+    """Return True if GTM should be excluded for the current request.
+
+    Staff users (is_staff=True) should not be tracked by GTM
+    to avoid polluting analytics with internal page views and previews.
+    """
+    if request is None:
+        return False
+    user = getattr(request, "user", None)
+    if user is None:
+        return False
+    return getattr(user, "is_staff", False)
+
+
 def get_seo_settings(request: HttpRequest | None) -> SEOSettings | None:
     """Get SEOSettings with request-level caching.
 
@@ -254,8 +268,12 @@ def seo_body(context: dict[str, Any]) -> SafeString:
 
     seo_settings = get_seo_settings(request)
 
+    gtm_id = seo_settings.gtm_container_id if seo_settings else ""
+    if _should_exclude_gtm(request):
+        gtm_id = ""
+
     body_context = {
-        "gtm_container_id": seo_settings.gtm_container_id if seo_settings else "",
+        "gtm_container_id": gtm_id,
         "custom_body_end_html": seo_settings.custom_body_end_html
         if seo_settings
         else "",
@@ -879,7 +897,9 @@ def build_seo_context(
         "favicon_svg": favicon_svg_url,
         "favicon_png": favicon_png_url,
         "apple_touch_icon": apple_touch_icon_url,
-        "gtm_container_id": settings.gtm_container_id if settings else "",
+        "gtm_container_id": ""
+        if _should_exclude_gtm(request)
+        else (settings.gtm_container_id if settings else ""),
         "custom_head_html": settings.custom_head_html if settings else "",
     }
 

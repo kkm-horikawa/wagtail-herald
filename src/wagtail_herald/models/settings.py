@@ -91,14 +91,6 @@ class SEOSettings(BaseSiteSetting):
     )
 
     # Default SEO
-    title_separator = models.CharField(
-        _("Title separator"),
-        max_length=10,
-        default="|",
-        help_text=_(
-            "Character(s) between page title and site name (e.g., '|', '-', '·')"
-        ),
-    )
     default_locale = models.CharField(
         _("Default locale"),
         max_length=10,
@@ -242,7 +234,6 @@ class SEOSettings(BaseSiteSetting):
         ),
         MultiFieldPanel(
             [
-                FieldPanel("title_separator"),
                 FieldPanel("default_locale"),
             ],
             heading=_("Default SEO Settings"),

@@ -178,7 +178,7 @@ Any key not provided falls back to the page object's own fields, so you only nee
 
 ```html
 <!-- Basic Meta -->
-<title>Page Title | Site Name</title>
+<title>Page Title</title>
 <meta name="description" content="Page description...">
 <meta name="robots" content="index, follow">
 
@@ -285,7 +285,6 @@ All settings are optional and configured through Wagtail admin:
 | Organization logo | Logo image for Schema |
 | Twitter handle | @username (without @) |
 | Facebook URL | Facebook page URL |
-| Title separator | Character between page title and site name |
 | Default locale | Default og:locale (e.g., en_US, ja_JP) |
 | Default OG image | Fallback image for social sharing (1200x630) |
 | Favicon (SVG) | SVG favicon for modern browsers (recommended) |

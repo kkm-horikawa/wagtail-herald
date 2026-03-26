@@ -109,16 +109,20 @@ msgid "Organization type"
 msgstr "組織タイプ"
 
 #: src/wagtail_herald/models/settings.py:65
-msgid "Organization type for Schema.org (e.g., Corporation, LocalBusiness)"
-msgstr "Schema.org用の組織タイプ（例: Corporation, LocalBusiness）"
+msgid "Type for Schema.org (e.g., Corporation, LocalBusiness, Person)"
+msgstr "Schema.org用のタイプ（例: Corporation, LocalBusiness, Person）"
 
 #: src/wagtail_herald/models/settings.py:74
 msgid "Organization logo"
 msgstr "組織ロゴ"
 
 #: src/wagtail_herald/models/settings.py:75
-msgid "Logo for Schema.org. Recommended: 112x112px minimum, PNG/JPEG"
-msgstr "Schema.org用のロゴ。推奨: 最小112x112px、PNG/JPEG"
+msgid ""
+"Logo for Schema.org structured data. "
+"Used as 'image' when Person type is selected."
+msgstr ""
+"Schema.org構造化データ用のロゴ。"
+"Personタイプが選択された場合は'image'として使用されます。"
 
 #: src/wagtail_herald/models/settings.py:80
 msgid "Twitter handle"
@@ -135,14 +139,6 @@ msgstr "Facebook URL"
 #: src/wagtail_herald/models/settings.py:88
 msgid "Full Facebook page URL (e.g., 'https://facebook.com/example')"
 msgstr "FacebookページのフルURL（例: 'https://facebook.com/example'）"
-
-#: src/wagtail_herald/models/settings.py:93
-msgid "Title separator"
-msgstr "タイトル区切り文字"
-
-#: src/wagtail_herald/models/settings.py:97
-msgid "Character(s) between page title and site name (e.g., '|', '-', '·')"
-msgstr "ページタイトルとサイト名の間の文字（例: '|', '-', '·'）"
 
 #: src/wagtail_herald/models/settings.py:101
 msgid "Default locale"
@@ -259,9 +255,9 @@ msgstr ""
 "</body>の前に挿入するカスタムHTML。チャットウィジェット、遅延スクリプトなどに"
 "使用。バリデーションなし - 注意して使用してください。"
 
-#: src/wagtail_herald/models/settings.py:220
-msgid "Organization"
-msgstr "組織"
+#: src/wagtail_herald/models/settings.py:226
+msgid "Organization / Person"
+msgstr "組織 / 個人"
 
 #: src/wagtail_herald/models/settings.py:227
 msgid "Social Profiles"

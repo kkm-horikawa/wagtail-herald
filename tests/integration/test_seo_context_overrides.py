@@ -610,7 +610,7 @@ class TestSeoHeadContextOverrideRoutablePagePattern:
         Verification:
         1. Render with the exact context shape a RoutablePageMixin view produces
         2. Confirm all rendered HTML elements use the sub-route overrides
-        3. Confirm site_name from the Wagtail site is still appended to title
+        3. Confirm <title> uses only the override title without site name suffix
         """
 
         class RoutableParentPage:

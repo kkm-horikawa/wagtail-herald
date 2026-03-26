@@ -198,6 +198,17 @@ class SEOSettings(BaseSiteSetting):
         ),
     )
 
+    # IndexNow
+    indexnow_api_key = models.CharField(
+        _("IndexNow API Key"),
+        max_length=128,
+        blank=True,
+        default="",
+        help_text=_(
+            "IndexNow API key for instant search engine notification on page publish."
+        ),
+    )
+
     # Custom Code
     custom_head_html = models.TextField(
         _("Custom head HTML"),
@@ -271,6 +282,12 @@ class SEOSettings(BaseSiteSetting):
                 FieldPanel("security_txt"),
             ],
             heading=_("security.txt"),
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("indexnow_api_key"),
+            ],
+            heading=_("IndexNow"),
         ),
         MultiFieldPanel(
             [

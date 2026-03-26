@@ -13,3 +13,8 @@ class WagtailHeraldConfig(AppConfig):
     label = "wagtail_herald"
     verbose_name = _("Wagtail Herald")
     default_auto_field = "django.db.models.BigAutoField"
+
+    def ready(self) -> None:
+        from wagtail_herald.signals import register_signals
+
+        register_signals()

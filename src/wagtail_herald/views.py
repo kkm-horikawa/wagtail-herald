@@ -135,3 +135,29 @@ def security_txt(request: HttpRequest) -> HttpResponse:
             return HttpResponse(seo_settings.security_txt, content_type="text/plain")
 
     raise Http404
+
+
+def indexnow_key_file(request: HttpRequest, key: str) -> HttpResponse:
+    """Serve IndexNow key verification file.
+
+    IndexNow requires a ``/{api_key}.txt`` endpoint that returns the key
+    as plain text to prove domain ownership.
+
+    Args:
+        request: The HTTP request object.
+        key: The key from the URL path (without .txt extension).
+
+    Returns:
+        HttpResponse with text/plain content type.
+
+    Raises:
+        Http404: If IndexNow is not configured or key does not match.
+    """
+    site = Site.find_for_request(request)
+
+    if site:
+        seo_settings = SEOSettings.for_request(request)
+        if seo_settings and seo_settings.indexnow_api_key == key:
+            return HttpResponse(key, content_type="text/plain")
+
+    raise Http404

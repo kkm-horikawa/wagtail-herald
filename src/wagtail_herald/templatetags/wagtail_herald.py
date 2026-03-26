@@ -833,11 +833,9 @@ def build_seo_context(
 
     site = Site.find_for_request(request) if request else None
 
-    # Title with separator
+    # Title
     page_title = _overrides["title"] if "title" in _overrides else _get_page_title(page)
     site_name = site.site_name if site else ""
-    separator = settings.title_separator if settings else "|"
-    full_title = f"{page_title} {separator} {site_name}" if site_name else page_title
 
     # Description
     description = (
@@ -874,7 +872,7 @@ def build_seo_context(
     )
 
     return {
-        "title": full_title,
+        "title": page_title,
         "description": description,
         "canonical_url": canonical_url,
         "robots": robots,

@@ -2,13 +2,18 @@
 
 import django.core.validators
 import django.db.models.deletion
+from django.conf import settings
 from django.db import migrations, models
+
+WAGTAILIMAGES_IMAGE_MODEL = getattr(
+    settings, "WAGTAILIMAGES_IMAGE_MODEL", "wagtailimages.Image"
+)
 
 
 class Migration(migrations.Migration):
     dependencies = [
         ("wagtail_herald", "0007_remove_seosettings_title_separator"),
-        ("wagtailimages", "0027_image_description"),
+        migrations.swappable_dependency(WAGTAILIMAGES_IMAGE_MODEL),
     ]
 
     operations = [
@@ -38,7 +43,7 @@ class Migration(migrations.Migration):
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
                 related_name="+",
-                to="wagtailimages.image",
+                to=WAGTAILIMAGES_IMAGE_MODEL,
                 verbose_name="Organization logo",
             ),
         ),

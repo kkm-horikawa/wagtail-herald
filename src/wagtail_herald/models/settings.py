@@ -204,6 +204,12 @@ class SEOSettings(BaseSiteSetting):
         max_length=128,
         blank=True,
         default="",
+        validators=[
+            RegexValidator(
+                regex=r"^[a-zA-Z0-9\-]*$",
+                message=_("Only alphanumeric characters and hyphens are allowed."),
+            ),
+        ],
         help_text=_(
             "IndexNow API key for instant search engine notification on page publish."
         ),

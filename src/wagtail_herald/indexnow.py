@@ -4,6 +4,7 @@ IndexNow notification for instant search engine indexing.
 
 import json
 import logging
+import threading
 from urllib.error import URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
@@ -17,7 +18,11 @@ INDEXNOW_TIMEOUT_SECONDS = 10
 
 
 def notify_indexnow(page: Page, api_key: str) -> None:
-    """Send IndexNow notification for a published page."""
+    """Send IndexNow notification for a published page in a background thread.
+
+    Runs the HTTP request in a daemon thread so the signal handler
+    does not block the request/response cycle.
+    """
     if not api_key:
         return
 
@@ -25,6 +30,14 @@ def notify_indexnow(page: Page, api_key: str) -> None:
     if not page_url:
         return
 
+    thread = threading.Thread(
+        target=_send_indexnow, args=(page_url, api_key), daemon=True
+    )
+    thread.start()
+
+
+def _send_indexnow(page_url: str, api_key: str) -> None:
+    """Send the IndexNow HTTP request (runs in background thread)."""
     host = urlparse(page_url).netloc
 
     payload = json.dumps(

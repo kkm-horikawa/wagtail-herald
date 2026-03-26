@@ -20,16 +20,15 @@ def handle_page_published(sender: type, instance: Page, **kwargs: Any) -> None:
     try:
         site = instance.get_site()
     except Exception:
+        logger.debug("IndexNow: could not determine site for page %s", instance.pk)
         return
 
     if not site:
         return
 
     settings = SEOSettings.for_site(site)
-    api_key: str = getattr(settings, "indexnow_api_key", "")
-
-    if api_key:
-        notify_indexnow(instance, api_key)
+    if settings.indexnow_api_key:
+        notify_indexnow(instance, settings.indexnow_api_key)
 
 
 def register_signals() -> None:

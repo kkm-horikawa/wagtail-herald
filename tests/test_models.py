@@ -22,7 +22,6 @@ class TestSEOSettings:
         assert settings.organization_type == "Organization"
         assert settings.twitter_handle == ""
         assert settings.facebook_url == ""
-        assert settings.title_separator == "|"
         assert settings.default_locale == "en_US"
         assert settings.default_og_image_alt == ""
         assert settings.custom_head_html == ""
@@ -88,7 +87,6 @@ class TestSEOSettings:
             "organization_type",
             "twitter_handle",
             "facebook_url",
-            "title_separator",
             "default_locale",
             "default_og_image_alt",
             "custom_head_html",

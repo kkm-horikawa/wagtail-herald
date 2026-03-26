@@ -70,7 +70,7 @@ class TestSeoHeadTemplateTag:
         context = Context({"request": request, "page": MockPage()})
         html = template.render(context)
 
-        assert "<title>Test Page | Test Site</title>" in html
+        assert "<title>Test Page</title>" in html
 
     def test_tag_renders_seo_title_override(self, rf, site):
         """Test tag uses seo_title when available."""
@@ -85,7 +85,7 @@ class TestSeoHeadTemplateTag:
         context = Context({"request": request, "page": MockPage()})
         html = template.render(context)
 
-        assert "SEO Title | Test Site" in html
+        assert "<title>SEO Title</title>" in html
 
     def test_tag_renders_description(self, rf, site):
         """Test tag renders meta description."""
@@ -212,9 +212,9 @@ class TestSeoHeadTemplateTag:
 
         assert '<meta name="custom" content="value">' in html
 
-    def test_tag_uses_configured_separator(self, rf, site, db):
-        """Test tag uses configured title separator."""
-        SEOSettings.objects.create(site=site, title_separator="-")
+    def test_title_has_no_site_name_suffix(self, rf, site, db):
+        """Test title does not include site name suffix."""
+        SEOSettings.objects.create(site=site)
 
         request = rf.get("/")
         request.site = site
@@ -227,7 +227,7 @@ class TestSeoHeadTemplateTag:
         context = Context({"request": request, "page": MockPage()})
         html = template.render(context)
 
-        assert "<title>Test Page - Test Site</title>" in html
+        assert "<title>Test Page</title>" in html
 
     def test_tag_uses_configured_locale(self, rf, site, db):
         """Test tag uses configured default locale."""
@@ -279,7 +279,7 @@ class TestBuildSeoContext:
         request.site = site
         result = build_seo_context(request, None, None)
 
-        assert result["title"] == " | Test Site"
+        assert result["title"] == ""
         assert result["og_title"] == ""
 
 

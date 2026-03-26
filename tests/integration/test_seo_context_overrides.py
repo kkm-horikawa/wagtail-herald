@@ -86,7 +86,7 @@ class TestSeoHeadContextOverrideTitle:
         - Site with site_name "Test Site"
         Verification:
         1. Render {% seo_head %} with seo_title in context
-        2. Confirm <title> contains "Events Archive | Test Site"
+        2. Confirm <title> contains "Events Archive" without site name suffix
         3. Confirm <title> does NOT contain "Original Page Title"
         """
         template = Template(TEMPLATE_STRING)
@@ -100,7 +100,7 @@ class TestSeoHeadContextOverrideTitle:
 
         html = template.render(context)
 
-        assert "<title>Events Archive | Test Site</title>" in html
+        assert "<title>Events Archive</title>" in html
         assert (
             "Original Page Title" not in html.split("<title>")[1].split("</title>")[0]
         )
@@ -319,7 +319,7 @@ class TestSeoHeadContextOverrideAllKeys:
 
         html = template.render(context)
 
-        assert "<title>March 2026 Events | Test Site</title>" in html
+        assert "<title>March 2026 Events</title>" in html
         assert 'name="description" content="All events happening in March 2026"' in html
         assert 'rel="canonical" href="https://example.com/events/2026/march/"' in html
         assert 'property="og:title" content="March 2026 Events"' in html
@@ -372,7 +372,7 @@ class TestSeoHeadContextOverrideBackwardCompatibility:
 
         html = template.render(context)
 
-        assert "<title>Original Page Title | Test Site</title>" in html
+        assert "<title>Original Page Title</title>" in html
         assert 'name="description" content="Original page description"' in html
         assert 'rel="canonical" href="https://example.com/original/"' in html
         assert 'property="og:title" content="Original Page Title"' in html
@@ -414,7 +414,7 @@ class TestSeoHeadContextOverrideBackwardCompatibility:
 
         html = template.render(context)
 
-        assert "<title>Original Page Title | Test Site</title>" in html
+        assert "<title>Original Page Title</title>" in html
         assert 'name="description" content="Original page description"' in html
         assert 'rel="canonical" href="https://example.com/original/"' in html
 
@@ -454,7 +454,7 @@ class TestSeoHeadContextOverridePartial:
 
         html = template.render(context)
 
-        assert "<title>Custom Sub-Route Title | Test Site</title>" in html
+        assert "<title>Custom Sub-Route Title</title>" in html
         assert 'name="description" content="Original page description"' in html
         assert 'rel="canonical" href="https://example.com/original/"' in html
 
@@ -489,7 +489,7 @@ class TestSeoHeadContextOverridePartial:
 
         html = template.render(context)
 
-        assert "<title>Original Page Title | Test Site</title>" in html
+        assert "<title>Original Page Title</title>" in html
         assert 'name="description" content="Custom sub-route description"' in html
         assert 'rel="canonical" href="https://example.com/original/"' in html
 
@@ -498,27 +498,25 @@ class TestSeoHeadContextOverrideWithSEOSettings:
     """Tests that overrides work correctly alongside SEOSettings configuration."""
 
     @pytest.mark.django_db
-    def test_overrides_with_custom_title_separator(self, rf, _site):
-        """seo_head uses SEOSettings title_separator with overridden title.
+    def test_overrides_title_has_no_site_name_suffix(self, rf, _site):
+        """seo_head title uses only the override value without site name suffix.
 
-        Purpose: Verify that the title separator configured in SEOSettings is
-                 used when composing the full title from the override value,
-                 confirming that overrides integrate correctly with site-wide
-                 SEO configuration.
+        Purpose: Verify that the title override is rendered as-is without
+                 appending site name, confirming the removal of title suffix.
         Category: Normal
         Technique: API endpoint (Django template rendering pipeline)
-        Integration: Context(seo_title=...) + SEOSettings(title_separator="-")
+        Integration: Context(seo_title=...) + SEOSettings
                      -> build_seo_context(overrides={"title": ...})
-                     -> full_title = "override - Site Name"
+                     -> title = "Events"
         Test data:
-        - SEOSettings with title_separator "-"
+        - SEOSettings with default configuration
         - Context with seo_title="Events"
         Verification:
-        1. Create SEOSettings with custom title separator
+        1. Create SEOSettings
         2. Render {% seo_head %} with seo_title in context
-        3. Confirm <title> uses "Events - Test Site" format
+        3. Confirm <title> uses "Events" without site name suffix
         """
-        SEOSettings.objects.create(site=_site, title_separator="-")
+        SEOSettings.objects.create(site=_site)
 
         request = rf.get("/")
         request.site = _site
@@ -540,7 +538,7 @@ class TestSeoHeadContextOverrideWithSEOSettings:
 
         html = template.render(context)
 
-        assert "<title>Events - Test Site</title>" in html
+        assert "<title>Events</title>" in html
 
     @pytest.mark.django_db
     def test_overrides_with_twitter_handle(self, rf, _site):
@@ -634,7 +632,7 @@ class TestSeoHeadContextOverrideRoutablePagePattern:
 
         html = template.render(context)
 
-        assert "<title>Posts tagged Python | Test Site</title>" in html
+        assert "<title>Posts tagged Python</title>" in html
         assert 'name="description" content="All blog posts tagged with Python"' in html
         assert 'rel="canonical" href="https://example.com/blog/tags/python/"' in html
         assert 'property="og:title" content="Posts tagged Python"' in html
@@ -682,7 +680,7 @@ class TestSeoHeadContextOverrideRoutablePagePattern:
 
         html = template.render(context)
 
-        assert "<title>Category: Tech | Test Site</title>" in html
+        assert "<title>Category: Tech</title>" in html
         assert 'name="description" content="Blog homepage description"' in html
 
 
@@ -962,7 +960,7 @@ class TestSeoHeadContextOverrideOgImage:
 
         html = template.render(context)
 
-        assert "<title>March 2026 Events | Test Site</title>" in html
+        assert "<title>March 2026 Events</title>" in html
         assert 'name="description" content="All events in March 2026"' in html
         assert 'rel="canonical" href="https://example.com/events/2026/march/"' in html
         assert "march-events-banner.jpg" in html

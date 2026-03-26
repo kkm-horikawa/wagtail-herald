@@ -168,7 +168,7 @@ class TestBuildSeoContextGtmExclusion:
         request.user = mock.Mock(is_staff=True)
         settings = mock.Mock()
         settings.gtm_container_id = "GTM-XXXXX"
-        settings.title_separator = "|"
+
         settings.twitter_handle = ""
         settings.custom_head_html = ""
         settings.default_og_image = None
@@ -202,7 +202,7 @@ class TestBuildSeoContextGtmExclusion:
         request.user = mock.Mock(is_staff=False)
         settings = mock.Mock()
         settings.gtm_container_id = "GTM-XXXXX"
-        settings.title_separator = "|"
+
         settings.twitter_handle = ""
         settings.custom_head_html = ""
         settings.default_og_image = None
@@ -237,7 +237,7 @@ class TestBuildSeoContextGtmExclusion:
         request.user = anonymous_user
         settings = mock.Mock()
         settings.gtm_container_id = "GTM-XXXXX"
-        settings.title_separator = "|"
+
         settings.twitter_handle = ""
         settings.custom_head_html = ""
         settings.default_og_image = None

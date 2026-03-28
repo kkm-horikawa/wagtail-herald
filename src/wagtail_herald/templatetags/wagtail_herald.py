@@ -899,6 +899,9 @@ def build_seo_context(
         if _should_exclude_gtm(request)
         else (settings.gtm_container_id if settings else ""),
         "custom_head_html": settings.custom_head_html if settings else "",
+        "hreflang_links": page.get_hreflang_links()
+        if page and hasattr(page, "get_hreflang_links")
+        else [],
     }
 
 

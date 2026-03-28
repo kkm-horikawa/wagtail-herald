@@ -433,3 +433,173 @@ class TestSEOPageMixinMethods:
         mixin_instance.seo_locale = "ko_KR"
         result = mixin_instance.get_schema_language()
         assert result == "ko"
+
+
+class TestTranslationOfField:
+    """Tests for the translation_of field on SEOPageMixin."""
+
+    def test_translation_of_field_exists(self):
+        """Test that translation_of field is defined."""
+        field_names = [f.name for f in SEOPageMixin._meta.get_fields()]
+        assert "translation_of" in field_names
+
+    def test_translation_of_field_is_nullable(self):
+        """Test that translation_of allows null values."""
+        field = SEOPageMixin._meta.get_field("translation_of")
+        assert field.null is True
+        assert field.blank is True
+
+    def test_translation_of_related_name(self):
+        """Test that translation_of uses seo_translations as related_name."""
+        field = SEOPageMixin._meta.get_field("translation_of")
+        assert field.remote_field.related_name == "seo_translations"
+
+    def test_translation_of_on_delete_set_null(self):
+        """Test that translation_of uses SET_NULL on delete."""
+        from django.db import models
+
+        field = SEOPageMixin._meta.get_field("translation_of")
+        # SET_NULL is a function, compare by class name
+        assert isinstance(field.remote_field.on_delete, type(models.SET_NULL))
+
+    def test_translation_of_in_seo_panels(self):
+        """Test that translation_of is included in seo_panels."""
+        from wagtail.admin.panels import MultiFieldPanel
+
+        seo_panel = SEOPageMixin.seo_panels[0]
+        assert isinstance(seo_panel, MultiFieldPanel)
+        field_names = [
+            child.field_name
+            for child in seo_panel.children
+            if hasattr(child, "field_name")
+        ]
+        assert "translation_of" in field_names
+
+
+class TestGetHreflangLinks:
+    """Tests for get_hreflang_links method using mock objects."""
+
+    def test_returns_empty_list_when_no_translation(self):
+        """Test that pages without translations return empty list."""
+
+        class MockPage:
+            translation_of_id = None
+            seo_locale = "en_US"
+            full_url = "https://example.com/page/"
+            pk = 1
+
+            get_page_lang = SEOPageMixin.get_page_lang
+            get_page_locale = SEOPageMixin.get_page_locale
+            get_hreflang_links = SEOPageMixin.get_hreflang_links
+            _hreflang_links_as_original = SEOPageMixin._hreflang_links_as_original
+
+            class seo_translations:
+                @staticmethod
+                def live():
+                    class _Qs:
+                        @staticmethod
+                        def specific():
+                            class _Inner:
+                                @staticmethod
+                                def exists():
+                                    return False
+
+                            return _Inner()
+
+                    return _Qs()
+
+        page = MockPage()
+        result = page.get_hreflang_links()
+        assert result == []
+
+    def test_returns_links_when_page_is_translation(self):
+        """Test hreflang links when this page is a translation of another."""
+
+        class MockOriginal:
+            seo_locale = "en_US"
+            full_url = "https://example.com/original/"
+            pk = 1
+
+            get_page_lang = SEOPageMixin.get_page_lang
+            get_page_locale = SEOPageMixin.get_page_locale
+
+            @property
+            def specific(self):
+                return self
+
+        original = MockOriginal()
+
+        class MockTranslation:
+            translation_of_id = 1
+            translation_of = original
+            seo_locale = "ja_JP"
+            full_url = "https://example.com/ja/translated/"
+            pk = 2
+
+            get_page_lang = SEOPageMixin.get_page_lang
+            get_page_locale = SEOPageMixin.get_page_locale
+            get_hreflang_links = SEOPageMixin.get_hreflang_links
+            _hreflang_links_as_translation = SEOPageMixin._hreflang_links_as_translation
+
+        page = MockTranslation()
+        result = page.get_hreflang_links()
+
+        assert len(result) == 3
+        assert {"hreflang": "en", "href": "https://example.com/original/"} in result
+        assert {
+            "hreflang": "ja",
+            "href": "https://example.com/ja/translated/",
+        } in result
+        assert {
+            "hreflang": "x-default",
+            "href": "https://example.com/original/",
+        } in result
+
+    def test_returns_links_when_page_has_translations(self):
+        """Test hreflang links when page is the original with translations."""
+
+        class MockTranslationPage:
+            seo_locale = "ja_JP"
+            full_url = "https://example.com/ja/page/"
+            pk = 2
+
+            get_page_lang = SEOPageMixin.get_page_lang
+            get_page_locale = SEOPageMixin.get_page_locale
+
+        translation = MockTranslationPage()
+
+        class MockOriginalPage:
+            translation_of_id = None
+            seo_locale = "en_US"
+            full_url = "https://example.com/page/"
+            pk = 1
+
+            get_page_lang = SEOPageMixin.get_page_lang
+            get_page_locale = SEOPageMixin.get_page_locale
+            get_hreflang_links = SEOPageMixin.get_hreflang_links
+            _hreflang_links_as_original = SEOPageMixin._hreflang_links_as_original
+
+            class seo_translations:
+                @staticmethod
+                def live():
+                    class _Qs:
+                        @staticmethod
+                        def specific():
+                            return _Qs()
+
+                        @staticmethod
+                        def exists():
+                            return True
+
+                        def __iter__(self_inner):
+                            return iter([translation])
+
+                    return _Qs()
+
+        page = MockOriginalPage()
+        result = page.get_hreflang_links()
+
+        assert len(result) == 3
+        assert {"hreflang": "en", "href": "https://example.com/page/"} in result
+        assert {"hreflang": "ja", "href": "https://example.com/ja/page/"} in result
+        assert {"hreflang": "x-default", "href": "https://example.com/page/"} in result

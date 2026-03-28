@@ -242,6 +242,67 @@ class TestSeoHeadTemplateTag:
 
         assert 'property="og:locale" content="ja_JP"' in html
 
+    def test_tag_renders_hreflang_tags(self, rf, site):
+        """Test seo_head outputs hreflang tags when translations exist."""
+        request = rf.get("/")
+        request.site = site
+
+        class MockPage:
+            title = "Test Page"
+            seo_title = ""
+            search_description = ""
+
+            def get_hreflang_links(self):
+                return [
+                    {"hreflang": "en", "href": "https://example.com/page/"},
+                    {"hreflang": "ja", "href": "https://example.com/ja/page/"},
+                    {"hreflang": "x-default", "href": "https://example.com/page/"},
+                ]
+
+        template = Template("{% load wagtail_herald %}{% seo_head %}")
+        context = Context({"request": request, "page": MockPage()})
+        html = template.render(context)
+
+        assert 'hreflang="en" href="https://example.com/page/"' in html
+        assert 'hreflang="ja" href="https://example.com/ja/page/"' in html
+        assert 'hreflang="x-default" href="https://example.com/page/"' in html
+        assert html.count('rel="alternate"') == 3
+
+    def test_tag_no_hreflang_without_translations(self, rf, site):
+        """Test seo_head omits hreflang when no translation relationship."""
+        request = rf.get("/")
+        request.site = site
+
+        class MockPage:
+            title = "Test Page"
+            seo_title = ""
+            search_description = ""
+
+            def get_hreflang_links(self):
+                return []
+
+        template = Template("{% load wagtail_herald %}{% seo_head %}")
+        context = Context({"request": request, "page": MockPage()})
+        html = template.render(context)
+
+        assert "hreflang" not in html
+
+    def test_tag_no_hreflang_without_method(self, rf, site):
+        """Test seo_head handles pages without get_hreflang_links method."""
+        request = rf.get("/")
+        request.site = site
+
+        class MockPage:
+            title = "Test Page"
+            seo_title = ""
+            search_description = ""
+
+        template = Template("{% load wagtail_herald %}{% seo_head %}")
+        context = Context({"request": request, "page": MockPage()})
+        html = template.render(context)
+
+        assert "hreflang" not in html
+
 
 class TestBuildSeoContext:
     """Tests for build_seo_context function."""
@@ -272,6 +333,34 @@ class TestBuildSeoContext:
 
         for key in required_keys:
             assert key in result
+
+    def test_contains_hreflang_links_key(self, rf, site):
+        """Test result contains hreflang_links key."""
+        request = rf.get("/")
+        request.site = site
+        result = build_seo_context(request, None, None)
+        assert "hreflang_links" in result
+        assert result["hreflang_links"] == []
+
+    def test_hreflang_links_populated_from_page(self, rf, site):
+        """Test hreflang_links is populated when page has get_hreflang_links."""
+        request = rf.get("/")
+        request.site = site
+
+        class MockPage:
+            title = "Test"
+            seo_title = ""
+            search_description = ""
+            full_url = "https://example.com/test/"
+
+            def get_hreflang_links(self):
+                return [
+                    {"hreflang": "en", "href": "https://example.com/test/"},
+                    {"hreflang": "ja", "href": "https://example.com/ja/test/"},
+                ]
+
+        result = build_seo_context(request, MockPage(), None)
+        assert len(result["hreflang_links"]) == 2
 
     def test_handles_none_page(self, rf, site):
         """Test function handles None page gracefully."""

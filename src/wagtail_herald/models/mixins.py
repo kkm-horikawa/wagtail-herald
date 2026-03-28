@@ -28,6 +28,16 @@ class SEOPageMixin(models.Model):
             promote_panels = Page.promote_panels + SEOPageMixin.seo_panels
     """
 
+    translation_of = models.ForeignKey(
+        "wagtailcore.Page",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="seo_translations",
+        verbose_name=_("Translation of"),
+        help_text=_("If this page is a translation, select the original page"),
+    )
+
     og_image = models.ForeignKey(
         get_image_model_string(),
         on_delete=models.SET_NULL,
@@ -96,6 +106,7 @@ class SEOPageMixin(models.Model):
                 FieldPanel("noindex"),
                 FieldPanel("nofollow"),
                 FieldPanel("canonical_url"),
+                FieldPanel("translation_of"),
             ],
             heading=_("SEO"),
         ),
@@ -199,6 +210,55 @@ class SEOPageMixin(models.Model):
         """
         locale = self.get_page_locale()
         return locale.replace("_", "-")
+
+    def get_hreflang_links(self) -> list[dict[str, str]]:
+        """Return hreflang link data for this page and its translations.
+
+        Returns a list of dicts with 'hreflang' and 'href' keys.
+        Includes x-default pointing to the original page.
+        """
+        if self.translation_of_id:  # type: ignore[attr-defined]
+            return self._hreflang_links_as_translation()
+
+        return self._hreflang_links_as_original()
+
+    def _hreflang_links_as_translation(self) -> list[dict[str, str]]:
+        """Build hreflang links when this page is a translation."""
+        original = self.translation_of.specific
+        links: list[dict[str, str]] = []
+
+        original_lang = (
+            original.get_page_lang()
+            if hasattr(original, "get_page_lang")
+            else "x-default"
+        )
+        links.append({"hreflang": original_lang, "href": original.full_url})
+        links.append({"hreflang": self.get_page_lang(), "href": self.full_url})  # type: ignore[attr-defined]
+        links.append({"hreflang": "x-default", "href": original.full_url})
+
+        # Other translations of the same original
+        if hasattr(original, "seo_translations"):
+            for t in original.seo_translations.live().specific().exclude(pk=self.pk):
+                if hasattr(t, "get_page_lang"):
+                    links.append({"hreflang": t.get_page_lang(), "href": t.full_url})
+
+        return links
+
+    def _hreflang_links_as_original(self) -> list[dict[str, str]]:
+        """Build hreflang links when this page is the original."""
+        translations = self.seo_translations.live().specific()  # type: ignore[attr-defined]
+        if not translations.exists():
+            return []
+
+        links: list[dict[str, str]] = []
+        links.append({"hreflang": self.get_page_lang(), "href": self.full_url})  # type: ignore[attr-defined]
+
+        for t in translations:
+            if hasattr(t, "get_page_lang"):
+                links.append({"hreflang": t.get_page_lang(), "href": t.full_url})
+
+        links.append({"hreflang": "x-default", "href": self.full_url})  # type: ignore[attr-defined]
+        return links
 
     def get_schema_language(self) -> str:
         """Return BCP 47 language code for Schema.org inLanguage property.

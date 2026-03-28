@@ -12,6 +12,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 {% if description %}<meta name="description" content="{{ description }}">{% endif %}
 {% if robots %}<meta name="robots" content="{{ robots }}">{% endif %}
 {% if canonical_url %}<link rel="canonical" href="{{ canonical_url }}">{% endif %}
+{% for link in hreflang_links %}
+<link rel="alternate" hreflang="{{ link.hreflang }}" href="{{ link.href }}">
+{% endfor %}
 
 {# Open Graph #}
 <meta property="og:type" content="{{ og_type }}">

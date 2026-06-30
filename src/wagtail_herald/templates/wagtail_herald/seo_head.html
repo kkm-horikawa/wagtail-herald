@@ -36,8 +36,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 {% if twitter_image %}<meta name="twitter:image" content="{{ twitter_image }}">{% endif %}
 {% if twitter_image_alt %}<meta name="twitter:image:alt" content="{{ twitter_image_alt }}">{% endif %}
 
-{# Favicon — wagtail_herald.urls が恒久ルートパスで長期キャッシュ配信する。
-   CMS メディア URL（再アップロードで変わる）に依存させないことで地球儀化を防ぐ #}
+{# Favicon: wagtail_herald.urls が恒久ルートパスで長期キャッシュ配信し、CMS メディア依存を避けて地球儀化を防ぐ #}
 {% if favicon_svg %}<link rel="icon" type="image/svg+xml" href="/favicon.svg">{% endif %}
 {% if favicon_png %}<link rel="icon" type="image/png"{% if favicon_png_sizes %} sizes="{{ favicon_png_sizes }}"{% endif %} href="/favicon.ico">{% endif %}
 {% if apple_touch_icon %}<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">{% endif %}

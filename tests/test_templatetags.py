@@ -5,6 +5,8 @@ Tests for wagtail-herald template tags.
 from unittest.mock import PropertyMock, patch
 
 from django.template import Context, Template
+from wagtail.images import get_image_model
+from wagtail.images.tests.utils import get_test_image_file
 
 from wagtail_herald.models import SEOSettings
 from wagtail_herald.templatetags.wagtail_herald import (
@@ -156,6 +158,32 @@ class TestSeoHeadTemplateTag:
         html = template.render(context)
 
         assert 'name="twitter:site" content="@testhandle"' in html
+
+    def test_tag_renders_favicon_at_root_path_with_real_size(self, rf, site, db):
+        """Favicon link points to the stable /favicon.ico root path with the
+        image's real dimensions (not the old hardcoded 48x48)."""
+        favicon = get_image_model().objects.create(
+            title="favicon", file=get_test_image_file(filename="favicon.png")
+        )
+        SEOSettings.objects.create(site=site, favicon_png=favicon)
+
+        request = rf.get("/")
+        request.site = site
+
+        class MockPage:
+            title = "Test Page"
+            seo_title = ""
+            search_description = ""
+
+        template = Template("{% load wagtail_herald %}{% seo_head %}")
+        html = template.render(Context({"request": request, "page": MockPage()}))
+
+        expected_sizes = f"{favicon.width}x{favicon.height}"
+        assert f'sizes="{expected_sizes}"' in html
+        assert 'href="/favicon.ico"' in html
+        # 旧来の固定値・メディアURL直リンクが残っていないこと
+        assert 'sizes="48x48"' not in html
+        assert "/media/" not in html
 
     def test_tag_renders_robots_noindex(self, rf, site):
         """Test tag renders robots meta for noindex pages."""

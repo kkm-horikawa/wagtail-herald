@@ -870,6 +870,13 @@ def build_seo_context(
     apple_touch_icon_url = (
         _get_image_url(request, settings.apple_touch_icon) if settings else ""
     )
+    # PNG ファビコンの実寸（sizes 属性用）。固定の 48x48 ではなく実際の画像サイズを使う
+    favicon_png_image = settings.favicon_png if settings else None
+    favicon_png_sizes = (
+        f"{favicon_png_image.width}x{favicon_png_image.height}"
+        if favicon_png_image
+        else ""
+    )
 
     return {
         "title": page_title,
@@ -894,6 +901,7 @@ def build_seo_context(
         "twitter_image_alt": og_image_data.get("alt"),
         "favicon_svg": favicon_svg_url,
         "favicon_png": favicon_png_url,
+        "favicon_png_sizes": favicon_png_sizes,
         "apple_touch_icon": apple_touch_icon_url,
         "gtm_container_id": ""
         if _should_exclude_gtm(request)

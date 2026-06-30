@@ -185,6 +185,38 @@ class TestSeoHeadTemplateTag:
         assert 'sizes="48x48"' not in html
         assert "/media/" not in html
 
+    def test_tag_does_not_leak_template_comments(self, rf, site, db):
+        """seo_head の出力にテンプレートコメント/タグが漏れないこと。
+
+        Django の ``{# #}`` は 1 行限定で、複数行に書くと本文として描画され
+        head が壊れる。favicon を含む全分岐をオンにして漏れがないか検証する。
+        """
+        favicon = get_image_model().objects.create(
+            title="favicon", file=get_test_image_file(filename="favicon.png")
+        )
+        SEOSettings.objects.create(
+            site=site,
+            favicon_png=favicon,
+            favicon_svg=favicon,
+            apple_touch_icon=favicon,
+            gtm_container_id="GTM-TEST",
+        )
+
+        request = rf.get("/")
+        request.site = site
+
+        class MockPage:
+            title = "Test Page"
+            seo_title = ""
+            search_description = ""
+
+        template = Template("{% load wagtail_herald %}{% seo_head %}")
+        html = template.render(Context({"request": request, "page": MockPage()}))
+
+        assert "{#" not in html
+        assert "#}" not in html
+        assert "{%" not in html
+
     def test_tag_renders_robots_noindex(self, rf, site):
         """Test tag renders robots meta for noindex pages."""
         request = rf.get("/")

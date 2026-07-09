@@ -36,11 +36,6 @@ def _should_exclude_gtm(request: HttpRequest | None) -> bool:
     return getattr(user, "is_staff", False)
 
 
-def _get_gtm_server_base_url(settings: SEOSettings | None) -> str:
-    """Return the GTM server base URL without a trailing slash."""
-    return "https://www.googletagmanager.com"
-
-
 def _get_gtm_script_url(settings: SEOSettings | None) -> str:
     """Return the custom server-side GTM script URL with a trailing slash."""
     if settings and settings.gtm_server_container_url:
@@ -286,7 +281,6 @@ def seo_body(context: dict[str, Any]) -> SafeString:
 
     body_context = {
         "gtm_container_id": gtm_id,
-        "gtm_server_base_url": _get_gtm_server_base_url(seo_settings),
         "custom_body_end_html": seo_settings.custom_body_end_html
         if seo_settings
         else "",
@@ -919,7 +913,7 @@ def build_seo_context(
         "gtm_container_id": ""
         if _should_exclude_gtm(request)
         else (settings.gtm_container_id if settings else ""),
-        "gtm_server_base_url": _get_gtm_server_base_url(settings),
+        "gtm_server_base_url": "https://www.googletagmanager.com",
         "gtm_script_url": _get_gtm_script_url(settings),
         "custom_head_html": settings.custom_head_html if settings else "",
         "hreflang_links": page.get_hreflang_links()

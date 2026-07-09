@@ -1,6 +1,6 @@
 {# Google Tag Manager (noscript) - must be placed immediately after opening <body> tag #}
 {% if gtm_container_id %}
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ gtm_container_id }}"
+<noscript><iframe src="{{ gtm_server_base_url }}/ns.html?id={{ gtm_container_id }}"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 {% endif %}
 

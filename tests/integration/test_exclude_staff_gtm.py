@@ -14,7 +14,7 @@ from wagtail.models import Page, Site
 from wagtail_herald.models import SEOSettings
 
 GTM_CONTAINER_ID = "GTM-TEST117"
-GTM_JS_MARKER = "googletagmanager.com/gtm.js"
+GTM_JS_MARKER = "gtm.js"
 GTM_NS_MARKER = "googletagmanager.com/ns.html"
 
 

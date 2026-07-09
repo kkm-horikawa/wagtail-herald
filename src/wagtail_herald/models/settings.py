@@ -167,8 +167,11 @@ class SEOSettings(BaseSiteSetting):
         _("GTM Server Container URL"),
         blank=True,
         help_text=_(
-            "Server-side GTM container URL. When set, GTM scripts will be "
-            "loaded from this URL instead of www.googletagmanager.com. "
+            "Complete server-side GTM serving path URL. When set, GTM head "
+            "scripts will be loaded from this full path instead of "
+            "www.googletagmanager.com. Include the full path "
+            "(for example, https://your-domain.com/aBcDeFgHiJ/). "
+            "The trailing slash is required. "
             "Leave empty to use default Google Tag Manager."
         ),
     )

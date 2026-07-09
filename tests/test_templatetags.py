@@ -2454,11 +2454,11 @@ class TestSeoBodyTemplateTag:
         assert 'style="display:none;visibility:hidden"' in html
 
     def test_tag_renders_gtm_noscript_with_server_container_url(self, rf, site, db):
-        """Test seo_body renders GTM noscript with server container URL when configured."""
+        """Test seo_body keeps default GTM noscript URL when server URL is set."""
         SEOSettings.objects.create(
             site=site,
             gtm_container_id="GTM-TEST123",
-            gtm_server_container_url="https://gtm.example.com",
+            gtm_server_container_url="https://gtm.example.com/aBcDeFgHiJ/",
         )
 
         request = rf.get("/")
@@ -2469,10 +2469,9 @@ class TestSeoBodyTemplateTag:
         html = template.render(context)
 
         assert "<noscript>" in html
-        assert "gtm.example.com/ns.html?id=GTM-TEST123" in html
+        assert "googletagmanager.com/ns.html?id=GTM-TEST123" in html
         assert 'style="display:none;visibility:hidden"' in html
-        # Ensure default URL is NOT used
-        assert "www.googletagmanager.com/ns.html" not in html
+        assert "gtm.example.com" not in html
 
     def test_tag_renders_default_gtm_noscript_when_server_url_empty(self, rf, site, db):
         """Test seo_body renders default GTM noscript when server container URL is not set."""
@@ -2493,12 +2492,12 @@ class TestSeoBodyTemplateTag:
         assert "googletagmanager.com/ns.html?id=GTM-TEST123" in html
         assert 'style="display:none;visibility:hidden"' in html
 
-    def test_tag_handles_server_url_with_trailing_slash(self, rf, site, db):
-        """Test seo_body handles server container URL with trailing slash."""
+    def test_tag_ignores_server_url_with_trailing_slash(self, rf, site, db):
+        """Test seo_body ignores server container URL with trailing slash."""
         SEOSettings.objects.create(
             site=site,
             gtm_container_id="GTM-TEST123",
-            gtm_server_container_url="https://gtm.example.com/",
+            gtm_server_container_url="https://gtm.example.com/aBcDeFgHiJ/",
         )
 
         request = rf.get("/")
@@ -2509,9 +2508,8 @@ class TestSeoBodyTemplateTag:
         html = template.render(context)
 
         assert "<noscript>" in html
-        assert "gtm.example.com/ns.html?id=GTM-TEST123" in html
-        # Ensure no double slashes in URL
-        assert "example.com//ns.html" not in html
+        assert "googletagmanager.com/ns.html?id=GTM-TEST123" in html
+        assert "gtm.example.com" not in html
 
     def test_tag_empty_when_no_gtm(self, rf, site, db):
         """Test seo_body returns empty when GTM not configured."""
@@ -2593,11 +2591,11 @@ class TestGtmInSeoHead:
         assert "dataLayer" in html
 
     def test_seo_head_renders_gtm_server_container_url_when_set(self, rf, site, db):
-        """Test seo_head renders GTM script with server container URL when configured."""
+        """Test seo_head renders complete server-side GTM script URL as-is."""
         SEOSettings.objects.create(
             site=site,
             gtm_container_id="GTM-ABC123",
-            gtm_server_container_url="https://gtm.example.com",
+            gtm_server_container_url="https://gtm.example.com/aBcDeFgHiJ/",
         )
 
         request = rf.get("/")
@@ -2607,11 +2605,11 @@ class TestGtmInSeoHead:
         context = Context({"request": request})
         html = template.render(context)
 
-        assert "https://gtm.example.com" in html
+        assert "https://gtm.example.com/aBcDeFgHiJ/" in html
         assert "GTM-ABC123" in html
         assert "dataLayer" in html
-        # Ensure default URL is NOT used
         assert "www.googletagmanager.com" not in html
+        assert "/gtm.js?id=" not in html
 
     def test_seo_head_renders_default_gtm_when_server_url_empty(self, rf, site, db):
         """Test seo_head uses default GTM URL when server container URL is not set."""
@@ -2632,12 +2630,12 @@ class TestGtmInSeoHead:
         assert "GTM-ABC123" in html
         assert "dataLayer" in html
 
-    def test_seo_head_handles_server_url_with_trailing_slash(self, rf, site, db):
-        """Test seo_head handles server container URL with trailing slash."""
+    def test_seo_head_adds_trailing_slash_to_server_url(self, rf, site, db):
+        """Test seo_head adds trailing slash to complete server-side GTM URL."""
         SEOSettings.objects.create(
             site=site,
             gtm_container_id="GTM-ABC123",
-            gtm_server_container_url="https://gtm.example.com/",
+            gtm_server_container_url="https://gtm.example.com/aBcDeFgHiJ",
         )
 
         request = rf.get("/")
@@ -2647,11 +2645,10 @@ class TestGtmInSeoHead:
         context = Context({"request": request})
         html = template.render(context)
 
-        # Should render correctly without double slashes
-        assert "https://gtm.example.com" in html
+        assert "https://gtm.example.com/aBcDeFgHiJ/" in html
         assert "GTM-ABC123" in html
-        # Ensure no double slashes in URL
-        assert "example.com//gtm.js" not in html
+        assert "https://gtm.example.com/aBcDeFgHiJ/gtm.js" not in html
+        assert "/gtm.js?id=" not in html
 
     def test_seo_head_no_gtm_when_empty(self, rf, site, db):
         """Test seo_head doesn't render GTM when not configured."""
@@ -2671,7 +2668,7 @@ class TestGtmInSeoHead:
         settings = SEOSettings.objects.create(
             site=site,
             gtm_container_id="GTM-XYZ789",
-            gtm_server_container_url="https://gtm.example.com",
+            gtm_server_container_url="https://gtm.example.com/aBcDeFgHiJ",
         )
 
         request = rf.get("/")
@@ -2680,7 +2677,8 @@ class TestGtmInSeoHead:
         result = build_seo_context(request, None, settings)
 
         assert result["gtm_container_id"] == "GTM-XYZ789"
-        assert result["gtm_server_base_url"] == "https://gtm.example.com"
+        assert result["gtm_server_base_url"] == "https://www.googletagmanager.com"
+        assert result["gtm_script_url"] == "https://gtm.example.com/aBcDeFgHiJ/"
 
     def test_build_seo_context_empty_gtm(self, rf, site, db):
         """Test build_seo_context handles empty gtm_container_id."""
@@ -2693,6 +2691,7 @@ class TestGtmInSeoHead:
 
         assert result["gtm_container_id"] == ""
         assert result["gtm_server_base_url"] == "https://www.googletagmanager.com"
+        assert result["gtm_script_url"] == ""
 
 
 class TestGetSchemaLanguageHelper:

@@ -163,6 +163,15 @@ class SEOSettings(BaseSiteSetting):
         ],
         help_text=_("Google Tag Manager Container ID (e.g., GTM-XXXXXX)"),
     )
+    gtm_server_container_url = models.URLField(
+        _("GTM Server Container URL"),
+        blank=True,
+        help_text=_(
+            "Server-side GTM container URL. When set, GTM scripts will be "
+            "loaded from this URL instead of www.googletagmanager.com. "
+            "Leave empty to use default Google Tag Manager."
+        ),
+    )
 
     # robots.txt
     robots_txt = models.TextField(
@@ -268,6 +277,7 @@ class SEOSettings(BaseSiteSetting):
         MultiFieldPanel(
             [
                 FieldPanel("gtm_container_id"),
+                FieldPanel("gtm_server_container_url"),
             ],
             heading=_("Analytics"),
         ),

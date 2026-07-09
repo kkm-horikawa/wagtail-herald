@@ -16,6 +16,7 @@ from wagtail_herald.models import SEOSettings
 GTM_CONTAINER_ID = "GTM-TEST117"
 GTM_JS_MARKER = "gtm.js"
 GTM_NS_MARKER = "googletagmanager.com/ns.html"
+GTM_SERVER_SCRIPT_URL = "https://gtm.example.com/aBcDeFgHiJ/"
 
 
 @pytest.fixture
@@ -389,3 +390,25 @@ class TestSeoHeadAndBodyGtmConsistency:
         assert GTM_CONTAINER_ID in head_part
         assert GTM_NS_MARKER in body_part
         assert GTM_CONTAINER_ID in body_part
+
+    @pytest.mark.django_db
+    def test_server_container_url_affects_head_script_only(
+        self, rf, _site, seo_settings, normal_user, mock_page
+    ):
+        """Server-side GTM URL is used only for the head script."""
+        seo_settings.gtm_server_container_url = GTM_SERVER_SCRIPT_URL
+        seo_settings.save()
+
+        request = _build_request(rf, _site, normal_user)
+        template = Template(
+            "{% load wagtail_herald %}{% seo_head %}<!-- sep -->{% seo_body %}"
+        )
+        context = Context({"request": request, "page": mock_page})
+
+        html = template.render(context)
+
+        head_part, body_part = html.split("<!-- sep -->")
+        assert GTM_SERVER_SCRIPT_URL in head_part
+        assert "/gtm.js?id=" not in head_part
+        assert GTM_NS_MARKER in body_part
+        assert GTM_SERVER_SCRIPT_URL not in body_part

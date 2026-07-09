@@ -1,10 +1,17 @@
 {# Google Tag Manager - must be placed as high as possible in <head> #}
 {% if gtm_container_id %}
+{% if gtm_script_url %}
+<script>(function(w,d,s,l,i,u){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s);j.async=true;j.src=u;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','{{ gtm_container_id }}','{{ gtm_script_url|escapejs }}');</script>
+{% else %}
 <script>(function(w,d,s,l,i,u){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 u + '/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
 })(window,document,'script','dataLayer','{{ gtm_container_id }}','{{ gtm_server_base_url|escapejs }}');</script>
+{% endif %}
 {% endif %}
 
 {# Basic Meta #}
